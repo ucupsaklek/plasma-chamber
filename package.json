@@ -15,5 +15,7 @@
   "bugs": {
     "url": "https://github.com/cryptoeconomicslab/PlasmaVM-JS/issues"
   },
-  "homepage": "https://github.com/cryptoeconomicslab/PlasmaVM-JS#readme"
+  "homepage": "https://github.com/cryptoeconomicslab/PlasmaVM-JS#readme",
+  "dependencies": {
+  }
 }
