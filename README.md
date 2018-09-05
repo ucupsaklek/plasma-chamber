@@ -1,7 +1,7 @@
 # PlasmaVM
 
 ## Overview
-- Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7))
+- Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
 - Not only for value transfer, but also for some simple contract.
 - Consisted by Value and Contract paradigm from TxVM 
 - Fund security model is implemented via migration rather than exit
