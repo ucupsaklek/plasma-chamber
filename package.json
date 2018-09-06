@@ -2,8 +2,19 @@
   "name": "plasmavm-js",
   "version": "1.0.0",
   "description": "",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "childchain",
+      "eth",
+      "rpc",
+      "storage",
+      "vm"
+    ]
+  },
   "main": "index.js",
   "scripts": {
+    "run-all": "yarn run wsrun",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

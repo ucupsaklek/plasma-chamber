@@ -1,0 +1,16 @@
+{
+  "name": "childchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "merkletree": "^1.5.0",
+    "mocha": "^5.2.0",
+    "rlp": "^2.1.0"
+  }
+}
