@@ -1,5 +1,7 @@
 # PlasmaVM
 
+[![Build Status](https://travis-ci.org/cryptoeconomicslab/PlasmaVM-JS.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/PlasmaVM-JS)
+
 ## Overview
 - Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
 - Not only for value transfer, but also for some simple contract.

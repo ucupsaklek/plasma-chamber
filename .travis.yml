@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - 'stable'
+  - 'lts/*'
+
+before_install:
+  - npm install -g yarn
+script:
+  - yarn run-all test
+
+dist: trusty
+sudo: false
+
