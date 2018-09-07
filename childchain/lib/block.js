@@ -8,6 +8,9 @@ class Block {
     this.number = 0;
     this.hash = null;
     this.txs = [];
+    this.txs_root = null;
+    this.contracts_root = null;
+    this.nonces_root = null;
   }
 
   appendTx(tx) {

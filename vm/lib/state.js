@@ -25,7 +25,7 @@ class PlasmaStateValue {
 
 }
 
-class PlasmaStateValue {
+class PlasmaStateContract {
   
   constructor(typecode, seed, program, stack) {
     this.typecode = typecode;
@@ -34,4 +34,8 @@ class PlasmaStateValue {
     this.stack = stack;
   }
 
+}
+
+module.exports = {
+  PlasmaStateContract: PlasmaStateContract
 }
