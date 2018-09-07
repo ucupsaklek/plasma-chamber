@@ -31,7 +31,7 @@ class VirtualMachine {
 
   validate(prog) {
     this.exec(prog);
-    if (!this.stopAfterFinalize && (this.contract.stack.length > 0 || !this.argstack.length > 0)) {
+    if (!this.stopAfterFinalize && (this.contract.stack.length > 0 || this.argstack.length > 0)) {
       throw new Error('stack not empty');
     }
   }

@@ -7,7 +7,7 @@ module.exports = {
       const vm = VirtualMachine.createVM(program);
       vm.validate(program);
       // create tx from txlog
-      const tx = vm.createTx()
+      // add tx to chain
       resolve(program);
     })
   }
