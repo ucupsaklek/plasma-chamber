@@ -316,13 +316,13 @@ contract RootChain {
       uint256 txindex = (_utxoPos % 1000000000) / 10000;
       uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
 
-      // Does we need checking the owner?
       var exitingTx = _txBytes.createExitingTx(oindex);
-      //require(msg.sender == exitingTx.exitor);
+      require(exitingTx.owner == address(0) || msg.sender == exitingTx.owner);
 
       // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
       bytes32 merkleHash = keccak256(keccak256(_txBytes), ByteUtils.slice(_sigs, 0, 130));
+      // need signature for transaction
       require(Validate.checkSigs(keccak256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
       require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
 
