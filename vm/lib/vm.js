@@ -57,6 +57,8 @@ class VirtualMachine {
     if(result.op >= Op.MinPushdata) {
       // vm.chargeCreate(d)
       this.push(result.data);
+    }else if(result.op <= Op.MaxSmallInt) {
+      this.push(result.op);
     }else{
       operationFunc[result.op](this);
     }
@@ -99,11 +101,21 @@ class VirtualMachine {
     }
   }
 
+  createContract(prog) {
+    return new PlasmaStateContract(1, null, prog, []);
+  }
+
   push(v) {
     this.contract.stack.push(v);
   }
 
   pop() {
+    const res = this.contract.stack.pop();
+    if(res === null) throw new Error('stack underflow');
+    return res;
+  }
+
+  popBytes() {
     const res = this.contract.stack.pop();
     if(res === null) throw new Error('stack underflow');
     return res;

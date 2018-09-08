@@ -1,4 +1,5 @@
-const MinPushdata = 0x5f
+const MinPushdata = 0x5f;
+const MaxSmallInt = 0x1f;
 
 function decodeInstruction(prog) {
   if(prog.length == 0) {
@@ -19,5 +20,6 @@ function decodeInstruction(prog) {
 
 module.exports = {
   decodeInstruction: decodeInstruction,
+  MaxSmallInt: MaxSmallInt,
   MinPushdata: MinPushdata
 }

@@ -47,5 +47,19 @@ describe('VirtualMachine', function() {
     });
   });
 
+  describe('opRoll', function() {
+    it('should roll 1', function() {
+      // transfer
+      const program = [0x60, 0x01, 0x60, 0x02, 0x01, 0x2a];
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.step(program);
+      vm.step(program);
+      vm.step(program);
+      vm.step(program);
+      assert.deepEqual(vm.contract.stack, [[2], [1]]);
+    });
+  });
+
 
 });
