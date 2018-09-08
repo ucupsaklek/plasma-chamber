@@ -8,7 +8,7 @@ module.exports = {
       vm.validate(program);
       // create tx from txlog
       // add tx to chain
-      resolve(program);
+      resolve(vm);
     })
   }
 }
