@@ -27,6 +27,6 @@ function opPut(vm) {
 module.exports = {
 	0x44: opYield,
 	0x48: opContract,
-  0x2d: opGet,
-  0x2e: opPut
+	0x2d: opGet,
+	0x2e: opPut
 }
