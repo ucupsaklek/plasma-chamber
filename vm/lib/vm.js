@@ -1,7 +1,12 @@
 const Op = require('./op');
 const operationFunc = require('./operations');
-const { PlasmaStateContract } = require('./state');
+const { PlasmaStateValue, PlasmaStateContract } = require('./state');
+
 const TXVM_VERSION = 0x01;
+
+const LOG_INPUT = 0x22;
+const LOG_OUTPUT = 0x23;
+
 
 /**
  * VirtualMachine
@@ -68,37 +73,15 @@ class VirtualMachine {
     // this.stopAfterFinalize = true;
   }
 
-  opSplit(value, amount) {
-    return [createValue({
-      amount: value.amount - amount,
-      assetId: value.assetId,
-      anchor: null
-    }), createValue({
-      amount: amount,
-      assetId: value.assetId,
-      anchor: null
-    })];
-  }
-
-  opOutput() {
-    //check portable
-    //program = vm.popBytes()
-    //vm.contract.program = prog
-    // amount was on the arg stack
-    // how to get weight?
-    // check the value on the stack
-    //snapshot, snapshotID := vm.contract.snapshot()
-    //vm.chargeCreate(snapshot)
-    //vm.logOutput(snapshotID)
-    //vm.unwinding = true    
-  }
-
-  createValue(option) {
-    return {
-      amount: option.amount,
-      assetId: option.assetId,
-      anchor: option.anchor
+  charge(n) {
+    this.runLimit -= n;
+    if(this.runLimit < 0) {
+      throw new Error('error run limit');
     }
+  }
+
+  createValue(amount, assetId, anchor) {
+    return new PlasmaStateValue(amount, assetId, anchor);
   }
 
   createContract(prog) {
@@ -107,6 +90,10 @@ class VirtualMachine {
 
   push(v) {
     this.contract.stack.push(v);
+  }
+
+  peek() {
+    return this.contract.stack[this.contract.stack.length - 1];
   }
 
   pop() {
@@ -119,6 +106,26 @@ class VirtualMachine {
     const res = this.contract.stack.pop();
     if(res === null) throw new Error('stack underflow');
     return res;
+  }
+
+  popZeroValue() {
+    const res = this.contract.stack.pop();
+    if(res === null) throw new Error('stack underflow');
+    if(!res.isZero()) throw new Error('value is not zero');
+    return res;
+
+  }
+
+  logInput(snapshotId) {
+    this.addLog(LOG_INPUT, [snapshotId])
+  }
+
+  logOutput(snapshotId) {
+    this.addLog(LOG_OUTPUT, [snapshotId])
+  }
+
+  addLog(logType, data) {
+    this.log.push([logType, data]);
   }
 
 }
