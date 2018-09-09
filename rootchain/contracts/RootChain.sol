@@ -1,3 +1,5 @@
+pragma solidity ^0.4.24;
+
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import "./Math.sol";
 import "./PlasmaRLP.sol";
@@ -21,7 +23,7 @@ contract RootChain {
      */
 
     event Deposit(
-      uint chainIndex,
+      address chainIndex,
       address indexed depositor,
       uint256 indexed depositBlock,
       address token,
@@ -29,7 +31,7 @@ contract RootChain {
     );
 
     event DepositFromShelter(
-      uint chainIndex,
+      address chainIndex,
       address indexed depositor,
       uint256 indexed depositBlock,
       address token,
@@ -53,6 +55,10 @@ contract RootChain {
         address token
     );
 
+    event Log(
+      uint256 no
+    );
+
 
     /*
      * Storage
@@ -61,9 +67,9 @@ contract RootChain {
 
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
 
-    mapping (uint256 => ChildChain) internal childChains;
+    mapping (address => ChildChain) internal childChains;
 
-    uint256 public childChainNum = 0;
+    uint256 childChainNum;
 
     Shelter internal shelter;
 
@@ -103,7 +109,7 @@ contract RootChain {
     /**
      * @dev operator for chain
      */
-    modifier onlyOperator(uint _chain) {
+    modifier onlyOperator(address _chain) {
         require(msg.sender == childChains[_chain].operator);
         _;
     }
@@ -130,17 +136,18 @@ contract RootChain {
      */
     function addChain()
       public
-      payable
-      returns (uint256)
+      returns (address)
     {
-      require(msg.value >= 1);
-      childChainNum += 1;
-      childChains[childChainNum].operator = msg.sender;
-      childChains[childChainNum].currentChildBlock = CHILD_BLOCK_INTERVAL;
-      childChains[childChainNum].currentDepositBlock = 1;
-      childChains[childChainNum].currentFeeExit = 1;
-      childChains[childChainNum].exitsQueues[address(0)] = address(new PriorityQueue());
-      return childChainNum;
+//      require(msg.value >= 1);
+      require(msg.sender != childChains[_operator].operator);
+      address _operator = msg.sender;
+      ChildChain storage childChain =  childChains[_operator];
+      childChain.operator = _operator;
+      childChain.currentChildBlock = CHILD_BLOCK_INTERVAL;
+      childChain.currentDepositBlock = 1;
+      childChain.currentFeeExit = 1;
+      childChain.exitsQueues[address(0)] = address(new PriorityQueue());
+      return _operator;
     }
 
 
@@ -149,27 +156,27 @@ contract RootChain {
      * @param _chain The index of child chain
      * @param _root The merkle root of a child chain transactions.
      */
-    function submitBlock(uint _chain, bytes32 _root)
+    function submitBlock(address _chain, bytes32 _root)
         public
         onlyOperator(_chain)
     {
-        ChildChain childChain = childChains[_chain];
-        childChain.blocks[childChain.currentChildBlock] = ChildBlock({
-            root: _root,
-            timestamp: block.timestamp
-        });
+      ChildChain childChain = childChains[_chain];
+      childChain.blocks[childChain.currentChildBlock] = ChildBlock({
+          root: _root,
+          timestamp: block.timestamp
+      });
 
-        // Update block numbers.
-        childChain.currentChildBlock = childChain.currentChildBlock.add(CHILD_BLOCK_INTERVAL);
-        childChain.currentDepositBlock = 1;
+      // Update block numbers.
+      childChain.currentChildBlock = childChain.currentChildBlock.add(CHILD_BLOCK_INTERVAL);
+      childChain.currentDepositBlock = 1;
 
-        emit BlockSubmitted(_root, block.timestamp);
+      emit BlockSubmitted(_root, block.timestamp);
     }
 
     /**
      * @dev Allows anyone to deposit funds into the Plasma chain.
      */
-    function deposit(uint _chain)
+    function deposit(address _chain)
         public
         payable
     {
@@ -194,7 +201,7 @@ contract RootChain {
      * @param _chain chain index
      * @param _pos shelter position of contract to deposit.
      */
-    function depositFromShelter(uint _chain, uint256 _pos)
+    function depositFromShelter(address _chain, uint256 _pos)
       public
       payable
     {
@@ -224,7 +231,7 @@ contract RootChain {
      * @param _amount Deposit amount.
      */
     function startDepositExit(
-      uint _chain,
+      address _chain,
       uint256 _depositPos,
       address _token,
       uint256 _amount
@@ -262,7 +269,7 @@ contract RootChain {
      * @param _cont contract bytes
      */
     function startDepositContractExit(
-      uint _chain,
+      address _chain,
       uint256 _depositPos,
       address _token,
       uint256 _amount,
@@ -298,7 +305,7 @@ contract RootChain {
      * @param _token Token to withdraw.
      * @param _amount Amount in fees to withdraw.
      */
-    function startFeeExit(uint _chain, address _token, uint256 _amount)
+    function startFeeExit(address _chain, address _token, uint256 _amount)
         public
         onlyOperator(_chain)
     {
@@ -323,7 +330,7 @@ contract RootChain {
      * @param _sigs Both transaction signatures and confirmations signatures used to verify that the exiting transaction has been confirmed.
      */
     function startExit(
-      uint _chain,
+      address _chain,
       uint256 _utxoPos,
       bytes _txBytes,
       bytes _snapshot,
@@ -371,7 +378,7 @@ contract RootChain {
      * @param _confirmationSig The confirmation signature for the transaction used to challenge.
      */
     function challengeExit(
-      uint _chain,
+      address _chain,
       uint256 _cUtxoPos,
       uint256 _eUtxoIndex,
       bytes _txBytes,
@@ -403,7 +410,7 @@ contract RootChain {
      * @param _token Asset type to be exited.
      * @return A tuple of the position and time when this exit can be processed.
      */
-    function getNextExit(uint _chain, address _token)
+    function getNextExit(address _chain, address _token)
         public
         view
         returns (uint256, uint256)
@@ -415,7 +422,7 @@ contract RootChain {
      * @dev Processes any exits that have completed the challenge period. 
      * @param _token Token type to process.
      */
-    function finalizeExits(uint _chain, address _token)
+    function finalizeExits(address _chain, address _token)
         public
     {
       ChildChain childChain = childChains[_chain];
@@ -429,16 +436,18 @@ contract RootChain {
 
         // TODO: handle ERC-20 transfer
         require(address(0) == _token);
+        require(_token == currentExit.token);
+        require(childChain.weights[_token] >= currentExit.amount);
 
         // if there is no owner
         if(currentExit.owner == address(0)) {
-          shelter.weights[address(0)] += currentExit.amount;
+          shelter.weights[_token] += currentExit.amount;
           shelter.packets[utxoPos] = currentExit;
 
         }else{
           currentExit.owner.transfer(currentExit.amount);
         }
-        childChain.weights[address(0)] -= currentExit.amount;
+        childChain.weights[_token] -= currentExit.amount;
         queue.delMin();
         delete childChain.exits[utxoPos].owner;
 
@@ -460,7 +469,7 @@ contract RootChain {
      * @param _blockNumber Number of the block to return.
      * @return Child chain block at the specified block number.
      */
-    function getChildChain(uint _chain, uint256 _blockNumber)
+    function getChildChain(address _chain, uint256 _blockNumber)
         public
         view
         returns (bytes32, uint256)
@@ -473,13 +482,15 @@ contract RootChain {
      * @dev Determines the next deposit block number.
      * @return Block number to be given to the next deposit block.
      */
-    function getDepositBlock(uint _chain)
+    function getDepositBlock(address _chain)
         public
         view
         returns (uint256)
     {
       ChildChain childChain = childChains[_chain];
-      return childChain.currentChildBlock.sub(CHILD_BLOCK_INTERVAL).add(childChain.currentDepositBlock);
+      return childChain.currentChildBlock
+              .sub(CHILD_BLOCK_INTERVAL)
+              .add(childChain.currentDepositBlock);
     }
 
     /**
@@ -487,7 +498,7 @@ contract RootChain {
      * @param _utxoPos Position of the UTXO in the chain.
      * @return A tuple representing the active exit for the given UTXO.
      */
-    function getExit(uint _chain, uint256 _utxoPos)
+    function getExit(address _chain, uint256 _utxoPos)
         public
         view
         returns (address, address, uint256)
@@ -514,7 +525,7 @@ contract RootChain {
      * @param _created_at Time when the UTXO was created.
      */
     function addExitToQueue(
-      uint _chain, 
+      address _chain, 
       uint256 _utxoPos,
       address _exitor,
       address _owner,
