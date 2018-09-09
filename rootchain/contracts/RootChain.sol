@@ -68,6 +68,7 @@ contract RootChain {
     Shelter internal shelter;
 
     struct Exit {
+        address exitor;
         address owner;
         address token;
         uint256 amount;
@@ -199,6 +200,7 @@ contract RootChain {
     {
       ChildChain childChain = childChains[_chain];
       require(childChain.currentDepositBlock < CHILD_BLOCK_INTERVAL);
+      require(msg.sender == packet.exitor);
 
       Exit packet = shelter.packets[_pos];
       bytes32 root = keccak256(msg.sender, packet.token, packet.amount, packet.cont);
@@ -241,7 +243,15 @@ contract RootChain {
       require(root == depositHash);
 
       addExitToQueue(
-        _chain, _depositPos, msg.sender, _token, _amount, new bytes(0), childChain.blocks[blknum].timestamp);
+        _chain,
+        _depositPos,
+        msg.sender,
+        msg.sender,
+        _token,
+        _amount,
+        new bytes(0),
+        childChain.blocks[blknum].timestamp
+      );
     }
 
     /**
@@ -272,7 +282,15 @@ contract RootChain {
       require(root == depositHash);
 
       addExitToQueue(
-        _chain, _depositPos, address(0), _token, _amount, _cont, childChain.blocks[blknum].timestamp);
+        _chain,
+        _depositPos,
+        msg.sender,
+        address(0),
+        _token,
+        _amount,
+        _cont,
+        childChain.blocks[blknum].timestamp
+      );
     }
 
     /**
@@ -288,6 +306,7 @@ contract RootChain {
       addExitToQueue(
         _chain,
         childChain.currentFeeExit,
+        msg.sender,
         msg.sender,
         _token,
         _amount,
@@ -321,7 +340,8 @@ contract RootChain {
       var snapshot = _snapshot.createExitingContract();
       // check snapshot is valid
       require(exitingTx.snapshotId == keccak256(_snapshot));
-      require(snapshot.owner == address(0) || msg.sender == snapshot.owner);
+      require(snapshot.exitor == address(0) || msg.sender == snapshot.exitor);
+      address owner = snapshot.cont.validateOwn();
 
       // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
@@ -333,7 +353,8 @@ contract RootChain {
       addExitToQueue(
         _chain,
         _utxoPos,
-        snapshot.owner,
+        snapshot.exitor,
+        owner,
         snapshot.token,
         snapshot.weight,
         snapshot.cont,
@@ -496,6 +517,7 @@ contract RootChain {
       uint _chain, 
       uint256 _utxoPos,
       address _exitor,
+      address _owner,
       address _token,
       uint256 _amount,
       bytes _cont,
@@ -503,6 +525,7 @@ contract RootChain {
     )
       private
     {
+
       // Check that we're exiting a known token.
       require(childChains[_chain].exitsQueues[_token] != address(0));
 
@@ -516,7 +539,8 @@ contract RootChain {
       queue.insert(exitableAt, _utxoPos);
 
       childChains[_chain].exits[_utxoPos] = Exit({
-        owner: _exitor,
+        owner: _owner,
+        exitor: _exitor,
         token: _token,
         amount: _amount,
         cont: _cont

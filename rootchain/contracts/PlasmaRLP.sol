@@ -15,7 +15,7 @@ library PlasmaRLP {
 
     struct exitingContract {
         address token;
-        address owner;
+        address exitor;
         uint256 weight;
         bytes cont;
     }
@@ -55,13 +55,23 @@ library PlasmaRLP {
         var snapshotList = RLP.toList(RLP.toRlpItem(snapshot));
         return exitingContract({
             token: RLP.toAddress(snapshotList[1]),
-            // owner or null
-            owner: RLP.toAddress(snapshotList[2]),
+            // owner
+            exitor: RLP.toAddress(snapshotList[2]),
             // weight
             weight: RLP.toUint(snapshotList[3]),
             // contract
             cont: RLP.toBytes(snapshotList[4])
         });
+    }
+
+    function validateOwn(bytes memory sendContractBytes)
+        internal
+        constant
+        returns (address)
+    {
+        var sendContract = RLP.toList(RLP.toRlpItem(sendContractBytes));
+        // TODO: validate send contract
+        return RLP.toAddress(sendContract[2]);
     }
 
     function bytesToBytes32(bytes b) private pure returns (bytes32) {
