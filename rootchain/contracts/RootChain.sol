@@ -307,6 +307,7 @@ contract RootChain {
       uint _chain,
       uint256 _utxoPos,
       bytes _txBytes,
+      bytes _snapshot,
       bytes _proof,
       bytes _sigs
     )
@@ -317,7 +318,10 @@ contract RootChain {
       uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
 
       var exitingTx = _txBytes.createExitingTx(oindex);
-      require(exitingTx.owner == address(0) || msg.sender == exitingTx.owner);
+      var snapshot = _snapshot.createExitingContract();
+      // check snapshot is valid
+      require(exitingTx.snapshotId == keccak256(_snapshot));
+      require(snapshot.owner == address(0) || msg.sender == snapshot.owner);
 
       // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
@@ -329,10 +333,10 @@ contract RootChain {
       addExitToQueue(
         _chain,
         _utxoPos,
-        exitingTx.owner,
-        exitingTx.token,
-        exitingTx.weight,
-        exitingTx.cont,
+        snapshot.owner,
+        snapshot.token,
+        snapshot.weight,
+        snapshot.cont,
         childBlock.timestamp);
     }
 
@@ -360,6 +364,7 @@ contract RootChain {
       uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
       bytes32 root = childChains[_chain].blocks[_cUtxoPos / 1000000000].root;
       var txHash = keccak256(_txBytes);
+      
       var confirmationHash = keccak256(txHash, root);
       var merkleHash = keccak256(txHash, _sigs);
       address owner = childChains[_chain].exits[eUtxoPos].owner;

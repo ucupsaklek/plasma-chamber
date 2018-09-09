@@ -9,11 +9,15 @@ import "./RLP.sol";
 library PlasmaRLP {
 
     struct exitingTx {
+        bytes32 snapshotId;
+        uint256 inputCount;
+    }
+
+    struct exitingContract {
         address token;
         address owner;
         uint256 weight;
         bytes cont;
-        uint256 inputCount;
     }
 
     /* Public Functions */
@@ -38,14 +42,35 @@ library PlasmaRLP {
     {
         var txList = RLP.toList(RLP.toRlpItem(exitingTxBytes));
         return exitingTx({
-            token: RLP.toAddress(txList[6]),
-            // owner or null
-            owner: RLP.toAddress(txList[8 + 2 * oindex]),
-            // weight
-            weight: RLP.toUint(txList[8 + 2 * oindex]),
-            // contract
-            cont: RLP.toBytes(txList[8 + 2 * oindex]),
+            snapshotId: bytesToBytes32(RLP.toBytes(txList[8 + 2 * oindex])),
             inputCount: RLP.toUint(txList[0]) * RLP.toUint(txList[3])
         });
     }
+
+    function createExitingContract(bytes memory snapshot)
+        internal
+        constant
+        returns (exitingContract)
+    {
+        var snapshotList = RLP.toList(RLP.toRlpItem(snapshot));
+        return exitingContract({
+            token: RLP.toAddress(snapshotList[1]),
+            // owner or null
+            owner: RLP.toAddress(snapshotList[2]),
+            // weight
+            weight: RLP.toUint(snapshotList[3]),
+            // contract
+            cont: RLP.toBytes(snapshotList[4])
+        });
+    }
+
+    function bytesToBytes32(bytes b) private pure returns (bytes32) {
+        bytes32 out;
+
+        for (uint i = 0; i < 32; i++) {
+            out |= bytes32(b[i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
 }
