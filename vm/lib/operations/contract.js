@@ -34,7 +34,7 @@ function opCall(vm) {
 		throw new Error('not contract');
 	}
 
-	con.typecode = ContractCode // unwrap on the fly
+	con.typecode = 'C';
 
 	const prevContract = vm.contract
 	const prevCaller = vm.caller
@@ -74,7 +74,7 @@ function opOutput(vm) {
 function opInput(vm) {
 	const t = vm.pop();
 	const snapshotResult = contractSnapshot(t)
-	const contract = new PlasmaStateContract(t[0], t[1], t[2], t[3]);
+	const contract = new PlasmaStateContract(t[0], t[1], t[2], []);
 	// vm.chargeCreate(con)
 	vm.push(contract)
 	vm.logInput(snapshotResult[1])

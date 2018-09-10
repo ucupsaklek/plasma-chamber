@@ -40,6 +40,9 @@ function opCheckSig(vm) {
 }
 
 function VMHash(f, x) {
+  if(typeof f == 'string') {
+    f = new Buffer(f);
+  }
   const hash = crypto.createHash('sha256');
   hash.update(Buffer.concat([f, x], f.length + x.length));
   return hash.digest();
