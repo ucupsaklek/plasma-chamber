@@ -26,6 +26,33 @@ function opPut(vm) {
 	vm.argstack.push(item)
 }
 
+function opCall(vm) {
+	const con = vm.pop();
+
+	// check contract
+	if(!con instanceof PlasmaStateContract) {
+		throw new Error('not contract');
+	}
+
+	con.typecode = ContractCode // unwrap on the fly
+
+	const prevContract = vm.contract
+	const prevCaller = vm.caller
+
+	vm.caller = vm.contract.seed
+	vm.contract = con
+
+	vm.exec(con.program)
+
+	if(!vm.unwinding && vm.contract.stack.length > 0) {
+		throw new Error('contract stack not empty', con.seed);
+	}
+
+	vm.unwinding = false
+	vm.contract = prevContract
+	vm.caller = prevCaller
+}
+
 function opOutput(vm) {
 	//check portable
 	const prog = vm.pop();
@@ -47,16 +74,16 @@ function opOutput(vm) {
 function opInput(vm) {
 	const t = vm.pop();
 	const snapshotResult = contractSnapshot(t)
-
 	const contract = new PlasmaStateContract(t[0], t[1], t[2], t[3]);
 	// vm.chargeCreate(con)
 	vm.push(contract)
-
 	vm.logInput(snapshotResult[1])
 }
 
 module.exports = {
+	0x43: opCall,
 	0x44: opYield,
+	0x46: opInput,
 	0x47: opOutput,
 	0x48: opContract,
 	0x2d: opGet,
