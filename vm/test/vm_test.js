@@ -61,5 +61,16 @@ describe('VirtualMachine', function() {
     });
   });
 
+  describe('opAdd', function() {
+    it('should add', function() {
+      const program = [0x61, 0x01, 0x01, 0x60, 0x02, 0x21]; // (push1byte) 0x01 (push1byte) 0x02 opAdd
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.step(program);
+      vm.step(program);
+      vm.step(program);
+      assert.deepEqual(vm.contract.stack, [[3]]);
+    });
+  });
 
 });

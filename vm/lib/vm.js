@@ -92,6 +92,11 @@ class VirtualMachine {
     this.contract.stack.push(v);
   }
 
+  pushBool(v) {
+	const v = Number(v)
+    this.contract.stack.push(v);
+  }
+
   peek() {
     return this.contract.stack[this.contract.stack.length - 1];
   }
