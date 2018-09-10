@@ -1,10 +1,15 @@
 var jayson = require('jayson');
-
+const childChain = require('../childchain')
 // create a server
 var server = jayson.server({
-  add: function(args, cb) {
-    cb(null, args[0] + args[1]);
+  tx: function(args, cb) {
+    console.log(args)
+    childChain.apiTx(args[0]).then((result) => {
+      cb(null, result);
+    }).catch((err) => {
+      cb(err);
+    })
   }
 });
 
-server.http().listen(3000);
+server.http().listen(process.env.PORT || 3000);
