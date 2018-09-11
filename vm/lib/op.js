@@ -6,15 +6,14 @@ function decodeInstruction(prog) {
     return {op: 0, n: 0}
   }
   const opcode = prog[0];
-	if(opcode < MinPushdata) {
+  if(opcode < MinPushdata) {
     return {op: opcode, n: 1};
   }
   const l = opcode - MinPushdata;
   const r = 1 + l;
-  if( prog.length < r)
-	if(prog.length < r) {
-    return {op: MinPushdata, n: 0};
-	}
+  if(prog.length < r) {
+    throw new Error('stack size is invalid');
+  }
   return {op: MinPushdata, n: r, data: prog.slice(1, r)};
 }
 
