@@ -43,7 +43,7 @@ class VirtualMachine {
   }
 
   exec(prog) {
-    if(this.run.prog.length > 0) {
+    if(this.run.prog && this.run.prog.length > 0) {
       this.runstack.push(Object.assign({}, this.run));
     }
     this.run.prog = prog
