@@ -2,7 +2,7 @@ const { VMHash } = require('./crypto');
 
 function opIssue(vm) {
 	const tag = vm.pop();
-	const amount := vm.pop();
+	const amount = vm.pop();
 	if(amount < 0) {
     throw new Error('amount is negative');
 	}
@@ -23,7 +23,7 @@ function opAmount(vm) {
 
 function opAssetID(vm) {
 	const val = vm.peek();
-	// vm.chargeCopy(Bytes(val.assetID))
+	// vm.chargeCopy(Bytes(val.assetId))
 	vm.push(val.assetId);
 }
 
@@ -37,12 +37,13 @@ function opSplit(vm) {
 	if(amount > a.amount) {
     throw new Error('split error');
 	}
+	console.log(a)
 
 	const anchor1 = VMHash("Split1", a.anchor);
-	const b = vm.createValue(a.amount - amount, a.assetID, anchor1)
+	const b = vm.createValue(a.amount - amount, a.assetId, anchor1)
 
 	const anchor2 = VMHash("Split2", a.anchor)
-	const c = vm.createValue(int64(amount), a.assetID, anchor2)
+	const c = vm.createValue(amount, a.assetId, anchor2)
 
 	vm.push(b)
 	vm.push(c)

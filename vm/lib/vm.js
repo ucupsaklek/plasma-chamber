@@ -6,6 +6,7 @@ const TXVM_VERSION = 0x01;
 
 const LOG_INPUT = 0x22;
 const LOG_OUTPUT = 0x23;
+const LOG_FINALIZE = 0x24;
 
 
 /**
@@ -42,23 +43,33 @@ class VirtualMachine {
   }
 
   exec(prog) {
+    if(this.run.prog.length > 0) {
+      this.runstack.push(Object.assign({}, this.run));
+    }
     this.run.prog = prog
     this.run.pc = 0
-    while(this.run.pc < this.run.prog.length) {
-      if (this.unwinding) {
-        return
+    try {
+      while(this.run.pc < this.run.prog.length) {
+        if (this.unwinding) {
+          break
+        }
+        this.step()
+        if (this.finalized && this.stopAfterFinalize) {
+          break
+        }
       }
-      this.step()
-      if (this.finalized && this.stopAfterFinalize) {
-        break
-      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.run = this.runstack.pop();
     }
   }
   
   step() {
-    console.log(this.run.pc);
     const result = Op.decodeInstruction(this.run.prog.slice(this.run.pc));
     this.run.pc += result.n;
+    console.log('Debug =====Start=====');
+    console.log(result.op, operationFunc[result.op] ? operationFunc[result.op].name : '');
     if(result.op >= Op.MinPushdata) {
       // vm.chargeCreate(d)
       this.push(result.data);
@@ -67,9 +78,10 @@ class VirtualMachine {
     }else{
       operationFunc[result.op](this);
     }
-
     console.log('contract stack=', this.contract.stack);
     console.log('argstack=', this.argstack);
+    console.log('unwinding=', this.unwinding);
+    console.log('Debug =====End=====');
     // this.stopAfterFinalize = true;
   }
 
@@ -113,7 +125,6 @@ class VirtualMachine {
     if(res === null) throw new Error('stack underflow');
     if(!res.isZero()) throw new Error('value is not zero');
     return res;
-
   }
 
   logInput(snapshotId) {
@@ -122,6 +133,10 @@ class VirtualMachine {
 
   logOutput(snapshotId) {
     this.addLog(LOG_OUTPUT, [snapshotId])
+  }
+
+  logFinalize(anchor) {
+    this.addLog(LOG_FINALIZE, [anchor])
   }
 
   addLog(logType, data) {
