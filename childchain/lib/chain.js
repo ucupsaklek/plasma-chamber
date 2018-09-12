@@ -3,6 +3,7 @@ const { VMHash } = require('../../vm/lib/operations/crypto');
 const { assembleSource, PlasmaStateContract, PlasmaStateValue } = require('../../vm');
 const Snapshot = require('./state/snapshot');
 const Transaction = require('./tx');
+const ChainEvent = require('./chainevent');
 
 class Chain {
   
@@ -11,11 +12,16 @@ class Chain {
     this.blocks = [];
     this.commitmentTxs = []; // TxVM idiom. Eq pendingTx
     this.snapshot = new Snapshot();
+    this.events = new ChainEvent(); // EventEmitter
+  }
+
+  emit(eventName, payload){
+    this.events.emit(eventName, payload)
   }
 
   /**
    * apply deposit event
-   * @param {*} event ecent object of web3
+   * @param {*} event event object of web3
    */
   applyDeposit(event) {
     const returnValues = event.returnValues;
@@ -24,8 +30,10 @@ class Chain {
       returnValues.amount,
       returnValues.depositBlock
     );
-    this.commitmentTxs.push(tx);
-    this.generateBlock();
+    this.emit("TxAdded", {
+      type: "deposit",
+      payload: tx
+    });
   }
   
   createDepositTx(depositor, amount, depositBlock) {
@@ -51,18 +59,11 @@ class Chain {
    * generate block
    */
   generateBlock() {
-    const newBlock = new Block(this.getLatestBlock());
-    const txs = this.commitmentTxs
-    txs.filter((tx) => {
-      if(this.snapshot.applyTx(tx)) {
-        return true;
-      }else{
-        return false
-      }
-    }).forEach((tx) => {
-      newBlock.appendTx(tx);
-    });
-    this.blocks.push(newBlock);
+    const newBlock = new Block(this.getLatestBlock().number + 1);
+    thise.emit("BlockGenerated", {
+      type: "basic",
+      payload: newBlock
+    })
   }
 
 }

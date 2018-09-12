@@ -3,14 +3,14 @@ const MerkleTree = require("merkletree").default;
 
 class Block {
   
-  constructor() {
+  constructor(number) {
     this.id = null;
-    this.number = 0;
+    this.number = number;
     this.hash = null;
     this.prevhash = null;
     this.txs_root = null;
     this.txs = [];
-    this.timestamp = null;
+    this.timestamp = Date.now();
     this.nonce = null;
     this.gaslimit = 0;
     this.gasused = 0;
