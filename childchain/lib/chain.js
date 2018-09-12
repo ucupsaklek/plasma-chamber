@@ -1,5 +1,7 @@
 const Block = require('./block');
 const { VMHash } = require('../../vm/lib/operations/crypto');
+const { assembleSource, PlasmaStateContract, PlasmaStateValue } = require('../../vm');
+const Snapshot = require('./state/snapshot');
 const Transaction = require('./tx');
 
 class Chain {
@@ -25,11 +27,11 @@ class Chain {
   createDepositTx(depositor, amount, depositBlock) {
     const prog = assembleSource('[put [txid 1 roll get 0 checksig verify] yield]');
     const stack = [
-      new PlasmaStateValue(amount, new Buffer('d073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'hex', 'anchor')),
+      new PlasmaStateValue(amount, new Buffer('d073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'hex', 'anchor')).encode(),
       depositor
     ];
     const contract = new PlasmaStateContract('C', 'contractseed', prog, stack);
-    const encoded = contract.encode();
+    const encoded = contract.snapshot();
     const id = VMHash("SnapshotID", encoded);
     this.snapshot.insertId(id);
     const depositTx = new Transaction();

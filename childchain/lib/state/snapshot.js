@@ -1,10 +1,11 @@
 const Trie = require('merkle-patricia-tree');
 const levelup = require('levelup');
+const leveldown = require('leveldown');
 
 class Snapshot {
   
   constructor() {
-    const db = levelup('./testdb');
+    const db = levelup(leveldown('./testdb'));
     this.contTrie = new Trie(db); 
 
   }
