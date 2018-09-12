@@ -27,7 +27,7 @@ function opTuple(vm) {
     vals.push(vm.pop());
   }
 	// vm.chargeCreate(vals)
-	vm.push(vals);
+	vm.push(vals.reverse());
 }
 
 function opUntuple(vm) {
