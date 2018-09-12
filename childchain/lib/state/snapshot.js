@@ -7,9 +7,12 @@ class Snapshot {
   constructor() {
     const db = levelup(leveldown('./testdb'));
     this.contTrie = new Trie(db); 
-
   }
 
+  /**
+   * apply transaction to contract
+   * @param {*} tx Transaction
+   */
   applyTx(tx) {
     return Promise.all(tx.inputs.map((i) => {
       return this.contains(i);
@@ -23,6 +26,10 @@ class Snapshot {
     })
   }
 
+  /**
+   * contains contract or not
+   * @param {*} id SnapshotId of contract
+   */
   contains(id) {
     return new Promise((resolve, reject) => {
       this.contTrie.get(id, (err, value) => {
@@ -35,6 +42,10 @@ class Snapshot {
     })
   }
 
+  /**
+   * insert contract
+   * @param {*} id SnapshotId of contract
+   */
   insertId(id) {
     return new Promise((resolve, reject) => {
       this.contTrie.put(id, id, () => {
