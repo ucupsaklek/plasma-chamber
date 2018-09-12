@@ -11,14 +11,16 @@ class Snapshot {
   }
 
   applyTx(tx) {
-    if(Promise.all(tx.inputs.map((i) => {
+    return Promise.all(tx.inputs.map((i) => {
       return this.contains(i);
-    })).filter(!_).length < 0) {
-      throw new Error('input not found');
-    }
-    Promise.all(tx.outputs.map((i) => {
-      return this.insertId(i);
-    }));
+    })).then((results) => {
+      if(results.filter(b => !b).length < 0) {
+        throw new Error('input not found');
+      }
+      return Promise.all(tx.outputs.map((i) => {
+        return this.insertId(i);
+      }));
+    })
   }
 
   contains(id) {

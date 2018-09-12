@@ -32,7 +32,7 @@ class Chain {
     ];
     const contract = new PlasmaStateContract('C', 'contractseed', prog, stack);
     const encoded = contract.snapshot();
-    const id = VMHash("SnapshotID", encoded);
+    const id = VMHash("SnapshotID", encoded[0]);
     this.snapshot.insertId(id);
     const depositTx = new Transaction();
     depositTx.outputs.push(id);
@@ -44,12 +44,12 @@ class Chain {
     const newBlock = new Block(lastBlock);
     const txs = this.commitmentTxs
     txs.filter((tx) => {
-      if(Snapshot.applyTx(tx)) {
+      if(this.snapshot.applyTx(tx)) {
         return true;
       }else{
         return false
       }
-    }).forEach((txs) => {
+    }).forEach((tx) => {
       newBlock.appendTx(tx);
     });
     this.blocks.push(newBlock);
