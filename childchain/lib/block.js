@@ -7,10 +7,13 @@ class Block {
     this.id = null;
     this.number = 0;
     this.hash = null;
-    this.txs = [];
+    this.prevhash = null;
     this.txs_root = null;
-    this.contracts_root = null;
-    this.nonces_root = null;
+    this.txs = [];
+    this.timestamp = null;
+    this.nonce = null;
+    this.gaslimit = 0;
+    this.gasused = 0;
   }
 
   appendTx(tx) {

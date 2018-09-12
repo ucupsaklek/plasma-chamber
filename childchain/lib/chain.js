@@ -9,7 +9,7 @@ class Chain {
   constructor() {
     this.id = null;
     this.blocks = [];
-    this.commitmentTxs = []
+    this.commitmentTxs = []; // TxVM idiom. Eq pendingTx
     this.snapshot = new Snapshot();
   }
 
@@ -42,13 +42,16 @@ class Chain {
     depositTx.outputs.push(id);
     return depositTx;
   }
+
+  getLatestBlock(){
+    return this.blocks[this.blocks.length - 1];
+  }
   
   /**
    * generate block
    */
   generateBlock() {
-    const lastBlock = this.blocks[this.blocks.length - 1];
-    const newBlock = new Block(lastBlock);
+    const newBlock = new Block(this.getLatestBlock());
     const txs = this.commitmentTxs
     txs.filter((tx) => {
       if(this.snapshot.applyTx(tx)) {
