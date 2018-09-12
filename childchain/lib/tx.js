@@ -18,6 +18,8 @@ class Transaction {
     this.outputs = [];
     // deposit amount never change
     // this.retirements = [];
+    this.gaslimit = 0:
+    this.gasused = 0;
   }
 
   getBytes() {
