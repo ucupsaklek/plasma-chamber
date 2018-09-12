@@ -176,7 +176,7 @@ describe('VirtualMachine', function() {
       const vm2 = VirtualMachine.createVM(program2);
       vm2.run.prog = program2;
       vm2.validate(program2);
-      console.log(vm2.log);
+      console.log(program2.toString('hex'));
       assert.deepEqual(vm2.contract.stack, []);
     });
   });
