@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha",
-    "test-cov": "istanbul cover --print both _mocha -- test/vm_test.js"
+    "test-cov": "istanbul cover --print both _mocha "
   },
   "author": "",
   "license": "ISC",
