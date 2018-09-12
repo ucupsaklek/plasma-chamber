@@ -6,7 +6,7 @@ class Transaction {
   
   constructor() {
     this.id = null;
-    this.finalized = 
+    this.finalized = false;
     this.contracts = [];
     this.timerange = [];
     this.nonces = [];
