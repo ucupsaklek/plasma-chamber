@@ -3,8 +3,6 @@ const checked = require('../checked');
 function opAdd(vm) {
 	const v1 = vm.pop();
 	const v2 = vm.pop();
-	console.log('test val');
-	console.log(v1);
 	const [v3, check] = checked.AddInt64(v1,v2);
 
 	if(!check) throw new Error('Invalid value:',v1,'+',v2);
@@ -12,7 +10,7 @@ function opAdd(vm) {
 }
 
 function opNeg(vm) {
-	const [n, check] = checked.NegateInt64(vm.pop);
+	const [n, check] = checked.NegateInt64(vm.pop());
 
 	if(!check) throw new Error('Invalid value:',n);
 	vm.push(n);
@@ -30,7 +28,7 @@ function opMul(vm) {
 function opDiv(vm) {
 	const v1 = vm.pop();
 	const v2 = vm.pop();
-	const [v3, check] = checked.DivInt64(v1,v2);
+	const [v3, check] = checked.DivInt64(v2,v1);
 
 	if(!check) throw new Error('Invalid value:',v1,'/',v2);
 	vm.push(v3);
@@ -39,7 +37,7 @@ function opDiv(vm) {
 function opMod(vm) {
 	const v1 = vm.pop();
 	const v2 = vm.pop();
-	const [v3, check] = checked.ModInt64(v1,v2);
+	const [v3, check] = checked.ModInt64(v2,v1);
 
 	if(!check) throw new Error('Invalid value:',v1,'%',v2);
 	vm.push(v3);
@@ -48,7 +46,7 @@ function opMod(vm) {
 function opGT(vm) {
 	const v1 = vm.pop();
 	const v2 = vm.pop();
-	vm.pushBool(v2 > v1);
+	vm.push(Number(v2 > v1));
 }
 
 module.exports = {
