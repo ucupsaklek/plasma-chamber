@@ -13,6 +13,10 @@ class Chain {
     this.snapshot = new Snapshot();
   }
 
+  /**
+   * apply deposit event
+   * @param {*} event ecent object of web3
+   */
   applyDeposit(event) {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
@@ -39,6 +43,9 @@ class Chain {
     return depositTx;
   }
   
+  /**
+   * generate block
+   */
   generateBlock() {
     const lastBlock = this.blocks[this.blocks.length - 1];
     const newBlock = new Block(lastBlock);
