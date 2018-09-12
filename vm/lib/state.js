@@ -20,6 +20,7 @@ class PlasmaState {
 class PlasmaStateValue {
   
   constructor(amount, assetId, anchor) {
+    this.typecode = 'V';
     this.amount = amount;
     this.assetId = assetId;
     this.anchor = anchor;
@@ -43,13 +44,27 @@ class PlasmaStateContract {
     this.exitor = null;
     this.program = program;
     this.stack = stack;
+    this.weight = [];
   }
 
   snapshot() {
-    console.log(this)
-    const encoded = RLP.encode([this.typecode, this.seed, this.exitor, this.program, encodeStack(this.stack)]);
+    this.checkWeight();
+    const encoded = RLP.encode([this.typecode, this.seed, this.exitor, this.weight, this.program, encodeStack(this.stack)]);
     const h = VMHash("SnapshotID", encoded)
     return [encoded, h];
+  }
+
+  checkWeight() {
+    const weight = {}
+    this.stack.forEach((s) => {
+      if(s.typecode == 'V') {
+        if(!weight[s.assetId]) weight[s.assetId] = 0;
+        weight[s.assetId] += s.amount;
+      }
+    })
+    for(var w in weight) {
+      this.weight.push([w, weight[w]]);
+    }
   }
 
 }
@@ -63,7 +78,7 @@ function encodeStack(stack) {
 
 
 function contractSnapshot(t) {
-  const encoded = RLP.encode([t[0], t[1], t[2], encodeStack(t[3])]);
+  const encoded = RLP.encode([t[0], t[1], t[2], t[3], t[4], encodeStack(t[5])]);
   const h = VMHash("SnapshotID", encoded)
   return [encoded, h];
 }

@@ -78,16 +78,19 @@ function opOutput(vm) {
 function opInput(vm) {
 	const t = vm.pop();
 	const snapshotResult = contractSnapshot(t)
-	const typecode = t.pop();
-	const seed = t.pop();
-	const prog = t.pop();
+	const typecode = t.shift();
+	const seed = t.shift();
+	const exitor = t.shift();
+	const weight = t.shift();
+	const prog = t.shift();
 	const stack = t.map(s => {
-		if(s[s.length - 1] == 'S') return s[0];
-		else if(s[s.length - 1] == 'V') return new PlasmaStateValue(s[2], s[1], s[0]);
+		if(s[0] == 'S') return s[1];
+		else if(s[0] == 'V') return new PlasmaStateValue(s[1], s[2], s[3]);
 		else return s;
-	}).reverse();
-	console.log('stack', stack)
+	});
 	const contract = new PlasmaStateContract(typecode, seed, prog, stack);
+	contract.exitor = exitor;
+	contract.weight = weight;
 	// vm.chargeCreate(con)
 	vm.push(contract)
 	vm.logInput(snapshotResult[1])
