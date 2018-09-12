@@ -1,28 +1,22 @@
+const MerkleTree = require("merkletree").default;
+const RLP = require('rlp');
+
 function opTxID(vm) {
 	if(!vm.finalized) {
     throw new Error('unfinalized at tzid');
 	}
 	// vm.chargeCopy(Bytes(vm.TxID[:]))
-	vm.push(vm.txid);
+	vm.push(new Buffer(vm.txid, 'hex'));
 }
 
 function opFinalize(vm) {
-  /*
-	anchor := vm.popZeroValue().anchor
+	const anchor = vm.popZeroValue().anchor
   vm.logFinalize(anchor)
-  */
 
   vm.finalized = true
   
-  /*
-	items := make([][]byte, 0, len(vm.Log))
-	for _, item := range vm.Log {
-		items = append(items, Encode(item))
-	}
-
-	vm.TxID = merkle.Root(items)
-  vm.runHooks(vm.onFinalize)
-  */
+  const tree = MerkleTree(vm.log.map(l => RLP.encode(l) ));
+  vm.txid = tree.root();
 }
 
 module.exports = {

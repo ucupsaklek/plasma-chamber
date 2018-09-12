@@ -1,4 +1,8 @@
-const { PlasmaStateContract, contractSnapshot } = require('../state');
+const {
+	PlasmaStateContract,
+	PlasmaStateValue,
+	contractSnapshot
+} = require('../state');
 
 function opContract(vm) {
 	const prog = vm.popBytes();
@@ -74,7 +78,16 @@ function opOutput(vm) {
 function opInput(vm) {
 	const t = vm.pop();
 	const snapshotResult = contractSnapshot(t)
-	const contract = new PlasmaStateContract(t[0], t[1], t[2], []);
+	const typecode = t.pop();
+	const seed = t.pop();
+	const prog = t.pop();
+	const stack = t.map(s => {
+		if(s[s.length - 1] == 'S') return s[0];
+		else if(s[s.length - 1] == 'V') return new PlasmaStateValue(s[2], s[1], s[0]);
+		else return s;
+	}).reverse();
+	console.log('stack', stack)
+	const contract = new PlasmaStateContract(typecode, seed, prog, stack);
 	// vm.chargeCreate(con)
 	vm.push(contract)
 	vm.logInput(snapshotResult[1])
