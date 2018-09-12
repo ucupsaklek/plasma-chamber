@@ -4,8 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "test": "mocha",
-    "test-cov": "istanbul cover --print both _mocha"
+    "test": "istanbul cover --print both _mocha && istanbul-coveralls"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +15,7 @@
     "secp256k1": "^3.5.2"
   },
   "devDependencies": {
-    "istanbul": "^0.4.5"
+    "istanbul": "^0.4.5",
+    "istanbul-coveralls": "^1.0.3"
   }
 }
