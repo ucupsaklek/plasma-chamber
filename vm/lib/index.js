@@ -1,7 +1,11 @@
 const VirtualMachine = require("./vm");
-const { Assemble } = require("./asm/asm");
+const { Assembler, assembleSource } = require("./asm/asm");
+const { PlasmaStateContract, PlasmaStateValue } = require('./state');
 
 module.exports = {
-  VirtualMachine,
-  Assemble
+  Assembler,
+  assembleSource,
+  PlasmaStateContract,
+  PlasmaStateValue,
+  VirtualMachine
 }
