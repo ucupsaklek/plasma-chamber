@@ -2,13 +2,9 @@ const MAX_INT64 = Math.pow(2,32) - 1
 const MIN_INT64 = 1- Math.pow(2,32) 
 
 function AddInt64(a,b) {
-	console.log('test val');
-	console.log(a);
 	if ((b > 0 && a > MAX_INT64 - b) || (b < 0 && a < MIN_INT64 - b)) {
 		return [0, false];
 	}
-	console.log('test val');
-	console.log(a + b);
 	return [a + b, true];
 }
 
@@ -33,7 +29,7 @@ function DivInt64(a,b) {
 	if ((b == 0) || (a == MAX_INT64 && b == -1)) {
 		return [0, false];
 	}
-	return [a / b, true];
+	return [Math.floor(a / b), true];
 }
 
 function ModInt64(a,b) {
