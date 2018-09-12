@@ -1,0 +1,9 @@
+# Logs
+logs
+*.log
+
+# Generated files
+
+build
+dist
+

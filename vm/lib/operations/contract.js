@@ -1,4 +1,8 @@
-const { PlasmaStateContract, contractSnapshot } = require('../state');
+const {
+	PlasmaStateContract,
+	PlasmaStateValue,
+	contractSnapshot
+} = require('../state');
 
 function opContract(vm) {
 	const prog = vm.popBytes();
@@ -26,6 +30,33 @@ function opPut(vm) {
 	vm.argstack.push(item)
 }
 
+function opCall(vm) {
+	const con = vm.pop();
+
+	// check contract
+	if(!con instanceof PlasmaStateContract) {
+		throw new Error('not contract');
+	}
+
+	con.typecode = 'C';
+
+	const prevContract = vm.contract
+	const prevCaller = vm.caller
+
+	vm.caller = vm.contract.seed
+	vm.contract = con
+
+	vm.exec(con.program)
+
+	if(!vm.unwinding && vm.contract.stack.length > 0) {
+		throw new Error('contract stack not empty', con.seed);
+	}
+
+	vm.unwinding = false
+	vm.contract = prevContract
+	vm.caller = prevCaller
+}
+
 function opOutput(vm) {
 	//check portable
 	const prog = vm.pop();
@@ -47,16 +78,25 @@ function opOutput(vm) {
 function opInput(vm) {
 	const t = vm.pop();
 	const snapshotResult = contractSnapshot(t)
-
-	const contract = new PlasmaStateContract(t[0], t[1], t[2], t[3]);
+	const typecode = t.pop();
+	const seed = t.pop();
+	const prog = t.pop();
+	const stack = t.map(s => {
+		if(s[s.length - 1] == 'S') return s[0];
+		else if(s[s.length - 1] == 'V') return new PlasmaStateValue(s[2], s[1], s[0]);
+		else return s;
+	}).reverse();
+	console.log('stack', stack)
+	const contract = new PlasmaStateContract(typecode, seed, prog, stack);
 	// vm.chargeCreate(con)
 	vm.push(contract)
-
 	vm.logInput(snapshotResult[1])
 }
 
 module.exports = {
+	0x43: opCall,
 	0x44: opYield,
+	0x46: opInput,
 	0x47: opOutput,
 	0x48: opContract,
 	0x2d: opGet,

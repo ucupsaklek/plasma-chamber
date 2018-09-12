@@ -29,6 +29,10 @@ class PlasmaStateValue {
     return this.amount == 0;
   }
 
+  encode() {
+    return [this.amount, this.assetId, this.anchor];
+  }
+
 }
 
 class PlasmaStateContract {
@@ -42,15 +46,24 @@ class PlasmaStateContract {
   }
 
   snapshot() {
-    const encoded = RLP.encode([this.typecode, this.seed, this.exitor, this.program, this.stack]);
+    console.log(this)
+    const encoded = RLP.encode([this.typecode, this.seed, this.exitor, this.program, encodeStack(this.stack)]);
     const h = VMHash("SnapshotID", encoded)
     return [encoded, h];
   }
 
 }
 
+function encodeStack(stack) {
+  return stack.map((s) => {
+    if(s.encode) return s.encode();
+    else return s;
+  })
+}
+
+
 function contractSnapshot(t) {
-  const encoded = RLP.encode([t[0], t[1], t[2], t[3]]);
+  const encoded = RLP.encode([t[0], t[1], t[2], encodeStack(t[3])]);
   const h = VMHash("SnapshotID", encoded)
   return [encoded, h];
 }

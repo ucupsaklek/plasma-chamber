@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const secp256k1 = require('secp256k1')
+const ed25519 = require('ed25519')
 
 function opVMHash(vm) {
   const f = vm.pop();
@@ -30,7 +30,8 @@ function opCheckSig(vm) {
 	vm.charge(2048)
   // secp256k1 signatures have scheme Int(0).
   if(scheme == 0) {
-    if(!secp256k1.verify(msg, sig, pubkey)) {
+    console.log(pubkey.length)
+    if(!ed25519.Verify(msg, sig, pubkey)) {
       throw new Error('error signature');
     }
   }else{
@@ -40,6 +41,9 @@ function opCheckSig(vm) {
 }
 
 function VMHash(f, x) {
+  if(typeof f == 'string') {
+    f = new Buffer(f);
+  }
   const hash = crypto.createHash('sha256');
   hash.update(Buffer.concat([f, x], f.length + x.length));
   return hash.digest();
