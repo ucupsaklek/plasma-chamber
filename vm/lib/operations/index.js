@@ -6,5 +6,6 @@ const tx = require('./tx');
 const math = require('./math');
 const value = require('./value');
 const control = require('./control');
+const boolean = require('./boolean');
 
-module.exports = Object.assign({}, contract, control, crypto, data, stack, tx, value, math);
+module.exports = Object.assign({}, contract, control, crypto, data, stack, tx, value, math, boolean);

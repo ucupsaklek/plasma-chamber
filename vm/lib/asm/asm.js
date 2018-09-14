@@ -284,5 +284,6 @@ module.exports = {
 	Assembler,
 	assembleSource,
 	assembleScanner,
-	Macro
+	Macro,
+	opcode
 };

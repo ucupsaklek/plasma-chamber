@@ -46,7 +46,7 @@ function opMod(vm) {
 function opGT(vm) {
 	const v1 = vm.pop();
 	const v2 = vm.pop();
-	vm.push(Number(v2 > v1));
+	vm.pushBool(v2 > v1);
 }
 
 module.exports = {
