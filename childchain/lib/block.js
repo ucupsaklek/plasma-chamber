@@ -22,7 +22,7 @@ class Block {
 
   createTxProof(tx) {
     const tree = MerkleTree(this.txs.map(tx=>tx.hash()));
-    return tree.proof(tx.hash());
+    return tree.proof(tx.hash()).reduce((acc, p) => {return acc + p.parent}, '');
   }
 
   merkleHash() {

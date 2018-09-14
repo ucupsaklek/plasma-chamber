@@ -346,15 +346,15 @@ contract RootChain {
       var exitingTx = _txBytes.createExitingTx(oindex);
       var snapshot = _snapshot.createExitingContract();
       // check snapshot is valid
-      require(exitingTx.snapshotId == keccak256(_snapshot));
+      require(exitingTx.snapshotId == sha256(_snapshot));
       require(snapshot.exitor == address(0) || msg.sender == snapshot.exitor);
       address owner = snapshot.cont.validateOwn();
 
       // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
-      bytes32 merkleHash = keccak256(keccak256(_txBytes), ByteUtils.slice(_sigs, 0, 130));
+      bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 130));
       // need signature for transaction
-      require(Validate.checkSigs(keccak256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
+      require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
       require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
 
       addExitToQueue(

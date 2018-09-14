@@ -20,11 +20,15 @@ class Transaction {
     // this.retirements = [];
   }
 
+  getBytes() {
+    const data = [this.id].concat(this.inputs).concat(this.outputs);
+    return RLP.encode(data);
+  }
+
   hash() {
-    const data = [this.id, this.inputs, this.outputs];
     const hash = crypto.createHash('sha256');
-    hash.update(RLP.encode(data));
-    return hash.digest();
+    hash.update(this.getBytes());
+    return hash.digest('hex');
   }
 
 }
