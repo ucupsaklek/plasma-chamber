@@ -93,14 +93,6 @@ const opcode = {
 	"bitxor": 0x5e
 }
 
-const Macro = {
-  "bool": "not not",
-  "swap": "1 roll",
-  "jump": "1 swap jumpif",
-  "sub": "neg add",
-  "splitzero": "0 split"
-}
-
 let composite = {}; // assembled macro array
 
 class Jump {
@@ -109,6 +101,14 @@ class Jump {
     this.isJumpIf = false;
     this.opcodes = [];
   }
+}
+
+const Macro = {
+  "bool": "not not",
+  "swap": "1 roll",
+  "jump": "1 swap jumpif",
+  "sub": "neg add",
+  "splitzero": "0 split"
 }
 
 function assembleSource(src) {
