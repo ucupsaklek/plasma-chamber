@@ -26,21 +26,21 @@ function MulInt64(a,b) {
 }
 
 function DivInt64(a,b) {
-	if ((b == 0) || (a == MAX_INT64 && b == -1)) {
+	if ((b === 0) || (a === MAX_INT64 && b === -1)) {
 		return [0, false];
 	}
 	return [Math.floor(a / b), true];
 }
 
 function ModInt64(a,b) {
-	if ((b == 0) || (a == MAX_INT64 && b == -1)) {
+	if ((b === 0) || (a === MAX_INT64 && b === -1)) {
 		return [0, false];
 	}
 	return [a % b, true];
 }
 
 function NegateInt64(a) {
-	if (a == MIN_INT64) {
+	if (a === MIN_INT64) {
 		return [0, false];
 	}
 	return [-a, true];
