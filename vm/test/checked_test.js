@@ -1,7 +1,7 @@
 const assert = require('assert');
 const {
 	AddInt64,
-	SubInt64,
+	//SubInt64,
 	MulInt64,
 	DivInt64,
 	ModInt64,
