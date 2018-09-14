@@ -6,13 +6,15 @@ const leveldown = require('leveldown');
 module.exports = {
     run: async _=>{
         const blockDB = levelup(leveldown('./block'));
-        const snaphostDB = levelup(leveldown('./snapshot'));
+        const metaDB = levelup(leveldown('./meta'));
+        const snapshotDB = levelup(leveldown('./snapshot'));
         const childChain = new Chain();
-        childChain.setDB(blockDB);
+        childChain.setMetaDB(metaDB);
+        childChain.setBlockDB(blockDB);
         const snapshot = new Snapshot();
         snapshot.setDB(snapshotDB);
         childChain.setSnapshot(snapshot);
-        await childChain.loadBlocks();
+        await childChain.init();
         return childChain;
     }
 }

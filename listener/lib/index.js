@@ -14,7 +14,6 @@ module.exports.run = childChain => {
 
   childChain.events.TxAdded((e) => {
     if (e.type == "deposit") {
-      childChain.commitmentTxs.push(tx);
       childChain.generateBlock();
     } else if (e.type == "basic") {
 
