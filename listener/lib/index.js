@@ -15,7 +15,7 @@ module.exports.run = childChain => {
       childChain.generateBlock();
     } else if (e.type == "basic") {
       // check gaslimit of block and generate block
-      // Ideally this must be called before Tx added, otherwise big Tx will be inserted to block
+      // TODO: Ideally this must be called before Tx added, otherwise big Tx will be inserted to block
       let gasOfTxs = childChain.getLatestBlock().commitmentTxs.reduce((acm, tx)=>{
         return acm + tx1.gasused
       }, 0)
@@ -33,11 +33,18 @@ module.exports.run = childChain => {
         .forEach((tx) => newBlock.appendTx(tx) );
 
       this.blocks.push(newBlock);
-      // submitRoothash()
+
+      /**
+       * @param address _chain The index of child chain
+       * @param bytes32 _root The merkle root of a child chain transactions.
+       */
+      rootchain.methods.submitBlock(childChain.id, newBlock.txs_root);
     }
   })
-  rootChain.events.RoothashSubmitted((e) => {
+  rootChain.events.BlockSubmitted((e) => {
     console.log(e);
+    // TODO: Fetch snapshot and instantiate Snapshot object
+    // Then set it to childchain
   })
 
 }
