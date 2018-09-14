@@ -1,6 +1,9 @@
 const MerkleTree = require("merkletree").default;
 
-
+/*
+* Only concerns for latest raw Block
+* Older generated blocks are basically on leveldb
+*/
 class Block {
   
   constructor(number) {
