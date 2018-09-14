@@ -164,15 +164,12 @@ class Assembler {
 					// TODO
 					break;
 				case Token_Ident:
-					if(Macro.hasOwnProperty(lit)){
-						if(composite.hasOwnProperty(lit)){
-							composite[lit].forEach((op) => {
-								this.writeVarint(op);
-							})
-						}else{
-							const assembled = assebleSource(Macro[lit]);
-							composite[lit] = 
+					if(Macro.hasOwnProperty(this.lit)){
+						if(! composite.hasOwnProperty(this.lit)){
+							composite[this.lit] = assembleSource(Macro[this.lit]);
 						}
+						const copylength = composite[this.lit].copy(this.buffer, this.bufferOffset, 0);
+						this.bufferOffset += copylength;
 					}else{
 						const op = opcode[String(this.lit)];
 						this.writeVarint(op);
