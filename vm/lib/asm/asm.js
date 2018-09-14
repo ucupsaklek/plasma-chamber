@@ -94,11 +94,11 @@ const opcode = {
 }
 
 const Macro = {
-  "bool": ["not", "not"],
-  "swap": ["1", "roll"],
-  "jump": ["1", "swap", "jumpif"],
-  "sub": ["neg", "add"],
-  "splitzero": ["0", "split"]
+  "bool": "not not",
+  "swap": "1 roll",
+  "jump": "1 swap jumpif",
+  "sub": "neg add",
+  "splitzero": "0 split"
 }
 
 let composite = {}; // assembled macro array
@@ -168,7 +168,7 @@ class Assembler {
 						if(! composite.hasOwnProperty(this.lit)){
 							composite[this.lit] = assembleSource(Macro[this.lit]);
 						}
-						const copylength = composite[this.lit].copy(this.buffer, this.bufferOffset, 0);
+						const copylength = composite[this.lit].copy(this.buffer, this.bufferOffset, 0, composite[this.lit].length);
 						this.bufferOffset += copylength;
 					}else{
 						const op = opcode[String(this.lit)];
