@@ -93,6 +93,15 @@ const opcode = {
 	"bitxor": 0x5e
 }
 
+const Macro = {
+  "bool": ["not", "not"],
+  "swap": ["1", "roll"],
+  "jump": ["1", "swap", "jumpif"],
+  "sub": ["neg", "add"],
+  "splitzero": ["0", "split"]
+}
+
+let composite = {}; // assembled macro array
 
 class Jump {
   constructor() {
@@ -100,14 +109,6 @@ class Jump {
     this.isJumpIf = false;
     this.opcodes = [];
   }
-}
-
-const Macro = {
-  "bool": "not not",
-  "swap": "1 roll",
-  "jump": "1 swap jumpif",
-  "sub": "neg add",
-  "splitzero": "0 split"
 }
 
 function assembleSource(src) {
@@ -163,8 +164,20 @@ class Assembler {
 					// TODO
 					break;
 				case Token_Ident:
-					const op = opcode[String(this.lit)];
-					this.writeVarint(op);
+					if(Macro.hasOwnProperty(lit)){
+						if(composite.hasOwnProperty(lit)){
+							composite[lit].forEach((op) => {
+								this.writeVarint(op);
+							})
+						}else{
+							const assembled = assebleSource(Macro[lit]);
+							composite[lit] = 
+						}
+					}else{
+						const op = opcode[String(this.lit)];
+						this.writeVarint(op);
+					}
+
 					break;
 				default:
 					const err = this.assembleValue();
@@ -273,5 +286,6 @@ class Assembler {
 module.exports = {
 	Assembler,
 	assembleSource,
-	assembleScanner
+	assembleScanner,
+	Macro
 };
