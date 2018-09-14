@@ -8,7 +8,7 @@ describe('Block', function() {
       const tx = new Transaction();
       const block = new Block();
       block.appendTx(tx);
-      assert.equal(block.merkleHash().toString('hex'), 'e0d7a297a4f17f4122af3088a20374493c897cbd8689c870fca6fb71aa3db8c1');
+      assert.equal(block.merkleHash().toString('hex'), '9d1fc20a964456eef247be27a7d2d3d9917cff4f2bdb1601155e063039856c2d');
     });
   });
 });

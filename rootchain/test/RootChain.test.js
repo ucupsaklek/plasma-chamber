@@ -29,7 +29,7 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
     const utxoPos = 1000000000;
     let sigs = "00";
 
-
+    /*
     it('should startExit', async function () {
       const depositResult = await this.rootChain.deposit(owner, {value: 1});
       const block = new Block();
@@ -59,6 +59,7 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         {from: user});
       assert.equal(startExitResult.logs[0].event, 'ExitStarted');
     });
+    */
   });
 
   
