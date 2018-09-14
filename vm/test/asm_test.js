@@ -11,7 +11,7 @@ describe('VirtualMachine', function() {
       "{'V', 10, x'd073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'anchor'}" +
       "} input call\n" +
       "get get\n" +
-      "0 split swap\n" +
+      "splitzero swap\n" +
       "put\n" +
       "x'1111111111111111111111111111111111111111111111111111111111111111' put\n" +
       "[get dup get swap" + // set pubkey for exitor and reciever
