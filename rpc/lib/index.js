@@ -15,8 +15,7 @@ module.exports.run = childChain => {
     eth_blockNumber: (args, cb) => {
       // Get latest block for descending manner
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_blocknumber
-      let block = childChain.chain.getLatestBlock()
-      cb(block.number)
+      cb(childChain.blockHeight)
     },
     eth_getBlockTransactionCountByNumber: (args, cb) => {
       // Get block info for them

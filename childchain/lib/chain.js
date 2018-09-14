@@ -15,10 +15,16 @@ class Chain {
   
   constructor() {
     this.id = null;
-    this.blocks = [];
+    this.block = null;
     this.commitmentTxs = []; // TxVM idiom. Eq pendingTx
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
+  }
+  setDB(db){
+    this.db = db;
+  }
+  setSnapshot(snapshot){
+    this.snapshot = snapshot;
   }
 
   emit(eventName, payload){
@@ -56,20 +62,24 @@ class Chain {
     depositTx.outputs.push(id);
     return depositTx;
   }
-
-  getLatestBlock(){
-    return this.blocks[this.blocks.length - 1];
-  }
   
   /**
    * generate block
    */
   generateBlock() {
-    const newBlock = new Block(this.getLatestBlock().number + 1);
-    thise.emit("BlockGenerated", {
-      type: "basic",
-      payload: newBlock
-    })
+    this.blockHeight++;
+    const newBlock = new Block(this.blockHeight);
+
+    // Make snapshot and 
+    this.commitmentTxs
+      .filter((tx) => !!this.snapshot.applyTx(tx) )
+      .forEach((tx) => newBlock.appendTx(tx) );
+
+    this.db.put(this.blockHeight, JSON.stringify(newBlock));
+
+    // TODO: Deal with sudden chain crash = revive newBlock = Save newBlock on leveldb
+
+    this.emit("BlockGenerated", { payload: newBlock })
   }
 
 }

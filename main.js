@@ -6,3 +6,4 @@ const Rpc = require("./rpc/lib")
 let childChain = ChildChain.run()
 Listener.run(childChain)
 Rpc.run(childChain)
+childChain.emit("Ready", {});
