@@ -6,7 +6,6 @@ const Block = require('../../childchain/lib/block');
 const Transaction = require('../../childchain/lib/tx');
 const { PlasmaStateContract } = require('../../vm');
 const RLP = require('rlp');
-const Web3 = require('web3');
 const utils = require('ethereumjs-util');
 
 contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
