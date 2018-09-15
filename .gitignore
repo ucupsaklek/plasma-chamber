@@ -6,3 +6,4 @@ coverage
 .blockdb
 .snapshotdb
 .metadb
+.env

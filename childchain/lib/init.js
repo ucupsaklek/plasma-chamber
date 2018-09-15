@@ -11,6 +11,14 @@ module.exports = {
         const childChain = new Chain();
         childChain.setMetaDB(metaDB);
         childChain.setBlockDB(blockDB);
+
+        // DEBUG for making initial DB
+        // const Block = require('./block');
+        // childChain.blockHeight = 1;
+        // await childChain.resumeBlockHeight()
+        // await childChain.resumeBlock(new Block())
+        // await childChain.resumeCommitmentTxs()
+
         const snapshot = new Snapshot();
         snapshot.setDB(snapshotDB);
         childChain.setSnapshot(snapshot);
