@@ -67,7 +67,7 @@ class Chain {
   /**
    * generate block
    */
-  async generateBlock() {
+  generateBlock() {
     this.blockHeight++;
     const newBlock = new Block(this.blockHeight);
 

@@ -1,4 +1,5 @@
-var jayson = require('jayson');
+const jayson = require('jayson');
+const { apiTx } = require("../../childchain/lib/api");
 
 module.exports.run = childChain => {
   // create a server
@@ -6,7 +7,7 @@ module.exports.run = childChain => {
     // These RPC Method must align with ETH
     eth_sendRawTransaction: (args, cb) => {
       console.log(args)
-      childChain.apiTx(args[0]).then((result) => {
+      apiTx(args[0]).then((result) => {
         cb(null, result);
       }).catch((err) => {
         cb(err);
