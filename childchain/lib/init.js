@@ -5,9 +5,9 @@ const leveldown = require('leveldown');
 
 module.exports = {
     run: async _=>{
-        const blockDB = levelup(leveldown('./block'));
-        const metaDB = levelup(leveldown('./meta'));
-        const snapshotDB = levelup(leveldown('./snapshot'));
+        const blockDB = levelup(leveldown('./.blockdb'));
+        const metaDB = levelup(leveldown('./.metadb'));
+        const snapshotDB = levelup(leveldown('./.snapshotdb'));
         const childChain = new Chain();
         childChain.setMetaDB(metaDB);
         childChain.setBlockDB(blockDB);
