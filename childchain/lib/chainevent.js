@@ -16,3 +16,5 @@ class ChainEvent extends EventEmitter {
     }
     
 }
+
+module.exports = ChainEvent;

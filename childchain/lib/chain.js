@@ -5,12 +5,6 @@ const Snapshot = require('./state/snapshot');
 const Transaction = require('./tx');
 const ChainEvent = require('./chainevent');
 
-const Web3 = require('web3');
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.ROOTCHAIN_ENDPOINT));
-const RootChainAbi = require('../assets/RootChain.json').abi;
-const rootChain = new web3.eth.Contract(RootChainAbi, process.env.ROOTCHAIN_ADDRESS);
-
-
 class Chain {
   
   constructor() {
@@ -26,9 +20,9 @@ class Chain {
   setBlockDB(blockDB){
     this.blockDB = blockDB;
   }
-  setChainID(chainID){
+  async setChainID(chainID){
     this.id = chainID;//eq with Operator's Address. See Rootchain.sol
-    this.metaDB.put("chainID", chainID);
+    await this.metaDB.put("chainID", chainID);
   }
   setSnapshot(snapshot){
     this.snapshot = snapshot;
@@ -49,7 +43,6 @@ class Chain {
       returnValues.depositBlock
     );
     this.commitmentTxs.push(tx);
-    this.replicateTxs();
     this.emit("TxAdded", {
       type: "deposit",
       payload: tx
@@ -74,7 +67,7 @@ class Chain {
   /**
    * generate block
    */
-  generateBlock() {
+  async generateBlock() {
     this.blockHeight++;
     const newBlock = new Block(this.blockHeight);
 
@@ -83,26 +76,32 @@ class Chain {
       .filter((tx) => !!this.snapshot.applyTx(tx) )
       .forEach((tx) => newBlock.appendTx(tx) );
 
-    this.blockDB.put(this.blockHeight, JSON.stringify(newBlock));
-    this.metaDB.put("blockHeight", this.blockHeight);
+    this.commitmentTxs = []
 
     this.emit("BlockGenerated", { payload: newBlock })
   }
 
   /*
-  * Fail-safe for sudden chain crash
+  * Fail-safe for sudden chain crash, resume functions
   * */
   async init(){
-    this.id = await this.mataDB("chainID")
-    this.blockHeight = await this.mataDB("blockHeight")
-    this.block = JSON.parse(await this.blockDB(this.blockHeight))
-    this.commitmentTxs = JSON.parse(await this.mataDB("txs"))
+    this.id = await this.metaDB.get("chainID")
+    this.blockHeight = await this.metaDB.get("blockHeight")
+    this.block = JSON.parse(await this.blockDB.get(this.blockHeight))
+    this.commitmentTxs = JSON.parse(await this.metaDB.get("commitmentTxs"))
   }
-  replicateTxs(){
-    this.metaDB.put("txs", JSON.stringify(this.commitmentTxs));
+  async resumeCommitmentTxs(){
+    await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
-
-
+  async resumeBlockHeight(newBlock){
+    await this.blockDB.put(this.blockHeight, JSON.stringify(newBlock));
+  }
+  async resumeBlock(newBlock){
+    await this.blockDB.put(this.blockHeight, JSON.stringify(newBlock));
+  }
+  async resumeBlockHeight(){
+    await this.metaDB.put("blockHeight", this.blockHeight);
+  }
 
 }
 

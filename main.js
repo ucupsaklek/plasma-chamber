@@ -8,6 +8,7 @@ async function main(){
     Listener.run(childChain)
     Rpc.run(childChain)
     childChain.emit("Ready", {});
+    return true;
 }
 
-main().resolve()
+main().then(_=> console.log("Done.") ).catch(e=> console.error(e) )

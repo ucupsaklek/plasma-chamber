@@ -13,17 +13,24 @@ module.exports.run = childChain => {
   })
 
   childChain.events.TxAdded((e) => {
+    childChain.resumeCommitmentTxs(); //async func
+
     if (e.type == "deposit") {
-      childChain.generateBlock();
+      childChain.generateBlock(); //async func
     } else if (e.type == "basic") {
 
       // TODO: Must make it blocksize
       if (childChain.commitmentTxs.length > 100) {
-        childChain.generateBlock()
+        childChain.generateBlock(); //async func
       }
     }
   })
   childChain.events.BlockGenerated((e) => {
+
+    childChain.resumeBlock(e.payload); //async func
+    childChain.resumeBlockHeight(); //async func
+    childChain.resumeCommitmentTxs();
+     
     /**
      * @param address _chain The index of child chain
      * @param bytes32 _root The merkle root of a child chain transactions.

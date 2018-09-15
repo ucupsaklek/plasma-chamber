@@ -14,6 +14,7 @@ module.exports = {
         const snapshot = new Snapshot();
         snapshot.setDB(snapshotDB);
         childChain.setSnapshot(snapshot);
+        await childChain.setChainID("NKJ23H3213WHKHSAL");
         await childChain.init();
         return childChain;
     }
