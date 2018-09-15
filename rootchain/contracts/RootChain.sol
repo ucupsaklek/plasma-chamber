@@ -361,7 +361,7 @@ contract RootChain {
         _utxoPos,
         snapshot.exitor,
         owner,
-        snapshot.token,
+        address(0),
         snapshot.weight,
         snapshot.cont,
         childBlock.timestamp);
