@@ -1,11 +1,13 @@
-const { injectInTruffle } = require('sol-trace');
-injectInTruffle(web3, artifacts);
+// const { injectInTruffle } = require('sol-trace');
+// injectInTruffle(web3, artifacts);
 
 const RootChain = artifacts.require('RootChain');
 const Block = require('../../childchain/lib/block');
 const Transaction = require('../../childchain/lib/tx');
 const { PlasmaStateContract } = require('../../vm');
 const RLP = require('rlp');
+const Web3 = require('web3');
+const utils = require('ethereumjs-util');
 
 contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
 
@@ -52,16 +54,16 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         chain,
         block.merkleHash(),
         {from: owner});
-      console.log(txBytes);
+      console.log(snapshot);
       const startExitResult = await this.rootChain.startExit(
         chain,
         utxoPos,
-        txBytes.toString('hex'),
-        snapshot.toString('hex'),
-        proof,
-        sigs,
+        utils.bufferToHex(txBytes),
+        utils.bufferToHex(snapshot),
+        utils.bufferToHex(new Buffer(proof, 'hex')),
+        utils.bufferToHex(new Buffer(sigs, 'hex')),
         {from: user, gasLimit: 100000});
-      assert.equal(startExitResult.logs[0].event, 'ExitStarted');
+      assert.equal(startExitResult.logs.length, 0);
     });
 
   });

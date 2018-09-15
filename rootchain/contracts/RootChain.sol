@@ -56,7 +56,7 @@ contract RootChain {
     );
 
     event Log(
-      uint256 no
+      RLP.RLPItem no
     );
 
 
@@ -342,7 +342,6 @@ contract RootChain {
       uint256 blknum = _utxoPos / 1000000000;
       uint256 txindex = (_utxoPos % 1000000000) / 10000;
       uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
-
       var exitingTx = _txBytes.createExitingTx(oindex);
       var snapshot = _snapshot.createExitingContract();
       // check snapshot is valid

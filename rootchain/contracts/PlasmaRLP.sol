@@ -14,7 +14,6 @@ library PlasmaRLP {
     }
 
     struct exitingContract {
-        address token;
         address exitor;
         uint256 weight;
         bytes cont;
@@ -42,8 +41,8 @@ library PlasmaRLP {
     {
         RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(exitingTxBytes));
         return exitingTx({
-            snapshotId: bytesToBytes32(RLP.toBytes(txList[8 + 2 * oindex])),
-            inputCount: RLP.toUint(txList[0]) * RLP.toUint(txList[3])
+            snapshotId: bytesToBytes32(RLP.toBytes(txList[1 + oindex])),
+            inputCount: 0
         });
     }
 
@@ -54,7 +53,6 @@ library PlasmaRLP {
     {
         var snapshotList = RLP.toList(RLP.toRlpItem(snapshot));
         return exitingContract({
-            token: RLP.toAddress(snapshotList[1]),
             // owner
             exitor: RLP.toAddress(snapshotList[2]),
             // weight
