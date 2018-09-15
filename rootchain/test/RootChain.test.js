@@ -1,5 +1,5 @@
-// const { injectInTruffle } = require('sol-trace');
-// injectInTruffle(web3, artifacts);
+const { injectInTruffle } = require('sol-trace');
+injectInTruffle(web3, artifacts);
 
 const RootChain = artifacts.require('RootChain');
 const Block = require('../../childchain/lib/block');
