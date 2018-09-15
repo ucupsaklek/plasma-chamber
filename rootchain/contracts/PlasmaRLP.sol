@@ -40,7 +40,7 @@ library PlasmaRLP {
         constant
         returns (exitingTx)
     {
-        var txList = RLP.toList(RLP.toRlpItem(exitingTxBytes));
+        RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(exitingTxBytes));
         return exitingTx({
             snapshotId: bytesToBytes32(RLP.toBytes(txList[8 + 2 * oindex])),
             inputCount: RLP.toUint(txList[0]) * RLP.toUint(txList[3])

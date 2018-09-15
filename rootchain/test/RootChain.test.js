@@ -1,7 +1,11 @@
+const { injectInTruffle } = require('sol-trace');
+injectInTruffle(web3, artifacts);
+
 const RootChain = artifacts.require('RootChain');
 const Block = require('../../childchain/lib/block');
 const Transaction = require('../../childchain/lib/tx');
 const { PlasmaStateContract } = require('../../vm');
+const RLP = require('rlp');
 
 contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
 
@@ -29,12 +33,11 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
     const utxoPos = 1000000000;
     let sigs = "00";
 
-    /*
     it('should startExit', async function () {
       const depositResult = await this.rootChain.deposit(owner, {value: 1});
       const block = new Block();
-      const tx = new Transaction();
-      const tx2 = new Transaction();
+      const tx = new Transaction(Buffer.from([1]));
+      const tx2 = new Transaction(Buffer.from([2]));
       const contract = new PlasmaStateContract('C', 'seed', new Buffer('00', 'hex'), []);
       contract.exitor = user;
       const encoded = contract.snapshot();
@@ -49,6 +52,7 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         chain,
         block.merkleHash(),
         {from: owner});
+      console.log(txBytes);
       const startExitResult = await this.rootChain.startExit(
         chain,
         utxoPos,
@@ -56,10 +60,10 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         snapshot.toString('hex'),
         proof,
         sigs,
-        {from: user});
+        {from: user, gasLimit: 100000});
       assert.equal(startExitResult.logs[0].event, 'ExitStarted');
     });
-    */
+
   });
 
   

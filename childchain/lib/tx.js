@@ -4,8 +4,8 @@ const crypto = require('crypto');
 
 class Transaction {
   
-  constructor() {
-    this.id = null;
+  constructor(id) {
+    this.id = id;
     this.finalized = false;
     this.contracts = [];
     this.timerange = [];
