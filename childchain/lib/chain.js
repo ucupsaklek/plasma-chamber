@@ -91,6 +91,7 @@ class Chain {
     this.id = (await this.metaDB.get("chainID")).toString()
     this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
     this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
+    console.log("Chain.resume}||||||||||||||||||||||",(await this.metaDB.get("commitmentTxs")).toString())
     this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
   }
   async saveBlock(newBlock){
