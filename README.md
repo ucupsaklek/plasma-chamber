@@ -7,8 +7,8 @@
 ## Overview
 - Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
 - Not only for value transfer, but also for some simple application.
-- Child chain is UTXO model and they has state.
-- state transition can be verified in child chain and root chain.
+- Child chain is UTXO model and they have state.
+- State transition can be verified in child chain and root chain.
 - Fund security model is implemented via migration rather than exit.
 - Multiple Plasma Network is needed.
 
