@@ -4,8 +4,11 @@ const Snapshot = require("./state/snapshot")
 const levelup = require('levelup');
 const leveldown = require('leveldown');
 
-module.exports = {
-    run: async _=>{
+class ChainManager {
+    constructor(){
+        this.chain = null;
+    }
+    async start (){
         const blockDB = levelup(leveldown('./.blockdb'));
         const metaDB = levelup(leveldown('./.metadb'));
         const snapshotDB = levelup(leveldown('./.snapshotdb'));
@@ -22,6 +25,13 @@ module.exports = {
         childChain.setSnapshot(snapshot);
         await childChain.setChainID("NKJ23H3213WHKHSAL");
         await childChain.resume();
+        this.chain = childChain;
         return childChain;
     }
+    async stop(){
+        this.chain.gracefulStop();
+    }
+
 }
+
+module.exports = ChainManager

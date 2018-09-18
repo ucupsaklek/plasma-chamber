@@ -102,6 +102,11 @@ class Chain {
   async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
+  gracefulStop(){
+    this.blockDB.close();
+    this.metaDB.close();
+    this.snapshot.db.close();
+  }
 
 }
 
