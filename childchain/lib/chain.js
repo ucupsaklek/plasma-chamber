@@ -67,16 +67,18 @@ class Chain {
   /**
    * generate block
    */
-  generateBlock() {
+  async generateBlock() {
     this.blockHeight++;
-    const newBlock = new Block(this.blockHeight);
+    await this.saveBlockHeight(); //async func
 
-    // Make snapshot and 
+    const newBlock = new Block(this.blockHeight);
     this.commitmentTxs
       .filter((tx) => !!this.snapshot.applyTx(tx) )
       .forEach((tx) => newBlock.appendTx(tx) );
+    await this.saveBlock(newBlock); //async func
 
     this.commitmentTxs = []
+    await this.saveCommitmentTxs();
 
     this.emit("BlockGenerated", { payload: newBlock })
   }
@@ -85,19 +87,20 @@ class Chain {
   * Fail-safe for sudden chain crash, resume functions
   * */
   async resume(){
-    this.id = await this.metaDB.get("chainID")
-    this.blockHeight = await this.metaDB.get("blockHeight")
-    this.block = JSON.parse(await this.blockDB.get(this.blockHeight))
-    this.commitmentTxs = JSON.parse(await this.metaDB.get("commitmentTxs"))
-  }
-  async saveCommitmentTxs(){
-    await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
+    // leveldb stored string as buffer
+    this.id = (await this.metaDB.get("chainID")).toString()
+    this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
+    this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
+    this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
   }
   async saveBlock(newBlock){
     await this.blockDB.put(this.blockHeight, newBlock.toString());
   }
   async saveBlockHeight(){
     await this.metaDB.put("blockHeight", this.blockHeight);
+  }
+  async saveCommitmentTxs(){
+    await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
 
 }

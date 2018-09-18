@@ -14,10 +14,8 @@ module.exports = {
         childChain.setBlockDB(blockDB);
 
         //DEBUG for making initial DB
-        // childChain.blockHeight = 1;
-        // await childChain.saveBlockHeight()
-        // await childChain.saveBlock(new Block())
-        // await childChain.saveCommitmentTxs()
+        // childChain.blockHeight = 20;
+        // await childChain.generateBlock()
 
         const snapshot = new Snapshot();
         snapshot.setDB(snapshotDB);
