@@ -1,11 +1,12 @@
 const assert = require('assert');
-const Init = require('../lib/init');
+const ChainManager = require('../lib/chain_manager');
+const chainManager = new ChainManager();
 const Listener = require('../../listener/lib/index')
 
 describe('Chain', function() {
   describe('applyDeposit()', function() {
     it('should apply deposit', function(done) {
-      Init.run().then(chain=>{
+      chainManager.start().then(chain=>{
         Listener.run(chain);
         const initialBlockHeight = chain.blockHeight;
   
@@ -18,6 +19,7 @@ describe('Chain', function() {
   
         setTimeout(_=>{
           assert(initialBlockHeight + 1 === chain.blockHeight);
+          chainManager.stop();
           done();
         }, 1500)
       })
