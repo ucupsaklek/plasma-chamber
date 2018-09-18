@@ -11,4 +11,4 @@ async function main(){
     return true;
 }
 
-main().then(_=> console.log("Done.") ).catch(e=> console.error(e) )
+main().then(_=> console.log("Chain running. RPC running.") ).catch(e=> console.error(e) )
