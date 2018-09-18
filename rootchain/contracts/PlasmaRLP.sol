@@ -67,9 +67,8 @@ library PlasmaRLP {
         constant
         returns (address)
     {
-        var sendContract = RLP.toList(RLP.toRlpItem(sendContractBytes));
         // TODO: validate send contract
-        return RLP.toAddress(sendContract[2]);
+        return address(0);
     }
 
     function bytesToBytes32(bytes b) private pure returns (bytes32) {

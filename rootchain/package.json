@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test"
+    "test": "export MODULE_RELATIVE_PATH=../ && truffle test"
   },
   "author": "",
   "license": "ISC",
@@ -12,7 +12,7 @@
     "babel-runtime": "^6.26.0",
     "ethereumjs-util": "^5.2.0",
     "openzeppelin-solidity": "^1.12.0",
-    "sol-trace": "nakajo2011/sol-trace#pre/eth_call_stack_trace",
+    "sol-trace": "nakajo2011/sol-trace#pre_release",
     "truffle": "^4.1.14"
   }
 }

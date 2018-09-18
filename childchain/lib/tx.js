@@ -1,5 +1,6 @@
 const RLP = require('rlp');
 const crypto = require('crypto');
+const ed25519 = require('ed25519')
 
 
 class Transaction {
@@ -25,9 +26,14 @@ class Transaction {
     return RLP.encode(data);
   }
 
+  sign(privKey) {
+    this.sign = ed25519.Sign(this.hash(), privKey);
+  }
+
   hash() {
     const hash = crypto.createHash('sha256');
     hash.update(this.getBytes());
+    // this.sign
     return hash.digest('hex');
   }
 

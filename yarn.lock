@@ -2754,10 +2754,11 @@ sntp@1.x.x:
   dependencies:
     hoek "2.x.x"
 
-sol-trace@nakajo2011/sol-trace#pre/eth_call_stack_trace:
-  version "0.0.1-beta.1"
-  resolved "https://codeload.github.com/nakajo2011/sol-trace/tar.gz/774617b67c303e290406b7b575d6029dfe698dc7"
+sol-trace@nakajo2011/sol-trace#pre_release:
+  version "0.1.2-pre"
+  resolved "https://codeload.github.com/nakajo2011/sol-trace/tar.gz/c13f37e9be45d3746f0763cb8789dc240dce1281"
   dependencies:
+    babel-runtime "^6.26.0"
     ethereumjs-util "^5.2.0"
     glob "^7.1.2"
 
