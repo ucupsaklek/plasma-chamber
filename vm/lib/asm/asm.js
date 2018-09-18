@@ -146,7 +146,7 @@ class Assembler {
 			this.off = result[0];
 			this.tok = result[1];
 			this.lit = result[2];
-			console.log(this.lit);
+			if(process.env.DEBUG) console.log(this.lit, "...in asm/asm.js next()");
 		}
 		return this.tok;
 	}
@@ -189,7 +189,7 @@ class Assembler {
 	}
 
 	assembleValue() {
-		console.log(this.lit)
+		if(process.env.DEBUG) console.log(this.lit, "...in asm/asm.js assembleValue()")
 		switch (this.tok) {
 			case Token_String:
 				const data = this.lit.slice(1, this.lit.length - 1);
@@ -240,7 +240,7 @@ class Assembler {
 	}
 
 	writeString(str) {
-		console.log('writeString', str)
+		if(process.env.DEBUG) console.log(str,'...in asm/asm.js writeString()')
 		this.bufferOffset += this.buffer.write(str, this.bufferOffset);
 	}
 
@@ -274,7 +274,7 @@ class Assembler {
 	resolve() {
 		const totalLength = this.items.reduce((acc, i) => {return i.length + acc}, 0);
 		const b = Buffer.concat(this.items, totalLength);
-		console.log(this.items, totalLength);
+		if(process.env.DEBUG) console.log(this.items, totalLength, "...in asm/asm.js resolve()");
 		return b;
 	}
 
