@@ -1,4 +1,5 @@
 const Chain = require("./chain");
+const Block = require("./block");
 const Snapshot = require("./state/snapshot")
 const levelup = require('levelup');
 const leveldown = require('leveldown');
@@ -12,18 +13,17 @@ module.exports = {
         childChain.setMetaDB(metaDB);
         childChain.setBlockDB(blockDB);
 
-        // DEBUG for making initial DB
-        // const Block = require('./block');
+        //DEBUG for making initial DB
         // childChain.blockHeight = 1;
-        // await childChain.resumeBlockHeight()
-        // await childChain.resumeBlock(new Block())
-        // await childChain.resumeCommitmentTxs()
+        // await childChain.saveBlockHeight()
+        // await childChain.saveBlock(new Block())
+        // await childChain.saveCommitmentTxs()
 
         const snapshot = new Snapshot();
         snapshot.setDB(snapshotDB);
         childChain.setSnapshot(snapshot);
         await childChain.setChainID("NKJ23H3213WHKHSAL");
-        await childChain.init();
+        await childChain.resume();
         return childChain;
     }
 }

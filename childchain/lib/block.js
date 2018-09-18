@@ -33,6 +33,21 @@ class Block {
     return tree.root();
   }
 
+  toString() {
+    return JSON.stringify({
+      id: this.id,
+      number: this.number,
+      hash: this.hash,
+      prevhash: this.prevhash,
+      txs_root: this.txs_root,
+      txs: this.txs,
+      timestamp: this.timestamp,
+      nonce: this.nonce,
+      gaslimit: this.gaslimit,
+      gasused: this.gasused
+    })
+  }
+
 }
 
 module.exports = Block

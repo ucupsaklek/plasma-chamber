@@ -84,22 +84,19 @@ class Chain {
   /*
   * Fail-safe for sudden chain crash, resume functions
   * */
-  async init(){
+  async resume(){
     this.id = await this.metaDB.get("chainID")
     this.blockHeight = await this.metaDB.get("blockHeight")
     this.block = JSON.parse(await this.blockDB.get(this.blockHeight))
     this.commitmentTxs = JSON.parse(await this.metaDB.get("commitmentTxs"))
   }
-  async resumeCommitmentTxs(){
+  async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
-  async resumeBlockHeight(newBlock){
-    await this.blockDB.put(this.blockHeight, JSON.stringify(newBlock));
+  async saveBlock(newBlock){
+    await this.blockDB.put(this.blockHeight, newBlock.toString());
   }
-  async resumeBlock(newBlock){
-    await this.blockDB.put(this.blockHeight, JSON.stringify(newBlock));
-  }
-  async resumeBlockHeight(){
+  async saveBlockHeight(){
     await this.metaDB.put("blockHeight", this.blockHeight);
   }
 
