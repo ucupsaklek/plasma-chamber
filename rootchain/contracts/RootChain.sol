@@ -353,8 +353,8 @@ contract RootChain {
       var childBlock = childChains[_chain].blocks[blknum];
       bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 64));
       // need signature for transaction
-      require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
-      require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
+      //require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
+      //require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
 
       addExitToQueue(
         _chain,

@@ -12,7 +12,7 @@ library Merkle {
         pure
         returns (bool)
     {
-        require(proof.length == 512);
+        require(proof.length <= 512);
         bytes32 proofElement;
         bytes32 computedHash = leaf;
 

@@ -2,38 +2,81 @@ const RLP = require('rlp');
 const crypto = require('crypto');
 const ed25519 = require('ed25519')
 
-
-class Transaction {
-  
-  constructor(id) {
-    this.id = id;
-    this.finalized = false;
-    this.contracts = [];
-    this.timerange = [];
-    this.nonces = [];
-    // 32 bytes
-    this.anchor = null;
-    this.inputs = [];
-    // deposit amount never change
-    // this.issueances = [];
-    this.outputs = [];
-    // deposit amount never change
-    // this.retirements = [];
+class Asset {
+  constructor() {
+    this.amount = 0;
+    this.assetId = 0;
+    this.anchor = 0;
   }
 
   getBytes() {
-    const data = [this.id].concat(this.inputs).concat(this.outputs);
-    return RLP.encode(data);
+    return RLP.encode([this.assetId, this.amount, this.anchor]);
   }
 
-  sign(privKey) {
-    this.sign = ed25519.Sign(this.hash(), privKey);
+}
+
+class TransactionOutput {
+  constructor() {
+    // addresses, tx need their signatures
+    this.owners = [];
+    // values
+    this.values = [];
+    // contract address include verification function, 20byte
+    this.contract = 0;
+    // state in bytes
+    this.state = []
+  }
+
+  getBytes() {
+    return RLP.encode([
+      this.owners,
+      this.values.map(v => v.getBytes()),
+      this.contract,
+      this.state
+    ]);
   }
 
   hash() {
     const hash = crypto.createHash('sha256');
     hash.update(this.getBytes());
-    // this.sign
+    return hash.digest('hex');
+  }
+
+}
+
+class Transaction {
+  
+  constructor(id) {
+    // hash of tx, 32byte
+    this.id = id;
+    // arguments for tx, first argument is function label
+    this.label = 
+    this.args = []
+    // inputs UTXO
+    this.inputs = [];
+    // outputs UTXO
+    this.outputs = [];
+  }
+
+  getBytes() {
+    const data = [
+      this.id,
+      this.contract,
+      this.args,
+      this.inputs.map(i => i.hash()),
+      this.outputs.map(o => o.hash())
+    ];
+    return RLP.encode(data);
+  }
+
+  sign(privKey) {
+    this.sign = ed25519.Sign(new Buffer(this.hash(), 'hex'), privKey);
+    return this.sign;
+  }
+
+  hash() {
+    const hash = crypto.createHash('sha256');
+    hash.update(this.getBytes());
     return hash.digest('hex');
   }
 

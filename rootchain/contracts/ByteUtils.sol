@@ -47,4 +47,18 @@ library ByteUtils {
 
         return tempBytes;
     }
+
+    function bytesToBytes32(bytes b)
+        internal
+        pure
+        returns (bytes32)
+    {
+        bytes32 out;
+
+        for (uint i = 0; i < 32; i++) {
+            out |= bytes32(b[i] & 0xFF) >> (i * 8);
+        }
+        return out;
+    }
+
 }

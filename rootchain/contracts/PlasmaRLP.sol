@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 
+import "./ByteUtils.sol";
 import "./RLP.sol";
 
 
@@ -41,7 +42,7 @@ library PlasmaRLP {
     {
         RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(exitingTxBytes));
         return exitingTx({
-            snapshotId: bytesToBytes32(RLP.toBytes(txList[1 + oindex])),
+            snapshotId: ByteUtils.bytesToBytes32(RLP.toBytes(txList[1 + oindex])),
             inputCount: 0
         });
     }
@@ -69,15 +70,6 @@ library PlasmaRLP {
     {
         // TODO: validate send contract
         return address(0);
-    }
-
-    function bytesToBytes32(bytes b) private pure returns (bytes32) {
-        bytes32 out;
-
-        for (uint i = 0; i < 32; i++) {
-            out |= bytes32(b[i] & 0xFF) >> (i * 8);
-        }
-        return out;
     }
 
 }
