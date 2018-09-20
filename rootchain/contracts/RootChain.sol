@@ -41,10 +41,9 @@ contract RootChain {
     );
 
     event ExitStarted(
-        address indexed exitor,
-        uint256 indexed utxoPos,
-        address token,
-        uint256 amount
+      address indexed exitor,
+      uint256 indexed utxoPos,
+      TxVerification.TxState state
     );
 
     event BlockSubmitted(
@@ -75,11 +74,10 @@ contract RootChain {
     Shelter internal shelter;
 
     struct Exit {
-        address exitor;
-        address owner;
-        address token;
-        uint256 amount;
-        bytes cont;
+      address exitor;
+      address[] owners;
+      TxVerification.PlasmaValue value;
+      bytes state;
     }
 
     struct ChildBlock {
@@ -95,7 +93,7 @@ contract RootChain {
       uint256 currentDepositBlock;
       uint256 currentFeeExit;
       mapping (uint256 => Exit) exits;
-      mapping (address => address) exitsQueues;
+      address exitsQueue;
       mapping (address => uint256) weights;
     }
 
@@ -150,7 +148,7 @@ contract RootChain {
       childChain.currentChildBlock = CHILD_BLOCK_INTERVAL;
       childChain.currentDepositBlock = 1;
       childChain.currentFeeExit = 1;
-      childChain.exitsQueues[address(0)] = address(new PriorityQueue());
+      childChain.exitsQueue = address(new PriorityQueue());
       return _chain;
     }
 
@@ -201,34 +199,6 @@ contract RootChain {
     }
 
     /**
-     * @dev non owner deposit from shelter
-     * @param _chain chain index
-     * @param _pos shelter position of contract to deposit.
-     */
-    function depositFromShelter(address _chain, uint256 _pos)
-      public
-      payable
-    {
-      ChildChain childChain = childChains[_chain];
-      require(childChain.currentDepositBlock < CHILD_BLOCK_INTERVAL);
-      require(msg.sender == packet.exitor);
-
-      Exit packet = shelter.packets[_pos];
-      bytes32 root = keccak256(msg.sender, packet.token, packet.amount, packet.cont);
-      uint256 depositBlock = getDepositBlock(_chain);
-      childChain.blocks[depositBlock] = ChildBlock({
-          root: root,
-          timestamp: block.timestamp
-      });
-      childChain.currentDepositBlock = childChain.currentDepositBlock.add(1);
-      childChain.weights[packet.token] += packet.amount;
-      shelter.weights[packet.token] -= packet.amount;
-      delete shelter.packets[_pos];
-
-      emit DepositFromShelter(_chain, msg.sender, depositBlock, packet.token, packet.amount, packet.cont);
-    }
-
-    /**
      * @dev Starts an exit from a deposit.
      * @param _depositPos UTXO position of the deposit.
      * @param _token Token type to deposit.
@@ -252,78 +222,23 @@ contract RootChain {
       bytes32 root = childChain.blocks[blknum].root;
       bytes32 depositHash = keccak256(msg.sender, _token, _amount);
       require(root == depositHash);
-
+      address[] memory owners = new address[](1);
+      owners[0] = msg.sender;
       addExitToQueue(
         _chain,
         _depositPos,
         msg.sender,
-        msg.sender,
-        _token,
-        _amount,
-        new bytes(0),
+        TxVerification.TxState({
+          owners: owners,
+          value: TxVerification.PlasmaValue({
+            assetId: _token,
+            amount: _amount
+          }),
+          state: RLP.toList(RLP.toRlpItem(hex"c100")),
+          stateBytes: hex"c100"
+        }),
         childChain.blocks[blknum].timestamp
       );
-    }
-
-    /**
-     * @dev Starts an exit from a contract deposit(non owner deposit).
-     * @param _depositPos UTXO position of the deposit.
-     * @param _token Token type to deposit.
-     * @param _amount Deposit amount.
-     * @param _cont contract bytes
-     */
-    function startDepositContractExit(
-      address _chain,
-      uint256 _depositPos,
-      address _token,
-      uint256 _amount,
-      bytes _cont
-    )
-      public
-    {
-      ChildChain childChain = childChains[_chain];
-      uint256 blknum = _depositPos / 1000000000;
-
-      // Check that the given UTXO is a deposit.
-      require(blknum % CHILD_BLOCK_INTERVAL != 0);
-
-      // Validate the given owner and amount.
-      bytes32 root = childChain.blocks[blknum].root;
-      bytes32 depositHash = keccak256(msg.sender, _token, _amount, _cont);
-      require(root == depositHash);
-
-      addExitToQueue(
-        _chain,
-        _depositPos,
-        msg.sender,
-        address(0),
-        _token,
-        _amount,
-        _cont,
-        childChain.blocks[blknum].timestamp
-      );
-    }
-
-    /**
-     * @dev Allows the operator withdraw any allotted fees. Starts an exit to avoid theft.
-     * @param _token Token to withdraw.
-     * @param _amount Amount in fees to withdraw.
-     */
-    function startFeeExit(address _chain, address _token, uint256 _amount)
-        public
-        onlyOperator(_chain)
-    {
-      ChildChain childChain = childChains[_chain];
-      addExitToQueue(
-        _chain,
-        childChain.currentFeeExit,
-        msg.sender,
-        msg.sender,
-        _token,
-        _amount,
-        new bytes(0),
-        block.timestamp + 1);
-      childChain.currentFeeExit = childChain.currentFeeExit.add(1);
     }
 
     /**
@@ -337,7 +252,6 @@ contract RootChain {
       address _chain,
       uint256 _utxoPos,
       bytes _txBytes,
-      bytes _snapshot,
       bytes _proof,
       bytes _sigs
     )
@@ -346,28 +260,27 @@ contract RootChain {
       uint256 blknum = _utxoPos / 1000000000;
       uint256 txindex = (_utxoPos % 1000000000) / 10000;
       uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
-      var exitingTx = _txBytes.createExitingTx(oindex);
-      var snapshot = _snapshot.createExitingContract();
-      // check snapshot is valid
-      //require(exitingTx.snapshotId == sha256("SnapshotID", _snapshot));
-      require(snapshot.exitor == address(0) || msg.sender == snapshot.exitor);
-      address owner = snapshot.cont.validateOwn();
+      var exitingTx = TxVerification.getTx(_txBytes);
+      var output = exitingTx.outputs[oindex];
+      bool isOwner = false;
+      for(uint i = 0;i < output.owners.length;i++) {
+        if(output.owners[i] == msg.sender) {
+          isOwner = true;
+        }
+      }
+      require(isOwner);
 
-      // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
       bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 64));
       // need signature for transaction
-      //require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
-      //require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
+      verifyTransaction(_txBytes, _sigs);
+      require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
 
       addExitToQueue(
         _chain,
         _utxoPos,
-        snapshot.exitor,
-        owner,
-        address(0),
-        snapshot.weight,
-        snapshot.cont,
+        msg.sender,
+        output,
         childBlock.timestamp);
     }
 
@@ -398,14 +311,15 @@ contract RootChain {
       
       var confirmationHash = keccak256(txHash, root);
       var merkleHash = keccak256(txHash, _sigs);
-      address owner = childChains[_chain].exits[eUtxoPos].owner;
+      //address owner = childChains[_chain].exits[eUtxoPos].exitor;
 
       // Validate the spending transaction.
-      require(owner == ECRecovery.recover(confirmationHash, _confirmationSig));
+      //require(owner == ECRecovery.recover(confirmationHash, _confirmationSig));
       require(merkleHash.checkMembership(txindex, root, _proof));
+      verifyTransaction(_txBytes, _sigs);
 
       // Delete the owner but keep the amount to prevent another exit.
-      delete childChains[_chain].exits[eUtxoPos].owner;
+      delete childChains[_chain].exits[eUtxoPos].exitor;
     }
 
     /**
@@ -418,7 +332,7 @@ contract RootChain {
         view
         returns (uint256, uint256)
     {
-        return PriorityQueue(childChains[_chain].exitsQueues[_token]).getMin();
+        return PriorityQueue(childChains[_chain].exitsQueue).getMin();
     }
 
     /**
@@ -432,27 +346,26 @@ contract RootChain {
       uint256 utxoPos;
       uint256 exitableAt;
       (exitableAt, utxoPos) = getNextExit(_chain, _token);
-      PriorityQueue queue = PriorityQueue(childChain.exitsQueues[_token]);
+      PriorityQueue queue = PriorityQueue(childChain.exitsQueue);
       Exit memory currentExit = childChain.exits[utxoPos];
       while (exitableAt < block.timestamp) {
         currentExit = childChain.exits[utxoPos];
 
         // TODO: handle ERC-20 transfer
         require(address(0) == _token);
-        require(_token == currentExit.token);
-        require(childChain.weights[_token] >= currentExit.amount);
+        require(_token == currentExit.value.assetId);
+        require(childChain.weights[_token] >= currentExit.value.amount);
 
         // if there is no owner
-        if(currentExit.owner == address(0)) {
-          shelter.weights[_token] += currentExit.amount;
-          shelter.packets[utxoPos] = currentExit;
-
+        if(TxVerification.verifyWithdrawal(currentExit.owners, currentExit.value, currentExit.state)) {
+          currentExit.exitor.transfer(currentExit.value.amount);
         }else{
-          currentExit.owner.transfer(currentExit.amount);
+          shelter.weights[_token] += currentExit.value.amount;
+          shelter.packets[utxoPos] = currentExit;
         }
-        childChain.weights[_token] -= currentExit.amount;
+        childChain.weights[_token] -= currentExit.value.amount;
         queue.delMin();
-        delete childChain.exits[utxoPos].owner;
+        delete childChain.exits[utxoPos].exitor;
 
         if (queue.currentSize() > 0) {
             (exitableAt, utxoPos) = getNextExit(_chain, _token);
@@ -508,9 +421,9 @@ contract RootChain {
     {
       ChildChain childChain = childChains[_chain];
       return (
-        childChain.exits[_utxoPos].owner,
-        childChain.exits[_utxoPos].token,
-        childChain.exits[_utxoPos].amount
+        childChain.exits[_utxoPos].exitor,
+        childChain.exits[_utxoPos].value.assetId,
+        childChain.exits[_utxoPos].value.amount
       );
     }
 
@@ -523,44 +436,39 @@ contract RootChain {
      * @dev Adds an exit to the exit queue.
      * @param _utxoPos Position of the UTXO in the child chain.
      * @param _exitor Owner of the UTXO.
-     * @param _token Token to be exited.
-     * @param _amount Amount to be exited.
+     * @param _utxo UTXO data.
      * @param _created_at Time when the UTXO was created.
      */
     function addExitToQueue(
       address _chain, 
       uint256 _utxoPos,
       address _exitor,
-      address _owner,
-      address _token,
-      uint256 _amount,
-      bytes _cont,
+      TxVerification.TxState _utxo,
       uint256 _created_at
     )
       private
     {
 
       // Check that we're exiting a known token.
-      require(childChains[_chain].exitsQueues[_token] != address(0));
+      require(childChains[_chain].exitsQueue != address(0));
 
       // Check exit is valid and doesn't already exist.
-      require(_amount > 0);
-      require(childChains[_chain].exits[_utxoPos].amount == 0);
+      // require(_amount > 0);
+      require(childChains[_chain].exits[_utxoPos].exitor == address(0));
 
       // Calculate priority.
       uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
-      PriorityQueue queue = PriorityQueue(childChains[_chain].exitsQueues[_token]);
+      PriorityQueue queue = PriorityQueue(childChains[_chain].exitsQueue);
       queue.insert(exitableAt, _utxoPos);
 
       childChains[_chain].exits[_utxoPos] = Exit({
-        owner: _owner,
         exitor: _exitor,
-        token: _token,
-        amount: _amount,
-        cont: _cont
+        owners: _utxo.owners,
+        value: _utxo.value,
+        state: _utxo.stateBytes
       });
 
-      emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
+      emit ExitStarted(msg.sender, _utxoPos, _utxo);
     }
 
   function verifyTransaction(bytes txBytes, bytes sigs)
