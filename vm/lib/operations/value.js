@@ -37,7 +37,7 @@ function opSplit(vm) {
 	if(amount > a.amount) {
     throw new Error('split error');
 	}
-	console.log(a)
+	if(process.env.DEBUG) console.log(a, "...in operations/value.js opSplit()")
 
 	const anchor1 = VMHash("Split1", a.anchor);
 	const b = vm.createValue(a.amount - amount, a.assetId, anchor1)

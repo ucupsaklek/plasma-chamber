@@ -1,3 +1,13 @@
+if(!process.env.DEBUG) console.log(`
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||| If you want VM debug log, use DEBUG env val. |||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+`)
+
 const Op = require('./op');
 const operationFunc = require('./operations');
 const { PlasmaStateValue, PlasmaStateContract } = require('./state');
@@ -7,7 +17,6 @@ const TXVM_VERSION = 0x01;
 const LOG_INPUT = 0x22;
 const LOG_OUTPUT = 0x23;
 const LOG_FINALIZE = 0x24;
-
 
 /**
  * VirtualMachine
@@ -68,8 +77,8 @@ class VirtualMachine {
   step() {
     const result = Op.decodeInstruction(this.run.prog.slice(this.run.pc));
     this.run.pc += result.n;
-    console.log('Debug =====Start=====');
-    console.log(result.op, operationFunc[result.op] ? operationFunc[result.op].name : '');
+    if(process.env.DEBUG) console.log('Debug =====Start=====');
+    if(process.env.DEBUG) console.log(result.op, operationFunc[result.op] ? operationFunc[result.op].name : '');
     if(result.op >= Op.MinPushdata) {
       // vm.chargeCreate(d)
       this.push(result.data);
@@ -78,10 +87,10 @@ class VirtualMachine {
     }else{
       operationFunc[result.op](this);
     }
-    console.log('contract stack=', this.contract.stack);
-    console.log('argstack=', this.argstack);
-    console.log('unwinding=', this.unwinding);
-    console.log('Debug =====End=====');
+    if(process.env.DEBUG) console.log('contract stack=', this.contract.stack);
+    if(process.env.DEBUG) console.log('argstack=', this.argstack);
+    if(process.env.DEBUG) console.log('unwinding=', this.unwinding);
+    if(process.env.DEBUG) console.log('Debug =====End=====');
     // this.stopAfterFinalize = true;
   }
 
