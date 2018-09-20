@@ -103,9 +103,15 @@ class Chain {
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
   gracefulStop(){
-    this.blockDB.close();
-    this.metaDB.close();
-    this.snapshot.db.close();
+    return new Promise((resolve, reject) => {
+      this.blockDB.close(_=>{
+        this.metaDB.close(_=>{
+          this.snapshot.db.close(_=>{
+            resolve();
+          });
+        });
+      });
+    })
   }
 
 }
