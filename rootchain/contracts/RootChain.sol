@@ -93,7 +93,7 @@ contract RootChain {
       uint256 currentDepositBlock;
       uint256 currentFeeExit;
       mapping (uint256 => Exit) exits;
-      address exitsQueue;
+      mapping (address => address) exitsQueues;
       mapping (address => uint256) weights;
     }
 
@@ -148,7 +148,7 @@ contract RootChain {
       childChain.currentChildBlock = CHILD_BLOCK_INTERVAL;
       childChain.currentDepositBlock = 1;
       childChain.currentFeeExit = 1;
-      childChain.exitsQueue = address(new PriorityQueue());
+      childChain.exitsQueues[address(0)] = address(new PriorityQueue());
       return _chain;
     }
 
@@ -332,7 +332,7 @@ contract RootChain {
         view
         returns (uint256, uint256)
     {
-        return PriorityQueue(childChains[_chain].exitsQueue).getMin();
+        return PriorityQueue(childChains[_chain].exitsQueues[_token]).getMin();
     }
 
     /**
@@ -346,7 +346,7 @@ contract RootChain {
       uint256 utxoPos;
       uint256 exitableAt;
       (exitableAt, utxoPos) = getNextExit(_chain, _token);
-      PriorityQueue queue = PriorityQueue(childChain.exitsQueue);
+      PriorityQueue queue = PriorityQueue(childChain.exitsQueues[_token]);
       Exit memory currentExit = childChain.exits[utxoPos];
       while (exitableAt < block.timestamp) {
         currentExit = childChain.exits[utxoPos];
@@ -450,7 +450,7 @@ contract RootChain {
     {
 
       // Check that we're exiting a known token.
-      require(childChains[_chain].exitsQueue != address(0));
+      require(childChains[_chain].exitsQueues[_utxo.value.assetId] != address(0));
 
       // Check exit is valid and doesn't already exist.
       // require(_amount > 0);
@@ -458,7 +458,7 @@ contract RootChain {
 
       // Calculate priority.
       uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
-      PriorityQueue queue = PriorityQueue(childChains[_chain].exitsQueue);
+      PriorityQueue queue = PriorityQueue(childChains[_chain].exitsQueues[_utxo.value.assetId]);
       queue.insert(exitableAt, _utxoPos);
 
       childChains[_chain].exits[_utxoPos] = Exit({
