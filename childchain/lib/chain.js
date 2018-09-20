@@ -2,7 +2,7 @@ const Block = require('./block');
 const { VMHash } = require('../../vm/lib/operations/crypto');
 const { assembleSource, PlasmaStateContract, PlasmaStateValue } = require('../../vm');
 const Snapshot = require('./state/snapshot');
-const Transaction = require('./tx');
+const { Transaction } = require('./tx');
 
 class Chain {
   
