@@ -3,11 +3,16 @@ injectInTruffle(web3, artifacts);
 
 const RootChain = artifacts.require('RootChain');
 const Block = require('../../childchain/lib/block');
-const Transaction = require('../../childchain/lib/tx');
-const { PlasmaStateContract } = require('../../vm');
+const {
+  Asset,
+  Transaction,
+  TransactionOutput
+} = require('../../childchain/lib/tx');
 const { VMHash } = require('../../vm/lib/operations/crypto');
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
+const secp256k1 = require('secp256k1')
+const { randomBytes } = require('crypto')
 
 contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
 
@@ -30,49 +35,38 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
     });
   });
 
-  /*
-  describe('startExit', function () {
-    const chain = owner;
-    const utxoPos = 1000010000;
-    const privKey = new Buffer('2bb2ecd1537480b7ecab8b847785025f97ecbe2564489e80217a34339f0ee4b230af9b46bf4b9db3c4cb174ae94839ede8f0b479e8e817467ce8746ad5df6268', 'hex')
+  describe('verifyTransaction', function () {
+    const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
+    const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
+    const testAddress1 = utils.privateToAddress(privKey1);
+    const testAddress2 = utils.privateToAddress(privKey2);
+    const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
-
-    it('should startExit', async function () {
-      const depositResult = await this.rootChain.deposit(owner, {value: 1});
-      const block = new Block();
-      const tx = new Transaction(Buffer.from([1]));
-      const tx2 = new Transaction(Buffer.from([2]));
-      const contract = new PlasmaStateContract('C', 'seed', new Buffer('00', 'hex'), []);
-      contract.exitor = user;
-      const encoded = contract.snapshot();
-      const snapshot = encoded[0];
-      tx.outputs.push(encoded[1]);
+    it('should verify transaction', async function () {
+      const input = new TransactionOutput(
+        [testAddress1],
+        [new Asset(zeroAddress, 2)]
+      );
+      const output = new TransactionOutput(
+        [testAddress2],
+        [new Asset(zeroAddress, 2)]
+      );
+      const tx = new Transaction(
+        0,
+        [testAddress2],
+        new Date().getTime(),
+        [input],
+        [output]
+      );
       let txBytes = tx.getBytes();
-      const txBytes2 = tx2.getBytes();
-      tx.sign(privKey)
-      tx2.sign(privKey)
-      block.appendTx(tx);
-      block.appendTx(tx2);
-      let proof = block.createTxProof(tx);
-      const submitResult = await this.rootChain.submitBlock(
-        chain,
-        block.merkleHash(),
-        {from: owner});
-        console.log(tx.outputs);
-        console.log(VMHash('SnapshotID', encoded[0]));
-      const startExitResult = await this.rootChain.startExit(
-        chain,
-        utxoPos,
+      tx.sign(privKey1)
+      const result = await this.rootChain.verifyTransaction(
         utils.bufferToHex(txBytes),
-        utils.bufferToHex(snapshot),
-        utils.bufferToHex(new Buffer(proof, 'hex')),
         utils.bufferToHex(tx.sign),
-        {from: user, gasLimit: 100000});
-      assert.equal(startExitResult.logs.length, 0);
+        {from: user, gasLimit: 200000});
+      assert.equal(result, 0);
     });
 
   });
-  */
-  
-  
+    
 });

@@ -1,39 +1,46 @@
 const RLP = require('rlp');
 const crypto = require('crypto');
-const ed25519 = require('ed25519')
+const utils = require('ethereumjs-util');
 
 class Asset {
-  constructor() {
-    this.amount = 0;
-    this.assetId = 0;
-    this.anchor = 0;
+  constructor(assetId, amount) {
+    this.assetId = assetId;
+    this.amount = amount;
+  }
+
+  getTuple() {
+    return [this.assetId, this.amount];
   }
 
   getBytes() {
-    return RLP.encode([this.assetId, this.amount, this.anchor]);
+    return RLP.encode(this.getTuple());
   }
 
 }
 
 class TransactionOutput {
-  constructor() {
+  constructor(owners, values) {
     // addresses, tx need their signatures
-    this.owners = [];
+    this.owners = owners || [];
     // values
-    this.values = [];
+    this.values = values || [];
     // contract address include verification function, 20byte
     this.contract = 0;
     // state in bytes
     this.state = []
   }
 
-  getBytes() {
-    return RLP.encode([
+  getTuple() {
+    return [
       this.owners,
-      this.values.map(v => v.getBytes()),
+      this.values.map(v => v.getTuple()),
       this.contract,
       this.state
-    ]);
+    ]
+  }
+
+  getBytes() {
+    return RLP.encode(this.getTuple());
   }
 
   hash() {
@@ -46,31 +53,34 @@ class TransactionOutput {
 
 class Transaction {
   
-  constructor(id) {
-    // hash of tx, 32byte
-    this.id = id;
+  constructor(label, args, nonce, inputs, outputs) {
     // arguments for tx, first argument is function label
-    this.label = 
-    this.args = []
+    this.label = label;
+    this.args = args || []
     // inputs UTXO
-    this.inputs = [];
+    this.inputs = inputs || [];
     // outputs UTXO
-    this.outputs = [];
+    this.outputs = outputs || [];
+    // hash of tx, 32byte
+    this.nonce = nonce;
+    this.id = this.hash();
   }
 
   getBytes() {
     const data = [
-      this.id,
       this.contract,
+      this.label,
       this.args,
-      this.inputs.map(i => i.hash()),
-      this.outputs.map(o => o.hash())
+      this.inputs.map(i => i.getTuple()),
+      this.outputs.map(o => o.getTuple()),
+      this.nonce
     ];
     return RLP.encode(data);
   }
 
   sign(privKey) {
-    this.sign = ed25519.Sign(new Buffer(this.hash(), 'hex'), privKey);
+    this.sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
+    this.sign = Buffer.concat([this.sign.r, this.sign.s, Buffer.from([this.sign.v])], 65);
     return this.sign;
   }
 
@@ -82,4 +92,8 @@ class Transaction {
 
 }
 
-module.exports = Transaction
+module.exports = {
+  Asset,
+  Transaction,
+  TransactionOutput
+}

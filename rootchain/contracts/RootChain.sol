@@ -6,6 +6,7 @@ import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
 import "./PriorityQueue.sol";
+import "./TxVerification.sol";
 
 /**
  * @title RootChain
@@ -558,4 +559,12 @@ contract RootChain {
 
       emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
     }
+
+  function verifyTransaction(bytes txBytes, bytes sigs)
+    public
+    pure
+  {
+    TxVerification.verifyTransaction(txBytes, sigs);
+  }
+
 }
