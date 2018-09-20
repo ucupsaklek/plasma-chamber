@@ -20,8 +20,9 @@ library TxVerification {
 
   struct TxState {
     address[] owners;
-    PlasmaValue[] values;
+    PlasmaValue value;
     RLP.RLPItem[] state;
+    bytes stateBytes;
   }
 
   struct Tx {
@@ -93,20 +94,16 @@ library TxVerification {
   {
     RLP.RLPItem[] memory txStateList = RLP.toList(txState);
     RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
-    RLP.RLPItem[] memory valueList = RLP.toList(txStateList[1]);
     address[] memory owners = new address[](ownerList.length);
-    PlasmaValue[] memory values = new PlasmaValue[](valueList.length);
     uint i = 0;
     for (i = 0; i < ownerList.length; i++) {
       owners[i] = RLP.toAddress(ownerList[i]);
     }
-    for (i = 0; i < valueList.length; i++) {
-      values[i] = getPlasmaValue(valueList[i]);
-    }
     return TxState({
       owners: owners,
-      values: values,
-      state: RLP.toList(txStateList[3])
+      value: getPlasmaValue(txStateList[1]),
+      state: RLP.toList(txStateList[3]),
+      stateBytes: RLP.toBytes(txStateList[3])
     });
   }
 
@@ -234,7 +231,6 @@ library TxVerification {
   {
   }
 
-
   function exchange(Tx transaction)
     internal
     pure
@@ -245,12 +241,24 @@ library TxVerification {
     TxState memory afterState2 = transaction.outputs[1];
     AppStateStdOrderBook memory orderbookState = getAppStateStdOrderBook(preState1.state);
 
-    require(orderbookState.assetId == preState2.values[0].assetId);
-    require(orderbookState.amount == preState2.values[0].amount);
+    require(orderbookState.assetId == preState2.value.assetId);
+    require(orderbookState.amount == preState2.value.amount);
     require(preState1.owners[0] == afterState2.owners[0]);
     require(preState2.owners[0] == afterState1.owners[0]);
-    require(preState1.values[0].amount == afterState1.values[0].amount);
-    require(preState2.values[0].amount == afterState2.values[0].amount);
+    require(preState1.value.amount == afterState1.value.amount);
+    require(preState2.value.amount == afterState2.value.amount);
+  }
+
+  function verifyWithdrawal(address[] owners, PlasmaValue value, bytes stateBytes)
+    internal
+    pure
+    returns (bool)
+  {
+    var stdState = getAppStateStd(RLP.toList(RLP.toRlpItem(stateBytes)));
+    if(stdState == AppStateStd.AppStateStdOwn) {
+      return true;
+    }
+    return false;
   }
 
 }

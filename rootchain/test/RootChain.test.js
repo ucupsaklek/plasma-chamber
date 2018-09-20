@@ -45,11 +45,11 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
     it('should verify transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        [new Asset(zeroAddress, 2)]
+        new Asset(zeroAddress, 2)
       );
       const output = new TransactionOutput(
         [testAddress2],
-        [new Asset(zeroAddress, 2)]
+        new Asset(zeroAddress, 2)
       );
       const tx = new Transaction(
         0,
