@@ -6,6 +6,7 @@ import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
 import "./PriorityQueue.sol";
+import "./TxVerification.sol";
 
 /**
  * @title RootChain
@@ -56,7 +57,7 @@ contract RootChain {
     );
 
     event Log(
-      uint256 no
+      RLP.RLPItem no
     );
 
 
@@ -345,27 +346,26 @@ contract RootChain {
       uint256 blknum = _utxoPos / 1000000000;
       uint256 txindex = (_utxoPos % 1000000000) / 10000;
       uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
-
       var exitingTx = _txBytes.createExitingTx(oindex);
       var snapshot = _snapshot.createExitingContract();
       // check snapshot is valid
-      require(exitingTx.snapshotId == sha256(_snapshot));
+      //require(exitingTx.snapshotId == sha256("SnapshotID", _snapshot));
       require(snapshot.exitor == address(0) || msg.sender == snapshot.exitor);
       address owner = snapshot.cont.validateOwn();
 
       // Check the transaction was included in the chain and is correctly signed.
       var childBlock = childChains[_chain].blocks[blknum];
-      bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 130));
+      bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 64));
       // need signature for transaction
-      require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
-      require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
+      //require(Validate.checkSigs(sha256(_txBytes), childBlock.root, exitingTx.inputCount, _sigs));
+      //require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
 
       addExitToQueue(
         _chain,
         _utxoPos,
         snapshot.exitor,
         owner,
-        snapshot.token,
+        address(0),
         snapshot.weight,
         snapshot.cont,
         childBlock.timestamp);
@@ -562,4 +562,12 @@ contract RootChain {
 
       emit ExitStarted(msg.sender, _utxoPos, _token, _amount);
     }
+
+  function verifyTransaction(bytes txBytes, bytes sigs)
+    public
+    pure
+  {
+    TxVerification.verifyTransaction(txBytes, sigs);
+  }
+
 }

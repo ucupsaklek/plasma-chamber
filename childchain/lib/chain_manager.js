@@ -29,7 +29,7 @@ class ChainManager {
         return childChain;
     }
     async stop(){
-        this.chain.gracefulStop();
+        await this.chain.gracefulStop();
     }
 
 }

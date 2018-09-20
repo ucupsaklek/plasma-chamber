@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.24;
 
 
 /**
@@ -12,7 +12,7 @@ library Merkle {
         pure
         returns (bool)
     {
-        require(proof.length == 512);
+        require(proof.length <= 512);
         bytes32 proofElement;
         bytes32 computedHash = leaf;
 

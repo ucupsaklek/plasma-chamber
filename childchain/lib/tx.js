@@ -1,28 +1,46 @@
 const RLP = require('rlp');
 const crypto = require('crypto');
+const utils = require('ethereumjs-util');
 
+class Asset {
+  constructor(assetId, amount) {
+    this.assetId = assetId;
+    this.amount = amount;
+  }
 
-class Transaction {
-  
-  constructor() {
-    this.id = null;
-    this.finalized = false;
-    this.contracts = [];
-    this.timerange = [];
-    this.nonces = [];
-    // 32 bytes
-    this.anchor = null;
-    this.inputs = [];
-    // deposit amount never change
-    // this.issueances = [];
-    this.outputs = [];
-    // deposit amount never change
-    // this.retirements = [];
+  getTuple() {
+    return [this.assetId, this.amount];
   }
 
   getBytes() {
-    const data = [this.id].concat(this.inputs).concat(this.outputs);
-    return RLP.encode(data);
+    return RLP.encode(this.getTuple());
+  }
+
+}
+
+class TransactionOutput {
+  constructor(owners, values) {
+    // addresses, tx need their signatures
+    this.owners = owners || [];
+    // values
+    this.values = values || [];
+    // contract address include verification function, 20byte
+    this.contract = 0;
+    // state in bytes
+    this.state = []
+  }
+
+  getTuple() {
+    return [
+      this.owners,
+      this.values.map(v => v.getTuple()),
+      this.contract,
+      this.state
+    ]
+  }
+
+  getBytes() {
+    return RLP.encode(this.getTuple());
   }
 
   hash() {
@@ -33,4 +51,49 @@ class Transaction {
 
 }
 
-module.exports = Transaction
+class Transaction {
+  
+  constructor(label, args, nonce, inputs, outputs) {
+    // arguments for tx, first argument is function label
+    this.label = label;
+    this.args = args || []
+    // inputs UTXO
+    this.inputs = inputs || [];
+    // outputs UTXO
+    this.outputs = outputs || [];
+    // hash of tx, 32byte
+    this.nonce = nonce;
+    this.id = this.hash();
+  }
+
+  getBytes() {
+    const data = [
+      this.contract,
+      this.label,
+      this.args,
+      this.inputs.map(i => i.getTuple()),
+      this.outputs.map(o => o.getTuple()),
+      this.nonce
+    ];
+    return RLP.encode(data);
+  }
+
+  sign(privKey) {
+    this.sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
+    this.sign = Buffer.concat([this.sign.r, this.sign.s, Buffer.from([this.sign.v])], 65);
+    return this.sign;
+  }
+
+  hash() {
+    const hash = crypto.createHash('sha256');
+    hash.update(this.getBytes());
+    return hash.digest('hex');
+  }
+
+}
+
+module.exports = {
+  Asset,
+  Transaction,
+  TransactionOutput
+}
