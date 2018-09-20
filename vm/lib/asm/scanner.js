@@ -2,6 +2,8 @@
  * based on https://github.com/chain/txvm/blob/main/protocol/txvm/asm/scanner.go
  */
 
+const { Macro } = require('./asm');
+
 const Token_Illegal = 1;
 const Token_Number = 2;
 const Token_Ident = 3;

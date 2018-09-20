@@ -103,6 +103,9 @@ class VirtualMachine {
   push(v) {
     this.contract.stack.push(v);
   }
+  pushBool(v) {
+    this.push(Number(v));
+  }
 
   peek() {
     return this.contract.stack[this.contract.stack.length - 1];

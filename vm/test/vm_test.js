@@ -2,6 +2,9 @@ const assert = require('assert');
 const VirtualMachine = require('../lib/vm');
 const ed25519 = require('ed25519')
 const crypto = require('crypto')
+const { Assembler, assembleSource, assembleScanner, opcode } = require('../lib/asm/asm');
+const { PlasmaStateValue, PlasmaStateContract, contractSnapshot } = require('../lib/state');
+const { VMHash } = require('../lib/operations/crypto');
 
 describe('VirtualMachine', function() {
 
@@ -123,18 +126,6 @@ describe('VirtualMachine', function() {
   });
 
   describe('opGT', function() {
-    it('should mod', function() {
-      const program = [0x05, 0x02, 0x25]; // 0x05 0x02 opMod
-      const vm = VirtualMachine.createVM(program);
-      vm.run.prog = program;
-      vm.step(program);
-      vm.step(program);
-      vm.step(program);
-      assert.deepEqual(vm.contract.stack, [0x01]);
-    });
-  });
-
-  describe('opGT', function() {
     it('should gt true', function() {
       const program = [0x02, 0x01, 0x26]; // 0x02 0x01 opGT
       const vm = VirtualMachine.createVM(program);
@@ -154,6 +145,129 @@ describe('VirtualMachine', function() {
       assert.deepEqual(vm.contract.stack, [0x00]);
     });
   });
+
+  describe('opNot', function() {
+    it('should not 1', function() {
+      const program = [0x03, 0x27]; // 0x03 opNot
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x00]);
+    });
+    it('should not 1', function() {
+      const program = [0x00, 0x27]; // 0x00 opNot
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x01]);
+    });
+  });
+
+  describe('opAnd', function() {
+    it('should and', function() {
+      const program = [0x01, 0x01, 0x28]; // 0x01 0x01 opAnd
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x01]);
+    });
+    it('should and', function() {
+      const program = [0x01, 0x00, 0x28]; // 0x01 0x00 opAnd
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x00]);
+    });
+    it('should and', function() {
+      const program = [0x00, 0x00, 0x28]; // 0x00 0x00 opAnd
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x00]);
+    });
+  });
+
+  describe('opOr', function() {
+    it('should or', function() {
+      const program = [0x01, 0x01, 0x29]; // 0x01 0x01 opOr
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x01]);
+    });
+    it('should or', function() {
+      const program = [0x01, 0x00, 0x29]; // 0x01 0x00 opOr
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x01]);
+    });
+    it('should or', function() {
+      const program = [0x00, 0x00, 0x29]; // 0x00 0x00 opOr
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x00]);
+    });
+  });
+
+  describe('Macro bool', function() {
+    it('should 2 to bool', function() {
+      const code = "2 bool";
+      const assembled = assembleSource(code).toString('hex');
+      const program = new Buffer(assembled, 'hex');
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x01]);
+    });
+  });
+
+  describe('Macro swap', function() {
+    it('should swap 1 and 2', function() {
+      const code = "1 2 swap";
+      const assembled = assembleSource(code).toString('hex');
+      const program = new Buffer(assembled, 'hex');
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x02, 0x01]);
+    });
+  });
+
+  // opJumpif is not implemented
+
+  describe('Macro sub', function() {
+    it('should sub 3 by 5', function() {
+      const code = "5 3 sub";
+      const assembled = assembleSource(code).toString('hex');
+      const program = new Buffer(assembled, 'hex');
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+      vm.exec(program);
+      assert.deepEqual(vm.contract.stack, [0x02]);
+    });
+  });
+
+  describe('Macro splitzero', function() {
+    it('should split zero', function() {
+      const assembled = assembleSource("splitzero").toString('hex');
+      const program = new Buffer(assembled, 'hex');
+
+      const vm = VirtualMachine.createVM(program);
+      vm.run.prog = program;
+
+      const value = new PlasmaStateValue(10, new Buffer('d073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'hex'), new Buffer('anchor'));
+      vm.contract.stack.push(value);
+
+      vm.exec(program);
+
+      const assert_10_value = new PlasmaStateValue(10, new Buffer('d073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'hex'), VMHash("Split1", new Buffer('anchor')));
+      const assert_0_value = new PlasmaStateValue(0, new Buffer('d073785d7dffc98c69ef62bbc6c8efde78a3286a848f570f8028695048a8f62d', 'hex'), VMHash("Split2", new Buffer('anchor')));
+      assert.deepEqual(vm.contract.stack, [assert_10_value,assert_0_value]);
+    });
+  });
+
   describe('send', function() {
     it('should', function() {
       /*

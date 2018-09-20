@@ -93,6 +93,7 @@ const opcode = {
 	"bitxor": 0x5e
 }
 
+let composite = {}; // assembled macro array
 
 class Jump {
   constructor() {
@@ -163,8 +164,17 @@ class Assembler {
 					// TODO
 					break;
 				case Token_Ident:
-					const op = opcode[String(this.lit)];
-					this.writeVarint(op);
+					if(Macro.hasOwnProperty(this.lit)){
+						if(! composite.hasOwnProperty(this.lit)){
+							composite[this.lit] = assembleSource(Macro[this.lit]);
+						}
+						const copylength = composite[this.lit].copy(this.buffer, this.bufferOffset, 0, composite[this.lit].length);
+						this.bufferOffset += copylength;
+					}else{
+						const op = opcode[String(this.lit)];
+						this.writeVarint(op);
+					}
+
 					break;
 				default:
 					const err = this.assembleValue();
@@ -273,5 +283,7 @@ class Assembler {
 module.exports = {
 	Assembler,
 	assembleSource,
-	assembleScanner
+	assembleScanner,
+	Macro,
+	opcode
 };
