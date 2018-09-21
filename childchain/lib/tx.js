@@ -19,7 +19,7 @@ class Asset {
 }
 
 class TransactionOutput {
-  constructor(owners, value) {
+  constructor(owners, value, state) {
     // addresses, tx need their signatures
     this.owners = owners || [];
     // values
@@ -27,7 +27,7 @@ class TransactionOutput {
     // contract address include verification function, 20byte
     this.contract = 0;
     // state in bytes
-    this.state = []
+    this.state = state || [];
   }
 
   getTuple() {

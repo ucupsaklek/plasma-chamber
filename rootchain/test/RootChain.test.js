@@ -67,6 +67,33 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
       assert.equal(result, 0);
     });
 
+    it('should verify game transaction', async function () {
+      const input = new TransactionOutput(
+        [testAddress1],
+        new Asset(zeroAddress, 2),
+        [testAddress1, testAddress2, 3, 0]
+      );
+      const output = new TransactionOutput(
+        [testAddress2],
+        new Asset(zeroAddress, 2),
+        [testAddress2, testAddress1, 4, 0]
+      );
+      const tx = new Transaction(
+        100,
+        [0, 1],
+        new Date().getTime(),
+        [input],
+        [output]
+      );
+      let txBytes = tx.getBytes();
+      tx.sign(privKey1)
+      const result = await this.rootChain.verifyTransaction(
+        utils.bufferToHex(txBytes),
+        utils.bufferToHex(tx.sign),
+        {from: user, gasLimit: 200000});
+      assert.equal(result, 0);
+    });
+
   });
     
 });
