@@ -1,40 +1,27 @@
-# PlasmaVM
+# ethstacks
 
-[![Build Status](https://travis-ci.org/cryptoeconomicslab/PlasmaVM-JS.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/PlasmaVM-JS)
+[![Build Status](https://travis-ci.org/cryptoeconomicslab/ethstacks.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/ethstacks)
 
-[![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/PlasmaVM-JS/badge.svg)](https://coveralls.io/github/cryptoeconomicslab/PlasmaVM-JS)
+[![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/ethstacks/badge.svg)](https://coveralls.io/github/cryptoeconomicslab/ethstacks)
 
 ## Overview
 - Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
-- Not only for value transfer, but also for some simple contract.
-- Consisted by Value and Contract paradigm from TxVM 
-- Fund security model is implemented via migration rather than exit
-- Multiple Plasma Network is needed
+- Not only for value transfer, but also for some simple application.
+- Child chain is UTXO model and they have state.
+- State transition can be verified in child chain and root chain.
+- Fund security model is implemented via migration rather than exit.
+- Multiple Plasma Network is needed.
 
 ## Folder Structure
 
 ### rootchain
-- Solidity contract for deposit, commit, startExit, exitChallenge, finalizeExit, withdraw
+- Solidity contract for deposit, commit, startExit, exitChallenge, finalizeExit, withdraw, state transition verification
 
 ### childchain
 - Entrypoint for childchain which interacts with ETH, RPC, DB, VM
-
-### vm
-- Quasi general computation specific virtual machine
-- Must remain receipt for state transition especially for owned-asset and locked-asset
-
-### rpc
-- HTTP based JSON RPC
-- plasma_sendTransaction can call embedded-contracts by refering some function name and args
-
-### storage
-- LevelDB or something for storing Tx, receipt and state
-
-### eth
-- Adaptor for Ethereum rootchain
-- Web3 interface https://github.com/tomusdrw/rust-web3/blob/master/examples/simple_log_sub.rs#L36-L57
 
 ### watcher
 - Observe childchain's merkle tree.
 - Clients' must see his own state on childchain via his local proof
 - Watcher will do some more complehensive watching but must be decentralized. See Tesuji Plasma.
+
