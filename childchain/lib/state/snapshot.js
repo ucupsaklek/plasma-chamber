@@ -17,13 +17,13 @@ class Snapshot {
    */
   applyTx(tx) {
     return Promise.all(tx.inputs.map((i) => {
-      return this.contains(i);
+      return this.contains(i.hash());
     })).then((results) => {
       if(results.filter(b => !b).length < 0) {
         throw new Error('input not found');
       }
       return Promise.all(tx.outputs.map((i) => {
-        return this.insertId(i);
+        return this.insertId(i.hash());
       }));
     })
   }
