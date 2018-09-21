@@ -94,9 +94,18 @@ class Chain {
   async resume(){
     // leveldb stored string as buffer
     this.id = (await this.metaDB.get("chainID")).toString()
-    this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
-    this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
-    this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
+    try {
+      this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
+      this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
+      this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
+    } catch (err) {
+      if(err.notFound) {
+        this.blockHeight = 0;
+        this.block = null;
+        // there are no inflight transactions?
+        this.commitmentTxs = [];
+      }
+    }
   }
   async saveBlock(newBlock){
     await this.blockDB.put(this.blockHeight, newBlock.toString());
