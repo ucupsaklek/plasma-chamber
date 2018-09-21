@@ -10,7 +10,6 @@
       "rootchain",
       "eth",
       "rpc",
-      "storage",
       "vm"
     ]
   },
