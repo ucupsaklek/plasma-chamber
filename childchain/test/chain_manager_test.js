@@ -4,15 +4,19 @@ const chainManager = new ChainManager();
 const Block = require('../lib/block');
 const { Transaction } = require('../lib/tx');
 const levelup = require('levelup');
-const leveldown = require('leveldown');
+const memdown = require('memdown');
 
 
 describe('ChainManager', function() {
   describe('start', function() {
+
+    const memdownBlockDb = memdown();
+    const memdownMetaDb = memdown();
+    const memdownSnapshotDb = memdown();
     before(done=>{
-      const blockDB = levelup(leveldown('./.blockdb'));
-      const metaDB = levelup(leveldown('./.metadb'));
-      const snapshotDB = levelup(leveldown('./.snapshotdb'));
+      const blockDB = levelup(memdownBlockDb);
+      const metaDB = levelup(memdownMetaDb);
+      const snapshotDB = levelup(memdownSnapshotDb);
       metaDB.put("blockHeight", "1")
       .then(_=> blockDB.put(1, JSON.stringify(new Block(1))) )
       .then(_=> metaDB.put("commitmentTxs", JSON.stringify([new Transaction()])) )
@@ -25,7 +29,11 @@ describe('ChainManager', function() {
       })
     })
     it('should have properties', function(done) {
-      chainManager.start().then(async chain=>{
+      chainManager.start({
+        blockdb: memdownBlockDb,
+        metadb: memdownMetaDb,
+        snapshotdb: memdownSnapshotDb
+      }).then(async chain=>{
         assert(chain.id.length > 0);
         assert(chain.blockHeight > 0);
         assert(chain.block.number > 0);

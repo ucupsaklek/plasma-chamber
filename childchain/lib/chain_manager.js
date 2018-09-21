@@ -8,10 +8,10 @@ class ChainManager {
     constructor(){
         this.chain = null;
     }
-    async start (){
-        const blockDB = levelup(leveldown('./.blockdb'));
-        const metaDB = levelup(leveldown('./.metadb'));
-        const snapshotDB = levelup(leveldown('./.snapshotdb'));
+    async start (options){
+        const blockDB = levelup(options.blockdb);
+        const metaDB = levelup(options.metadb);
+        const snapshotDB = levelup(options.snapshotdb);
         const childChain = new Chain();
         childChain.setMetaDB(metaDB);
         childChain.setBlockDB(blockDB);
