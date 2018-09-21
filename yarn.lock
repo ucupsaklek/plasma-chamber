@@ -128,6 +128,10 @@ assert-plus@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/assert-plus/-/assert-plus-0.2.0.tgz#d74e1b87e7affc0db8aadb7021f3fe48101ab234"
 
+asty@^1.7.12:
+  version "1.7.16"
+  resolved "https://registry.yarnpkg.com/asty/-/asty-1.7.16.tgz#5ad3d91ee70735bd1b2a7ffd4eeeed63a62bea89"
+
 async-limiter@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.0.tgz#78faed8c3d074ab81f22b4e985d79e8738f720f8"
@@ -783,6 +787,10 @@ ed25519@^0.0.4:
 ee-first@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
+
+ejs@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/ejs/-/ejs-2.6.1.tgz#498ec0d495655abc6f23cd61868d926464071aa0"
 
 elliptic@6.3.3:
   version "6.3.3"
@@ -2275,6 +2283,24 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+pegjs-prolog-parser@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/pegjs-prolog-parser/-/pegjs-prolog-parser-1.1.1.tgz#12911f2039ca6a2f046f8f2fa15a6f5dc4a54294"
+  dependencies:
+    asty "^1.7.12"
+    pegjs "^0.10.0"
+    pegjs-util "^1.4.11"
+
+pegjs-util@^1.4.11:
+  version "1.4.14"
+  resolved "https://registry.yarnpkg.com/pegjs-util/-/pegjs-util-1.4.14.tgz#71db4b134eb98a738a129aaec12aafef1178817e"
+  dependencies:
+    pegjs ">=0.10.0"
+
+pegjs@>=0.10.0, pegjs@^0.10.0:
+  version "0.10.0"
+  resolved "http://registry.npmjs.org/pegjs/-/pegjs-0.10.0.tgz#cf8bafae6eddff4b5a7efb185269eaaf4610ddbd"
+
 pend@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/pend/-/pend-1.2.0.tgz#7a57eb550a6783f9115331fcf4663d5c8e007a50"
@@ -2758,7 +2784,7 @@ sntp@1.x.x:
   dependencies:
     hoek "2.x.x"
 
-sol-trace@nakajo2011/sol-trace#pre_release:
+"sol-trace@github:nakajo2011/sol-trace#pre_release":
   version "0.1.2-pre"
   resolved "https://codeload.github.com/nakajo2011/sol-trace/tar.gz/c13f37e9be45d3746f0763cb8789dc240dce1281"
   dependencies:
