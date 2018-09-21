@@ -104,6 +104,8 @@ class Chain {
         this.block = null;
         // there are no inflight transactions?
         this.commitmentTxs = [];
+      }else{
+        throw err;
       }
     }
   }
