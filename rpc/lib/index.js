@@ -1,4 +1,8 @@
 const jayson = require('jayson');
+const cors = require('cors');
+var connect = require('connect');
+const jsonParser = require('body-parser').json;
+const app = connect();
 const { apiTx } = require("../../childchain/lib/api");
 
 module.exports.run = childChain => {
@@ -16,7 +20,7 @@ module.exports.run = childChain => {
     eth_blockNumber: (args, cb) => {
       // Get latest block for descending manner
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_blocknumber
-      cb(childChain.blockHeight)
+      cb(null, childChain.blockHeight)
     },
     eth_getBlockTransactionCountByNumber: (args, cb) => {
       // Get block info for them
@@ -29,5 +33,9 @@ module.exports.run = childChain => {
 
     },
   });
-  server.http().listen(process.env.PORT || 3000);
+  app.use(cors({methods: ['POST']}));
+  app.use(jsonParser());
+  app.use(server.middleware());
+  
+  app.listen(process.env.PORT || 3000);
 }
