@@ -5,7 +5,8 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start": "parcel app/index.html"
+    "start": "parcel app/index.html",
+    "test": "exit 0"
   },
   "dependencies": {
     "babel-core": "^6.26.3",
