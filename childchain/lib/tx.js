@@ -16,6 +16,10 @@ class Asset {
     return RLP.encode(this.getTuple());
   }
 
+  clone() {
+    return new Asset(this.assetId, this.amount);
+  }
+
 }
 
 class TransactionOutput {
@@ -47,6 +51,14 @@ class TransactionOutput {
     const hash = crypto.createHash('sha256');
     hash.update(this.getBytes());
     return hash.digest('hex');
+  }
+
+  clone() {
+    return new TransactionOutput(
+      [].concat(this.owners),
+      this.value.clone(),
+      [].concat(this.state)
+    )
   }
 
 }
