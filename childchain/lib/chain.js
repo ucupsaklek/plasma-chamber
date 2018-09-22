@@ -93,8 +93,8 @@ class Chain {
   * */
   async resume(){
     // leveldb stored string as buffer
-    this.id = (await this.metaDB.get("chainID")).toString()
     try {
+      this.id = (await this.metaDB.get("chainID")).toString()
       this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
       this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
       this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
