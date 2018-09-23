@@ -68,6 +68,12 @@ class Chain {
     );
     return depositTx;
   }
+
+  createTx(txData) {
+    // check signatures
+    // check state transition
+    // applyTx to snapshot
+  }
   
   /**
    * generate block

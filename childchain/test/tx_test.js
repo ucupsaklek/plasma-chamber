@@ -13,23 +13,23 @@ describe('Transaction', function() {
   const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
   const testAddress1 = utils.privateToAddress(privKey1);
   const testAddress2 = utils.privateToAddress(privKey2);
+  const input = new TransactionOutput(
+    [testAddress1],
+    new Asset(zeroAddress, 2)
+  );
+  const output = new TransactionOutput(
+    [testAddress1],
+    new Asset(zeroAddress, 2)
+  );
+  const tx = new Transaction(
+    0,    // label
+    [0],  // args
+    1     // nonce,
+    [input],
+    [output]
+  );
 
   describe('create tx', function() {
-    const input = new TransactionOutput(
-      [testAddress1],
-      new Asset(zeroAddress, 2)
-    );
-    const output = new TransactionOutput(
-      [testAddress1],
-      new Asset(zeroAddress, 2)
-    );
-    const tx = new Transaction(
-      0,    // label
-      [0],  // args
-      1     // nonce,
-      [input],
-      [output]
-    );
 
     const sign1 = tx.sign(privKey1);
     tx.sigs[0] = sign1;
@@ -48,5 +48,16 @@ describe('Transaction', function() {
 
   });
 
+  describe('decode tx', function() {
+
+    it('should encode and decode', function() {
+      const sign1 = tx.sign(privKey1);
+      tx.sigs[0] = sign1;
+      const encoded = tx.getBytes();
+      const decoded = Transaction.fromBytes(encoded);
+      assert.equal(decoded.label, 0);
+    });
+
+  });
 
 });

@@ -16,11 +16,17 @@ class Asset {
     return RLP.encode(this.getTuple());
   }
 
+  static fromTuple(decoded) {
+    return new Asset(decoded[0], decoded[1]);
+  }
+
   clone() {
     return new Asset(this.assetId, this.amount);
   }
 
 }
+
+const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
 class TransactionOutput {
   constructor(owners, value, state) {
@@ -45,6 +51,15 @@ class TransactionOutput {
 
   getBytes() {
     return RLP.encode(this.getTuple());
+  }
+
+  static fromTuple(decoded) {
+    return new TransactionOutput(
+      decoded[0],
+      Asset.fromTuple(decoded[1]),
+      decoded[3],
+      decoded[4]
+    );
   }
 
   hash() {
@@ -82,7 +97,7 @@ class Transaction {
 
   getBytes() {
     const data = [
-      this.contract,
+      0,
       this.label,
       this.args,
       this.inputs.map(i => i.getTuple()),
@@ -90,6 +105,17 @@ class Transaction {
       this.nonce
     ];
     return RLP.encode(data);
+  }
+
+  static fromBytes(data) {
+    const decoded = RLP.decode(data);
+    return new Transaction(
+      decoded[1],
+      decoded[2],
+      decoded[5],
+      decoded[3].map(d => TransactionOutput.fromTuple(d)),
+      decoded[4].map(d => TransactionOutput.fromTuple(d))
+    );
   }
 
   sign(privKey) {
