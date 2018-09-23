@@ -10,6 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.18.3",
+    "connect": "^3.6.6",
+    "cors": "^2.8.4",
     "jayson": "^2.0.6"
   }
 }
