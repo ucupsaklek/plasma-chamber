@@ -1,14 +1,36 @@
-const ChildChain = require("./childchain/lib")
-const Listener = require("./listener/lib")
-const Rpc = require("./rpc/lib")
+const ChildChain = require('./childchain');
+const Listener = require('./listener/lib');
+const Rpc = require('./rpc/lib');
+const MongoDown = ChildChain.MongoDown;
+const leveldown = require('leveldown');
 
-
-async function main(){
-    let childChain = await ChildChain.run()
-    Listener.run(childChain)
-    Rpc.run(childChain)
-    childChain.emit("Ready", {});
-    return true;
+function getOption() {
+  const mongoOptions = {
+    blockdb: new MongoDown('blockdb'),
+    metadb: new MongoDown('metadb'),
+    snapshotdb: new MongoDown('snapshotdb')
+  }
+  const fsOptions = {
+    blockdb: leveldown('.db/blockdb'),
+    metadb: leveldown('.db/metadb'),
+    snapshotdb: leveldown('.db/snapshotdb')
+  }
+  const storage = process.env.STORAGE || 'leveldown';
+  if(storage == 'leveldown') {
+    return fsOptions;
+  }else if(storage == 'mongodb') {
+    return mongoOptions
+  }
 }
 
-main().then(_=> console.log("Chain running. RPC running.") ).catch(e=> console.error(e) )
+async function main(){
+  let childChain = await ChildChain.run(getOption());
+  Listener.run(childChain);
+  Rpc.run(childChain);
+  childChain.emit('Ready', {});
+  return true;
+}
+
+main()
+  .then(() => console.log('Chain running. RPC running.') )
+  .catch(e=> console.error(e) );
