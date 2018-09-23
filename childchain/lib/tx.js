@@ -76,6 +76,8 @@ class Transaction {
     // hash of tx, 32byte
     this.nonce = nonce;
     this.id = this.hash();
+    // signatures
+    this.sigs = [];
   }
 
   getBytes() {
@@ -91,9 +93,31 @@ class Transaction {
   }
 
   sign(privKey) {
-    this.sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
-    this.sign = Buffer.concat([this.sign.r, this.sign.s, Buffer.from([this.sign.v])], 65);
-    return this.sign;
+    const sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
+    const signBuffer = Buffer.concat([sign.r, sign.s, Buffer.from([sign.v])], 65);
+    return signBuffer;
+  }
+
+  getOwners() {
+    return this.inputs.reduce((owners, i) => {
+      return owners.concat(i.owners);
+    }, []);
+  }
+
+  checkSigns() {
+    const owners = this.getOwners();
+    if(this.sigs.length != owners.length) {
+      throw new Error('signatures not enough');
+    }
+  }
+
+  merkleHash() {
+    this.checkSigns();
+    const txHash = this.hash();
+    const hash = crypto.createHash('sha256');
+    hash.update(new Buffer(txHash, 'hex'));
+    hash.update(Buffer.concat(this.sigs));
+    return hash.digest('hex');
   }
 
   hash() {

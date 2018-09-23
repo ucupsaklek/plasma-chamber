@@ -24,12 +24,12 @@ class Block {
   }
 
   createTxProof(tx) {
-    const tree = MerkleTree(this.txs.map(tx=>tx.hash()));
-    return tree.proof(tx.hash()).reduce((acc, p) => {return acc + p.parent}, '');
+    const tree = MerkleTree(this.txs.map(tx=>tx.merkleHash()));
+    return tree.proof(tx.merkleHash()).reduce((acc, p) => {return acc + p.parent}, '');
   }
 
   merkleHash() {
-    const tree = MerkleTree(this.txs.map(tx=>tx.hash()));
+    const tree = MerkleTree(this.txs.map(tx=>tx.merkleHash()));
     return tree.root();
   }
 

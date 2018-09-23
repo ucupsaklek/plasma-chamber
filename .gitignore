@@ -7,3 +7,4 @@ coverage
 .snapshotdb
 .metadb
 .env
+.db
