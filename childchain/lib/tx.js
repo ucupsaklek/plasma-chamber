@@ -95,8 +95,8 @@ class Transaction {
     this.sigs = [];
   }
 
-  getBytes() {
-    const data = [
+  getBytes(includeSigs) {
+    let data = [
       0,
       this.label,
       this.args,
@@ -104,18 +104,23 @@ class Transaction {
       this.outputs.map(o => o.getTuple()),
       this.nonce
     ];
+    if(includeSigs) {
+      data.push(this.sigs);
+    }
     return RLP.encode(data);
   }
 
   static fromBytes(data) {
     const decoded = RLP.decode(data);
-    return new Transaction(
+    const tx = new Transaction(
       decoded[1],
       decoded[2],
       decoded[5],
       decoded[3].map(d => TransactionOutput.fromTuple(d)),
-      decoded[4].map(d => TransactionOutput.fromTuple(d))
+      decoded[4].map(d => TransactionOutput.fromTuple(d)),
     );
+    tx.sigs = decoded[6] || [];
+    return tx;
   }
 
   sign(privKey) {

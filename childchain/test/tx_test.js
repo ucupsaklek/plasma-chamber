@@ -38,6 +38,10 @@ describe('Transaction', function() {
       assert.equal(tx.getBytes().toString('hex'), 'f78080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080');
     });
 
+    it('should return bytes include sigs', function() {
+      assert.equal(tx.getBytes(true).toString('hex'), 'f87c8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080f843b841f0dbd6db93d010881dcecbeb6f5ed182d491d52ebab86cafcf5e2761613cc6ac71631f64d15f7794e20a3dabf4c405b2cf45f74a24f61a17e02c905be6aa5b451c');
+    });
+
     it('should return hash', function() {
       assert.equal(tx.hash(), '652f016e87f16a662143136cec52f31477aa9f39589e4cf0ed53dabbbd206a74');
     });

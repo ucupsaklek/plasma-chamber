@@ -10,12 +10,8 @@ module.exports.run = childChain => {
   var server = jayson.server({
     // These RPC Method must align with ETH
     eth_sendRawTransaction: (args, cb) => {
-      console.log(args)
-      apiTx(args[0]).then((result) => {
-        cb(null, result);
-      }).catch((err) => {
-        cb(err);
-      })
+      childChain.createTx(args[0])
+      cb(null);
     },
     eth_blockNumber: (args, cb) => {
       // Get latest block for descending manner

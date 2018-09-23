@@ -70,9 +70,15 @@ class Chain {
   }
 
   createTx(txData) {
+    // decode signedTx
+    const tx = Transaction.fromBytes(new Buffer(txData, 'hex'));
     // check signatures
+    tx.checkSigns();
     // check state transition
+    // TODO
     // applyTx to snapshot
+    this.snapshot.applyTx(tx);
+    this.commitmentTxs.push(tx);
   }
   
   /**
