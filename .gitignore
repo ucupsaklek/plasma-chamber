@@ -3,11 +3,5 @@
 node_modules
 yarn-error.log
 coverage
-<<<<<<< HEAD
-.blockdb
-.snapshotdb
-.metadb
-.env
 .db/*
 .env
-
