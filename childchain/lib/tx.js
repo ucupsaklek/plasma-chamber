@@ -135,6 +135,18 @@ class Transaction {
     if(this.sigs.length != owners.length) {
       throw new Error('signatures not enough');
     }
+    const unmatchSigs = this.sigs.filter((sig, i) => {
+      var pubKey = utils.ecrecover(
+        new Buffer(this.hash(), 'hex'),
+        sig.slice(64, 65).readUInt8(0),
+        sig.slice(0, 32),
+        sig.slice(32, 64)
+      );
+      return Buffer.compare(utils.pubToAddress(pubKey), owners[i]) != 0;
+    });
+    if(unmatchSigs != 0) {
+      throw new Error('signatures not match');
+    }
   }
 
   /**
