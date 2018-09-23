@@ -111,6 +111,10 @@ class Transaction {
     }
   }
 
+  /**
+   * @dev merkleHash is hash(hash(tx) + sigs).
+   * sigs are signatures of all inputs owners.
+   */
   merkleHash() {
     this.checkSigns();
     const txHash = this.hash();
