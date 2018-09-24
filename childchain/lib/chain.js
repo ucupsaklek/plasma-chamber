@@ -77,6 +77,7 @@ class Chain {
     // applyTx to snapshot
     this.snapshot.applyTx(tx);
     this.commitmentTxs.push(tx);
+    return tx.hash();
   }
   
   /**
