@@ -3,8 +3,6 @@ const cors = require('cors');
 var connect = require('connect');
 const jsonParser = require('body-parser').json;
 const app = connect();
-const { apiTx } = require("../../childchain/lib/api");
-
 module.exports.run = childChain => {
   // create a server
   var server = jayson.server({
