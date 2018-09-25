@@ -35,19 +35,19 @@ describe('Transaction', function() {
     tx.sigs[0] = sign1;
 
     it('should return bytes', function() {
-      assert.equal(tx.getBytes().toString('hex'), 'f78080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080');
+      assert.equal(tx.getBytes().toString('hex'), 'f8678080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001');
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f87c8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080f843b841f0dbd6db93d010881dcecbeb6f5ed182d491d52ebab86cafcf5e2761613cc6ac71631f64d15f7794e20a3dabf4c405b2cf45f74a24f61a17e02c905be6aa5b451c');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f8ac8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001f843b841fbbbfffdff5c7321d765f9af7ec4923c49d060c28cdd77e4b907b538125abb32013c9c27fed177c9a8541d391320c471087f37c3b3a3bd3fbd3ec6b40fe66c431b');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash(), '652f016e87f16a662143136cec52f31477aa9f39589e4cf0ed53dabbbd206a74');
+      assert.equal(tx.hash(), '562913ebf378bd37c739dc61b50129a0a795c3e6de2d882266bd3b162e33ff15');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash(), 'c0025b33a868b51e7c69c323b0a6038dd52a37527845c20164012dae1b6bbf46');
+      assert.equal(tx.merkleHash(), 'eee7f0f39c76c367651811bb711d6959d1c43cdaa0ff178fd50fd9f20725f47c');
     });
 
   });
