@@ -6,6 +6,7 @@ const levelup = require('levelup');
 class ChainManager {
   constructor(){
     this.chain = null;
+    this.timer = null;
   }
   async start (options){
     const blockTime = options.blockTime || 10000;
@@ -28,12 +29,15 @@ class ChainManager {
     this.chain = childChain;
     const generateBlock = async () => {
       await this.chain.generateBlock();
-      setTimeout(generateBlock, blockTime);
+      this.timer = setTimeout(generateBlock, blockTime);
     }
-    setTimeout(generateBlock, blockTime);
+    this.timer = setTimeout(generateBlock, blockTime);
     return childChain;
   }
   async stop(){
+    if(this.timer) {
+      clearTimeout(this.timer);
+    }
     await this.chain.gracefulStop();
   }
 
