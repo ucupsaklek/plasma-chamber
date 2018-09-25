@@ -26,8 +26,8 @@ class ChainManager {
     await childChain.setChainID("NKJ23H3213WHKHSAL");
     await childChain.resume();
     this.chain = childChain;
-    const generateBlock = () => {
-      this.chain.generateBlock();
+    const generateBlock = async () => {
+      await this.chain.generateBlock();
       setTimeout(generateBlock, blockTime);
     }
     setTimeout(generateBlock, blockTime);
