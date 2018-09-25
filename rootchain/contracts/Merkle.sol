@@ -12,11 +12,11 @@ library Merkle {
         pure
         returns (bool)
     {
-        require(proof.length <= 512);
         bytes32 proofElement;
         bytes32 computedHash = leaf;
+        uint256 len = (proof.length / 32) * 32;
 
-        for (uint256 i = 32; i <= 512; i += 32) {
+        for (uint256 i = 32; i <= len; i += 32) {
             assembly {
                 proofElement := mload(add(proof, i))
             }

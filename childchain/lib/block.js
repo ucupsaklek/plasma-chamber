@@ -1,4 +1,4 @@
-const MerkleTree = require("merkletree").default;
+const MerkleTree = require('./merkle');
 
 /*
 * Only concerns for latest raw Block
@@ -23,13 +23,27 @@ class Block {
     this.txs.push(tx);
   }
 
+  getTxIndex(tx) {
+    for(var i = 0;i < this.txs.length;i++) {
+      if(Buffer.compare(this.txs[i].hash(), tx.hash()) == 0) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   createTxProof(tx) {
-    const tree = MerkleTree(this.txs.map(tx=>tx.merkleHash()));
-    return tree.proof(tx.merkleHash()).reduce((acc, p) => {return acc + p.parent}, '');
+    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
+    return tree.proof(tx.merkleHash());
+  }
+
+  createRawTxProof(tx) {
+    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
+    return tree.proof(tx.merkleHash());
   }
 
   merkleHash() {
-    const tree = MerkleTree(this.txs.map(tx=>tx.merkleHash()));
+    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
     return tree.root();
   }
 

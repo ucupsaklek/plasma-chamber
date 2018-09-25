@@ -203,7 +203,7 @@ library TxVerification {
   {
     Tx memory transaction = getTx(txBytes);
     address[] memory owners = getTxOwners(transaction);
-    require(checkSigs(owners, sigs, sha256(txBytes)) == true);
+    require(checkSigs(owners, sigs, keccak256(txBytes)) == true);
     if(transaction.label == 0) {
       transfer(transaction);
     }else if(transaction.label == 1) {

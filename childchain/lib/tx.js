@@ -1,5 +1,4 @@
 const RLP = require('rlp');
-const crypto = require('crypto');
 const utils = require('ethereumjs-util');
 
 class Asset {
@@ -63,9 +62,7 @@ class TransactionOutput {
   }
 
   hash() {
-    const hash = crypto.createHash('sha256');
-    hash.update(this.getBytes());
-    return hash.digest('hex');
+    return utils.sha3(this.getBytes());
   }
 
   clone() {
@@ -161,16 +158,12 @@ class Transaction {
   merkleHash() {
     this.checkSigns();
     const txHash = this.hash();
-    const hash = crypto.createHash('sha256');
-    hash.update(new Buffer(txHash, 'hex'));
-    hash.update(Buffer.concat(this.sigs));
-    return hash.digest('hex');
+    const buf = Buffer.concat([new Buffer(txHash, 'hex')].concat(this.sigs));
+    return utils.sha3(buf);
   }
 
   hash() {
-    const hash = crypto.createHash('sha256');
-    hash.update(this.getBytes());
-    return hash.digest('hex');
+    return utils.sha3(this.getBytes());
   }
 
 }

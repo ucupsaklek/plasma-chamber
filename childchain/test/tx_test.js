@@ -39,15 +39,15 @@ describe('Transaction', function() {
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f87c8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080f843b841f0dbd6db93d010881dcecbeb6f5ed182d491d52ebab86cafcf5e2761613cc6ac71631f64d15f7794e20a3dabf4c405b2cf45f74a24f61a17e02c905be6aa5b451c');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f87c8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080f843b841ee7bf9d0f68e1c2a286c8146e43a24a9b1b7b64390751cf19472c52597ce74b8479bfa5b9fce60d5ea4876fe41144d48741c4e47a5c807993e1d8ef0b4ecb3971c');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash(), '652f016e87f16a662143136cec52f31477aa9f39589e4cf0ed53dabbbd206a74');
+      assert.equal(tx.hash().toString('hex'), 'f19587814e8e932897572358b3c0ca6d9cbcc71654b1d312195607aa2b0d1812');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash(), 'c0025b33a868b51e7c69c323b0a6038dd52a37527845c20164012dae1b6bbf46');
+      assert.equal(tx.merkleHash().toString('hex'), '76312c2be5f61150874e02c44126803b6a1df6dad78fbba1ad9ab2a8eb1e1682');
     });
 
   });
