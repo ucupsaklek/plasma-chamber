@@ -37,11 +37,6 @@ class Block {
     return tree.proof(tx.merkleHash());
   }
 
-  createRawTxProof(tx) {
-    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
-    return tree.proof(tx.merkleHash());
-  }
-
   merkleHash() {
     const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
     return tree.root();
