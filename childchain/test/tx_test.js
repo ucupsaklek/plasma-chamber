@@ -24,7 +24,7 @@ describe('Transaction', function() {
   const tx = new Transaction(
     0,    // label
     [0],  // args
-    1     // nonce,
+    1,     // nonce,
     [input],
     [output]
   );
