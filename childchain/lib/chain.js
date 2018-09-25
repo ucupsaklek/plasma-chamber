@@ -84,6 +84,9 @@ class Chain {
    * generate block
    */
   async generateBlock() {
+    if(this.commitmentTxs.length == 0) {
+      return;
+    }
     this.blockHeight++;
     await this.saveBlockHeight(); //async func
 
