@@ -3,19 +3,13 @@ const cors = require('cors');
 var connect = require('connect');
 const jsonParser = require('body-parser').json;
 const app = connect();
-const { apiTx } = require("../../childchain/lib/api");
-
 module.exports.run = childChain => {
   // create a server
   var server = jayson.server({
     // These RPC Method must align with ETH
     eth_sendRawTransaction: (args, cb) => {
-      console.log(args)
-      apiTx(args[0]).then((result) => {
-        cb(null, result);
-      }).catch((err) => {
-        cb(err);
-      })
+      const txHash = childChain.createTx(args[0])
+      cb(null, txHash);
     },
     eth_blockNumber: (args, cb) => {
       // Get latest block for descending manner

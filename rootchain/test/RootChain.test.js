@@ -59,10 +59,10 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         [output]
       );
       let txBytes = tx.getBytes();
-      tx.sign(privKey1)
+      const sign = tx.sign(privKey1)
       const result = await this.rootChain.verifyTransaction(
         utils.bufferToHex(txBytes),
-        utils.bufferToHex(tx.sign),
+        utils.bufferToHex(sign),
         {from: user, gasLimit: 200000});
       assert.equal(result, 0);
     });
@@ -86,10 +86,10 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         [output]
       );
       let txBytes = tx.getBytes();
-      tx.sign(privKey1)
+      const sign = tx.sign(privKey1)
       const result = await this.rootChain.verifyTransaction(
         utils.bufferToHex(txBytes),
-        utils.bufferToHex(tx.sign),
+        utils.bufferToHex(sign),
         {from: user, gasLimit: 200000});
       assert.equal(result, 0);
     });

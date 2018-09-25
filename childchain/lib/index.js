@@ -1,16 +1,20 @@
 const Block = require('./block');
 const Chain = require('./chain');
-const Transaction = require('./tx');
-const { apiTx } = require('./api');
+const {
+  Asset,
+  Transaction,
+  TransactionOutput
+} = require('./tx');
 const ChainManager = require("./chain_manager");
 const chainManager = new ChainManager();
 const MongoDown = require('./db/mongodown');
 
 module.exports = {
+  Asset: Asset,
   Block: Block,
   Chain: Chain,
   Transaction: Transaction,
-  apiTx: apiTx,
+  TransactionOutput: TransactionOutput,
   run: chainManager.start,
   MongoDown: MongoDown
 }

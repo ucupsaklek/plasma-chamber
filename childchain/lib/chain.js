@@ -1,6 +1,4 @@
 const Block = require('./block');
-const { VMHash } = require('../../vm/lib/operations/crypto');
-const { assembleSource, PlasmaStateContract, PlasmaStateValue } = require('../../vm');
 const Snapshot = require('./state/snapshot');
 const {
   Asset,
@@ -67,6 +65,19 @@ class Chain {
       [output]  // outputs
     );
     return depositTx;
+  }
+
+  createTx(txData) {
+    // decode signedTx
+    const tx = Transaction.fromBytes(new Buffer(txData, 'hex'));
+    // check signatures
+    tx.checkSigns();
+    // check state transition
+    // TODO
+    // applyTx to snapshot
+    this.snapshot.applyTx(tx);
+    this.commitmentTxs.push(tx);
+    return tx.hash();
   }
   
   /**

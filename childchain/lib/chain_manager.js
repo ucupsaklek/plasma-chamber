@@ -2,7 +2,6 @@ const Chain = require("./chain");
 const Block = require("./block");
 const Snapshot = require("./state/snapshot")
 const levelup = require('levelup');
-const leveldown = require('leveldown');
 
 class ChainManager {
     constructor(){

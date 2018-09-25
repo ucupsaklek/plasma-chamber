@@ -1,6 +1,4 @@
 const Trie = require('merkle-patricia-tree');
-const levelup = require('levelup');
-const leveldown = require('leveldown');
 
 class Snapshot {
   
