@@ -24,7 +24,7 @@ describe('Transaction', function() {
   const tx = new Transaction(
     0,    // label
     [0],  // args
-    1     // nonce,
+    1,     // nonce,
     [input],
     [output]
   );
@@ -35,19 +35,19 @@ describe('Transaction', function() {
     tx.sigs[0] = sign1;
 
     it('should return bytes', function() {
-      assert.equal(tx.getBytes().toString('hex'), 'f78080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080');
+      assert.equal(tx.getBytes().toString('hex'), 'f8678080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001');
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f87c8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0c080f843b841ee7bf9d0f68e1c2a286c8146e43a24a9b1b7b64390751cf19472c52597ce74b8479bfa5b9fce60d5ea4876fe41144d48741c4e47a5c807993e1d8ef0b4ecb3971c');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f8ac8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001f843b841df7670f1748b9f52832239cf451cb4cd656a41a34796f6b74b759c3ef1fc7d2b246f40187b53169f046681ea3ba158939b2acfaf9ffea973cd1df6741bf735c41b');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash().toString('hex'), 'f19587814e8e932897572358b3c0ca6d9cbcc71654b1d312195607aa2b0d1812');
+      assert.equal(tx.hash().toString('hex'), '535868f6becf1b11a30693cca9ac6e5938ee015c96326bfc6d7b030bf231f823');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash().toString('hex'), '76312c2be5f61150874e02c44126803b6a1df6dad78fbba1ad9ab2a8eb1e1682');
+      assert.equal(tx.merkleHash().toString('hex'), '944cf9830844e27c529eb1478dd2d001667c150ef1df9070fd6377228882ae08');
     });
 
   });
