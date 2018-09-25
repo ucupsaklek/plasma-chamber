@@ -8,15 +8,15 @@ const {
   Transaction,
   TransactionOutput
 } = require('../../childchain/lib/tx');
-const { VMHash } = require('../../vm/lib/operations/crypto');
-const RLP = require('rlp');
 const utils = require('ethereumjs-util');
-const secp256k1 = require('secp256k1')
-const { randomBytes } = require('crypto')
-const merkletree = require("merkletree");
-
 
 contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
+
+  const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
+  const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
+  const testAddress1 = utils.privateToAddress(privKey1);
+  const testAddress2 = utils.privateToAddress(privKey2);
+  const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
   beforeEach(async function () {
     this.rootChain = await RootChain.new();
@@ -38,16 +38,13 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
   });
 
   describe('verifyTransaction', function () {
-    const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
-    const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
-    const testAddress1 = utils.privateToAddress(privKey1);
-    const testAddress2 = utils.privateToAddress(privKey2);
-    const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
     it('should verify transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        new Asset(zeroAddress, 2)
+        new Asset(zeroAddress, 2),
+        [],
+        0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
@@ -73,7 +70,8 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
       const input = new TransactionOutput(
         [testAddress1],
         new Asset(zeroAddress, 2),
-        [testAddress1, testAddress2, 3, 0]
+        [testAddress1, testAddress2, 3, 0],
+        0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
@@ -99,26 +97,25 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
   });
 
   describe('startExit', function () {
-    const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
-    const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
-    const testAddress1 = utils.privateToAddress(privKey1);
-    const testAddress2 = utils.privateToAddress(privKey2);
-    const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
     const blockNumber = 1000;
     const utxoPos = blockNumber * 1000000000;
+    const blockNumber2 = 1000 * 2;
+    const utxoPos2 = blockNumber2 * 1000000000;
 
-    it('should exit user\'s utxo', async function () {
+    it('should exit recipient\'s utxo and failed to challenge invalid tx', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        new Asset(zeroAddress, 2)
+        new Asset(zeroAddress, 2),
+        [],
+        0,0,0
       );
       const output = new TransactionOutput(
-        [user],
+        [recipient],
         new Asset(zeroAddress, 2)
       );
       const tx1 = new Transaction(
         0,
-        [user],
+        [recipient],
         1,
         [input],
         [output]
@@ -163,11 +160,86 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         utils.bufferToHex(txBytes),
         utils.bufferToHex(proof),
         utils.bufferToHex(sign1),
-        {from: user, gasLimit: 100000});
+        {from: recipient, gasLimit: 100000});
       assert(result.hasOwnProperty('receipt'));
 
+      const spentOutput = new TransactionOutput(
+        [testAddress2],
+        new Asset(zeroAddress, 2),
+        [],
+        utxoPos,
+        txindex,
+        0
+      );
+      const output2 = new TransactionOutput(
+        [testAddress1],
+        new Asset(zeroAddress, 2)
+      );
+      const tx21 = new Transaction(
+        0,
+        [testAddress1],
+        3,
+        [spentOutput],
+        [output2]
+      );
+      const tx22 = new Transaction(
+        0,
+        [user],
+        4,
+        [input],
+        [output]
+      );
+      let txBytes21 = tx21.getBytes();
+      const sign21 = tx21.sign(privKey2);
+      tx21.sigs.push(sign21);
+      const sign22 = tx22.sign(privKey1);
+      tx22.sigs.push(sign22);
+      const block2 = new Block(2);
+      block2.appendTx(tx21);
+      block2.appendTx(tx22);
+      const txindex21 = block2.getTxIndex(tx21);
+      assert.equal(txindex21, 0);
+      const rootHash2 = block.merkleHash();
+
+      const submitBlockResult2 = await this.rootChain.submitBlock(
+        owner,
+        utils.bufferToHex(rootHash2),
+        {from: owner, gasLimit: 100000});
+
+      assert.equal(submitBlockResult2.logs[0].event, 'BlockSubmitted');
+
+      const getChildChainResult2 = await this.rootChain.getChildChain(
+        owner,
+        blockNumber2,
+        {from: owner, gasLimit: 100000});
+      assert.equal(getChildChainResult2[0], utils.bufferToHex(rootHash2));
+
+      const getExitResult1 = await this.rootChain.getExit(
+        owner,
+        utxoPos + txindex * 10000,
+        {from: recipient, gasLimit: 100000});
+
+      assert.equal(getExitResult1[0], recipient);
+      assert.equal(getExitResult1[3].toNumber(), 2);
+
+      const proof21 = block2.createTxProof(tx21);
+
+      try {
+        await this.rootChain.challengeExit(
+          owner,
+          utxoPos2 + txindex21 * 10000,
+          0,
+          utils.bufferToHex(txBytes21),
+          utils.bufferToHex(proof21),
+          utils.bufferToHex(sign21),
+          utils.bufferToHex(sign21),
+          {from: recipient, gasLimit: 100000});
+      } catch(e) {
+        assert(e.message.indexOf('revert') >= 0);
+      }
+
     });
-    
+
   });
 
 });

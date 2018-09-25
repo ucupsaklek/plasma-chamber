@@ -28,7 +28,7 @@ class Asset {
 const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
 class TransactionOutput {
-  constructor(owners, value, state) {
+  constructor(owners, value, state, blkNum, txIndex, oIndex) {
     // addresses, tx need their signatures
     this.owners = owners || [];
     // values
@@ -37,15 +37,34 @@ class TransactionOutput {
     this.contract = 0;
     // state in bytes
     this.state = state || [];
+    // block number
+    this.blkNum = blkNum;
+    // transaction index
+    this.txIndex = txIndex;
+    // outputs index
+    this.oIndex = oIndex;
   }
 
   getTuple() {
-    return [
-      this.owners,
-      this.value.getTuple(),
-      this.contract,
-      this.state
-    ]
+    if(this.blkNum != undefined && this.txIndex != undefined && this.oIndex != undefined) {
+      return [
+        this.owners,
+        this.value.getTuple(),
+        this.contract,
+        this.state,
+        this.blkNum,
+        this.txIndex,
+        this.oIndex
+      ]
+    }else{
+      return [
+        this.owners,
+        this.value.getTuple(),
+        this.contract,
+        this.state
+      ]
+
+    }
   }
 
   getBytes() {
@@ -57,7 +76,9 @@ class TransactionOutput {
       decoded[0],
       Asset.fromTuple(decoded[1]),
       decoded[3],
-      decoded[4]
+      decoded[4], // blkNum
+      decoded[5], // txIndex
+      decoded[6]  // oIndex
     );
   }
 
@@ -69,7 +90,10 @@ class TransactionOutput {
     return new TransactionOutput(
       [].concat(this.owners),
       this.value.clone(),
-      [].concat(this.state)
+      [].concat(this.state),
+      this.blkNum,
+      this.txIndex,
+      this.oIndex
     )
   }
 
