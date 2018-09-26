@@ -1,8 +1,8 @@
 # Plasma Chamber
 
-[![Build Status](https://travis-ci.org/cryptoeconomicslab/ethstacks.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/ethstacks)
+[![Build Status](https://travis-ci.org/cryptoeconomicslab/plasma-chamber.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/plasma-chamber)
 
-[![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/ethstacks/badge.svg)](https://coveralls.io/github/cryptoeconomicslab/ethstacks)
+[![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/plasma-chamber/badge.svg?branch=master)](https://coveralls.io/github/cryptoeconomicslab/plasma-chamber?branch=master)
 
 ## Overview
 - Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
