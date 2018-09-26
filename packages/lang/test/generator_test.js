@@ -8,7 +8,7 @@ const compiler = require('../lib/compiler');
 
 describe('generator', function() {
   it('should parse and generate', function(done) {
-    const src = fs.readFileSync(path.join(__dirname, '../examples/tictoctoe.chr'));
+    const src = fs.readFileSync(path.join(__dirname, '../examples/transfer.chr'));
     const solTemplate = fs.readFileSync(path.join(__dirname, '../lib/sol.ejs'));
     const result = compiler(src.toString());
     const template = ejs.compile(solTemplate.toString(), {});

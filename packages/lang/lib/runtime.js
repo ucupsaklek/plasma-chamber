@@ -16,9 +16,9 @@ class Runtime {
     this.inputNames = fact.head.args[0].args.map(a => {
       return a.value;
     });
-    this.argNames = fact.head.args[1].args.map(a => {
+    this.argNames = fact.head.args[1].args ? fact.head.args[1].args.map(a => {
       return a.value;
-    });
+    }) : [];
     this.outputNames = fact.head.args[2].args.map(a => {
       return a.value;
     });
@@ -37,7 +37,11 @@ class Runtime {
         const owner = args[0].value;
         // txo
         const txo = args[1].value;
-        if(this.isVariable(owner)) {
+        if(this.isVariable(owner) && this.isVariable(txo)) {
+          let txoVal = this.resolveValue(txo)
+          txoVal.owners = [this.resolveValue(owner)];
+          this.substitution(txo, txoVal);
+        }else if(this.isVariable(owner)) {
           this.substitution(owner, this.resolveValue(txo).owners[0]);
         } else if(this.isVariable(txo)) {
           let txoVal = this.resolveValue(txo)
@@ -56,7 +60,7 @@ class Runtime {
   }
 
   isVariable(name) {
-    return this.outputNames.indexOf(name) >= 0;
+    return (this.inputNames.indexOf(name) < 0) && (this.argNames.indexOf(name) < 0);
   }
   
   resolveValue(name) {
@@ -68,6 +72,9 @@ class Runtime {
     }
     if(this.outputNames.indexOf(name) >= 0) {
       return this.result[name];
+    }
+    if(this.variable.hasOwnProperty(name)) {
+      return this.variable[name];
     }
     throw new Error('unknown value');
   }

@@ -1,0 +1,6 @@
+
+exchange([input1, input2], [], [output1, output2]) :-
+  own(owner1, input1),
+  own(owner1, output2),
+  own(owner2, input2),
+  own(owner2, output1).

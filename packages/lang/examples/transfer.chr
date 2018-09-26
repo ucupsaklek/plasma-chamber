@@ -1,0 +1,3 @@
+transfer([input], [newOwner], [output]) :-
+  isAddress(newOwner),
+  own(newOwner, output).
