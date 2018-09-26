@@ -271,10 +271,10 @@ contract RootChain {
       require(isOwner);
 
       var childBlock = childChains[_chain].blocks[blknum];
-      bytes32 merkleHash = sha256(sha256(_txBytes), ByteUtils.slice(_sigs, 0, 64));
+      bytes32 merkleHash = keccak256(keccak256(_txBytes), ByteUtils.slice(_sigs, 0, 65 * exitingTx.inputs.length));
       // need signature for transaction
-      verifyTransaction(_txBytes, _sigs);
       require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
+      verifyTransaction(_txBytes, _sigs);
 
       addExitToQueue(
         _chain,
@@ -304,12 +304,16 @@ contract RootChain {
     )
       public
     {
-      uint256 eUtxoPos = _txBytes.getUtxoPos(_eUtxoIndex);
+      var exitingTx = TxVerification.getTx(_txBytes);
+      uint256 eUtxoPos = exitingTx.inputs[_eUtxoIndex].blkNum + exitingTx.inputs[_eUtxoIndex].txIndex + exitingTx.inputs[_eUtxoIndex].oIndex;
       uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
       bytes32 root = childChains[_chain].blocks[_cUtxoPos / 1000000000].root;
       var txHash = keccak256(_txBytes);
+      for(uint i = 0;i < exitingTx.inputs[_eUtxoIndex].owners.length;i++) {
+        require(exitingTx.inputs[_eUtxoIndex].owners[i] == childChains[_chain].exits[eUtxoPos].owners[i]);
+      }
       
-      var confirmationHash = keccak256(txHash, root);
+      // var confirmationHash = keccak256(txHash, root);
       var merkleHash = keccak256(txHash, _sigs);
       //address owner = childChains[_chain].exits[eUtxoPos].exitor;
 
@@ -417,11 +421,12 @@ contract RootChain {
     function getExit(address _chain, uint256 _utxoPos)
         public
         view
-        returns (address, address, uint256)
+        returns (address, address[], address, uint256)
     {
       ChildChain childChain = childChains[_chain];
       return (
         childChain.exits[_utxoPos].exitor,
+        childChain.exits[_utxoPos].owners,
         childChain.exits[_utxoPos].value.assetId,
         childChain.exits[_utxoPos].value.amount
       );

@@ -25,10 +25,19 @@ library TxVerification {
     bytes stateBytes;
   }
 
+  struct TxInput {
+    address[] owners;
+    PlasmaValue value;
+    RLP.RLPItem[] state;
+    uint256 blkNum;
+    uint256 txIndex;
+    uint256 oIndex;
+  }
+
   struct Tx {
     uint256 label;
     RLP.RLPItem[] args;
-    TxState[] inputs;
+    TxInput[] inputs;
     TxState[] outputs;
   }
 
@@ -81,6 +90,32 @@ library TxVerification {
     return PlasmaValue({
       assetId: RLP.toAddress(valueList[0]),
       amount: RLP.toUint(valueList[1])
+    });
+  }
+
+  /**
+   * @dev tx input bytes to TxInput
+   * @param txState txState
+   */
+  function getTxInput(RLP.RLPItem memory txState)
+    internal
+    pure
+    returns (TxInput)
+  {
+    RLP.RLPItem[] memory txStateList = RLP.toList(txState);
+    RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
+    address[] memory owners = new address[](ownerList.length);
+    uint i = 0;
+    for (i = 0; i < ownerList.length; i++) {
+      owners[i] = RLP.toAddress(ownerList[i]);
+    }
+    return TxInput({
+      owners: owners,
+      value: getPlasmaValue(txStateList[1]),
+      state: RLP.toList(txStateList[3]),
+      blkNum: RLP.toUint(txStateList[4]),
+      txIndex: RLP.toUint(txStateList[5]),
+      oIndex: RLP.toUint(txStateList[6])
     });
   }
 
@@ -139,16 +174,15 @@ library TxVerification {
     var txList = RLP.toList(RLP.toRlpItem(txByte));
     RLP.RLPItem[] memory inputList = RLP.toList(txList[3]);
     RLP.RLPItem[] memory outputList = RLP.toList(txList[4]);
-    TxState[] memory inputs = new TxState[](inputList.length);
+    TxInput[] memory inputs = new TxInput[](inputList.length);
     TxState[] memory outputs = new TxState[](outputList.length);
     for (uint i = 0; i < inputList.length; i++) {
-      inputs[i] = getTxState(inputList[i]);
+      inputs[i] = getTxInput(inputList[i]);
     }
     for (uint j = 0; j < outputList.length; j++) {
       outputs[j] = getTxState(outputList[j]);
     }
     return Tx({
-//      id: ByteUtils.bytesToBytes32(RLP.toBytes(txList[0])),
       label: RLP.toUint(txList[1]),
       args: RLP.toList(txList[2]),
       inputs: inputs,
@@ -203,7 +237,7 @@ library TxVerification {
   {
     Tx memory transaction = getTx(txBytes);
     address[] memory owners = getTxOwners(transaction);
-    require(checkSigs(owners, sigs, sha256(txBytes)) == true);
+    require(checkSigs(owners, sigs, keccak256(txBytes)) == true);
     if(transaction.label == 0) {
       transfer(transaction);
     }else if(transaction.label == 1) {
@@ -231,7 +265,7 @@ library TxVerification {
     internal
     pure
   {
-    TxState memory input = transaction.inputs[0];
+    TxInput memory input = transaction.inputs[0];
     TxState memory output = transaction.outputs[0];
     var appState = getAppStateTictactoe(input.state);
     var nextAppState = getAppStateTictactoe(output.state);
@@ -331,8 +365,8 @@ library TxVerification {
     internal
     pure
   {
-    TxState memory preState1 = transaction.inputs[0];
-    TxState memory preState2 = transaction.inputs[1];
+    TxInput memory preState1 = transaction.inputs[0];
+    TxInput memory preState2 = transaction.inputs[1];
     TxState memory afterState1 = transaction.outputs[0];
     TxState memory afterState2 = transaction.outputs[1];
     AppStateStdOrderBook memory orderbookState = getAppStateStdOrderBook(preState1.state);
