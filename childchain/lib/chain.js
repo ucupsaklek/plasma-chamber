@@ -84,17 +84,21 @@ class Chain {
    * generate block
    */
   async generateBlock() {
+    if(this.commitmentTxs.length == 0) {
+      return;
+    }
+    const commitmentTxs = [].concat(this.commitmentTxs);
+    this.commitmentTxs = []
     this.blockHeight++;
-    await this.saveBlockHeight(); //async func
+    await this.saveCommitmentTxs();
+    await this.saveBlockHeight();
 
     const newBlock = new Block(this.blockHeight);
-    this.commitmentTxs
+    commitmentTxs
       .filter((tx) => !!this.snapshot.applyTx(tx) )
       .forEach((tx) => newBlock.appendTx(tx) );
     await this.saveBlock(newBlock); //async func
 
-    this.commitmentTxs = []
-    await this.saveCommitmentTxs();
 
     this.emit("BlockGenerated", { payload: newBlock })
   }

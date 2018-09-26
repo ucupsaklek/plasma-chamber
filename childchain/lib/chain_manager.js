@@ -6,8 +6,10 @@ const levelup = require('levelup');
 class ChainManager {
   constructor(){
     this.chain = null;
+    this.timer = null;
   }
   async start (options){
+    const blockTime = options.blockTime || 10000;
     const blockDB = levelup(options.blockdb);
     const metaDB = levelup(options.metadb);
     const snapshotDB = levelup(options.snapshotdb);
@@ -25,9 +27,17 @@ class ChainManager {
     await childChain.setChainID("NKJ23H3213WHKHSAL");
     await childChain.resume();
     this.chain = childChain;
+    const generateBlock = async () => {
+      await this.chain.generateBlock();
+      this.timer = setTimeout(generateBlock, blockTime);
+    }
+    this.timer = setTimeout(generateBlock, blockTime);
     return childChain;
   }
   async stop(){
+    if(this.timer) {
+      clearTimeout(this.timer);
+    }
     await this.chain.gracefulStop();
   }
 
