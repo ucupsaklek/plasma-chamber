@@ -60,4 +60,26 @@ describe('runtime', function() {
     done()
   });
 
+  it('should failed to run exchange', function(done) {
+    const input1 = new TransactionOutput(
+      [zeroAddress],
+      new Asset(asset1Address, 2),
+      [asset2Address, 2]
+    );
+    const input2 = new TransactionOutput(
+      [oneAddress],
+      new Asset(asset2Address, 5)
+    );
+
+    const src = fs.readFileSync(path.join(__dirname, '../examples/exchange.chr'));
+    const runtime = new Runtime(compiler(src.toString()));
+    try {
+      const outputs = runtime.query('exchange', [], [input1, input2]);
+      assert.equal(outputs, undefined);
+    } catch (e) {
+      assert.equal(e.message, 'not match at hasAsset');
+    }
+    done()
+  });
+
 });

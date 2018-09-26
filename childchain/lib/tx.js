@@ -23,6 +23,14 @@ class Asset {
     return new Asset(this.assetId, this.amount);
   }
 
+  compare(asset) {
+    return (this.assetId == asset.assetId && this.amount == asset.amount);
+  }
+
+  static empty() {
+    return new Asset(null, 0);
+  }
+
 }
 
 const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
@@ -94,6 +102,14 @@ class TransactionOutput {
       this.blkNum,
       this.txIndex,
       this.oIndex
+    )
+  }
+
+  static empty() {
+    return new TransactionOutput(
+      [], // owners
+      Asset.empty(),
+      []
     )
   }
 
