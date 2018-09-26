@@ -1,4 +1,4 @@
-# ethstacks
+# Plasma Chamber
 
 [![Build Status](https://travis-ci.org/cryptoeconomicslab/ethstacks.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/ethstacks)
 
