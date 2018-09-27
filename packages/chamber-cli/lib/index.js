@@ -38,4 +38,23 @@ program
     console.log(result);
   })
 
+program
+  .command('deposit')
+  .action(async function(options) {
+    const result = await admin.deposit(operator, 100, operator);
+    console.log(result);
+  })
+
+program
+  .command('submit')
+  .option('-r, --root <root>', 'tx merkle root', '00')
+  .action(async function(options) {
+    const result = await admin.submitBlock(
+      operator,
+      new Buffer(options.root, 'hex'),
+      operator
+    );
+    console.log(result);
+  })
+
 program.parse(process.argv)

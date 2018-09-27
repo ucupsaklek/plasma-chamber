@@ -8,7 +8,7 @@ class Admin {
   }
 
   addChain(sender) {
-    return this.rootChain.methods.addChain().send({from: sender, gas: 200000})
+    return this.rootChain.methods.addChain().send({from: sender, gas: 600000});
   }
 
   getChildChain(childId, blockNumber, sender) {
@@ -16,7 +16,19 @@ class Admin {
       childId,
       blockNumber
     ).send({from: sender, gas: 200000})
+  }
 
+  deposit(childId, amount, sender) {
+    return this.rootChain.methods.deposit(
+      childId
+    ).send({from: sender, value: amount, gas: 200000})
+  }
+
+  submitBlock(childId, merkleRoot, sender) {
+    return this.rootChain.methods.submitBlock(
+      childId,
+      merkleRoot
+    ).send({from: sender, gas: 200000})
   }
 
 }
