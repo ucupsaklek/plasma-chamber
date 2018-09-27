@@ -32,7 +32,7 @@ module.exports.run = childChain => {
      * @param address _chain The index of child chain
      * @param bytes32 _root The merkle root of a child chain transactions.
      */
-    // rootchain.methods.submitBlock(childChain.id, newBlock.txs_root);
+    // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
   })
   // rootChain.events.BlockSubmitted((e) => {
   //   console.log(e);

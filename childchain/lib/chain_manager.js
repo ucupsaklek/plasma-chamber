@@ -31,7 +31,9 @@ class ChainManager {
       await this.chain.generateBlock();
       this.timer = setTimeout(generateBlock, blockTime);
     }
-    this.timer = setTimeout(generateBlock, blockTime);
+    if(blockTime > 0) {
+      this.timer = setTimeout(generateBlock, blockTime);
+    }
     return childChain;
   }
   async stop(){
