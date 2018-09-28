@@ -29,6 +29,7 @@ library TxVerification {
     address[] owners;
     PlasmaValue value;
     RLP.RLPItem[] state;
+    bytes stateBytes;
     uint256 blkNum;
     uint256 txIndex;
     uint256 oIndex;
@@ -113,6 +114,7 @@ library TxVerification {
       owners: owners,
       value: getPlasmaValue(txStateList[1]),
       state: RLP.toList(txStateList[3]),
+      stateBytes: RLP.toBytes(txStateList[3]),
       blkNum: RLP.toUint(txStateList[4]),
       txIndex: RLP.toUint(txStateList[5]),
       oIndex: RLP.toUint(txStateList[6])
