@@ -304,14 +304,15 @@ contract RootChain {
     )
       public
     {
-      var exitingTx = TxVerification.getTx(_txBytes);
-      uint256 eUtxoPos = exitingTx.inputs[_eUtxoIndex].blkNum + exitingTx.inputs[_eUtxoIndex].txIndex + exitingTx.inputs[_eUtxoIndex].oIndex;
+      var challengeTx = TxVerification.getTx(_txBytes);
+      uint256 eUtxoPos = challengeTx.inputs[_eUtxoIndex].blkNum + challengeTx.inputs[_eUtxoIndex].txIndex + exitingTx.inputs[_eUtxoIndex].oIndex;
       uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
       bytes32 root = childChains[_chain].blocks[_cUtxoPos / 1000000000].root;
       var txHash = keccak256(_txBytes);
-      for(uint i = 0;i < exitingTx.inputs[_eUtxoIndex].owners.length;i++) {
-        require(exitingTx.inputs[_eUtxoIndex].owners[i] == childChains[_chain].exits[eUtxoPos].owners[i]);
+      for(uint i = 0;i < challengeTx.inputs[_eUtxoIndex].owners.length;i++) {
+        require(challengeTx.inputs[_eUtxoIndex].owners[i] == childChains[_chain].exits[eUtxoPos].owners[i]);
       }
+      // TODO: require(keccak256(challengeTx) == keccak256(childChains[_chain].exits[eUtxoPos]))
       
       // var confirmationHash = keccak256(txHash, root);
       var merkleHash = keccak256(txHash, _sigs);
