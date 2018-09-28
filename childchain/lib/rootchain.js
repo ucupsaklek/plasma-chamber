@@ -1,6 +1,6 @@
 const RootChainAbi = require('../assets/RootChain.json').abi;
 
-class Admin {
+class RootChain {
 
   constructor(web3, address) {
     this.web3 = web3;
@@ -31,6 +31,23 @@ class Admin {
     ).send({from: sender, gas: 200000})
   }
 
+  startExit(
+    childId,
+    utxoPos,
+    txBytes,
+    proof,
+    sigs,
+    sender
+  ) {
+    return this.rootChain.methods.startExit(
+      childId,
+      utxoPos,
+      txBytes,
+      proof,
+      sigs
+    ).send({from: sender, gas: 200000})
+  }
+
 }
 
-module.exports = Admin;
+module.exports = RootChain;

@@ -8,10 +8,10 @@ const {
 const ChainManager = require("./chain_manager");
 const chainManager = new ChainManager();
 const MongoDown = require('./db/mongodown');
-const Admin = require('./admin');
+const RootChain = require('./rootchain');
 
 module.exports = {
-  Admin: Admin,
+  RootChain: RootChain,
   Asset: Asset,
   Block: Block,
   Chain: Chain,
