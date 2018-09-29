@@ -194,7 +194,7 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
       assert.equal(getExitResult[0], recipient);
       assert.equal(getExitResult[3].toNumber(), 2);
 
-      increaseTime(14 * 24 * 60 * 60);
+      increaseTime(15 * 24 * 60 * 60);
       await this.rootChain.finalizeExits(
         owner,
         utils.bufferToHex(zeroAddress),
