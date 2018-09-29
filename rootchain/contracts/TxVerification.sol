@@ -114,7 +114,7 @@ library TxVerification {
       owners: owners,
       value: getPlasmaValue(txStateList[1]),
       state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.toBytes(txStateList[3]),
+      stateBytes: RLP.listAsBytes(txStateList[3]),
       blkNum: RLP.toUint(txStateList[4]),
       txIndex: RLP.toUint(txStateList[5]),
       oIndex: RLP.toUint(txStateList[6])
@@ -141,7 +141,7 @@ library TxVerification {
       owners: owners,
       value: getPlasmaValue(txStateList[1]),
       state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.toBytes(txStateList[3])
+      stateBytes: RLP.listAsBytes(txStateList[3])
     });
   }
 

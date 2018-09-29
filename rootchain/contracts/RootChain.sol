@@ -419,14 +419,15 @@ contract RootChain {
     function getExit(address _chain, uint256 _utxoPos)
         public
         view
-        returns (address, address[], address, uint256)
+        returns (address, address[], address, uint256, bytes)
     {
       ChildChain childChain = childChains[_chain];
       return (
         childChain.exits[_utxoPos].exitor,
         childChain.exits[_utxoPos].owners,
         childChain.exits[_utxoPos].value.assetId,
-        childChain.exits[_utxoPos].value.amount
+        childChain.exits[_utxoPos].value.amount,
+        childChain.exits[_utxoPos].state
       );
     }
 

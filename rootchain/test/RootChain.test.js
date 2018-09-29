@@ -190,7 +190,7 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         owner,
         utxoPos + block1.getTxIndex(tx11) * 10000 + 0,
         {from: recipient, gasLimit: 100000});
-
+      
       assert.equal(getExitResult[0], recipient);
       assert.equal(getExitResult[3].toNumber(), 2);
 
@@ -233,14 +233,15 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
     const input = new TransactionOutput(
       [sender],
       new Asset(zeroAddress, amount),
-      [],
+      [0],
       blockNumber || 0,
       txIndex || 0,
       0
     );
     const output = new TransactionOutput(
       [receiver],
-      new Asset(zeroAddress, amount)
+      new Asset(zeroAddress, amount),
+      [0]
     );
     return new Transaction(
       0,
