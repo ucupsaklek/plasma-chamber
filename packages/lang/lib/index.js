@@ -1,13 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
-const peg = require('pegjs');
+const compiler = require('./compiler');
 
 const src = fs.readFileSync(path.join(__dirname, '../examples/tictoctoe.chr'));
 const solTemplate = fs.readFileSync(path.join(__dirname, './sol.ejs'));
-const psrc = fs.readFileSync(path.join(__dirname, './chamber.peg'));
-const parser = peg.generate(psrc.toString());
-const result = parser.parse(src.toString());
+
+const result = compiler(src.toString());
 console.log(JSON.stringify(result));
 
 const template = ejs.compile(solTemplate.toString(), {});
