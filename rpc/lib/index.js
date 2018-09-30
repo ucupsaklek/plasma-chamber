@@ -6,6 +6,10 @@ const app = connect();
 module.exports.run = childChain => {
   // create a server
   var server = jayson.server({
+    net_version: (args, cb) => {
+      console.log('net_version', args);
+      cb(null, 10);
+    },
     // These RPC Method must align with ETH
     eth_sendRawTransaction: (args, cb) => {
       const txHash = childChain.createTx(args[0])
@@ -15,6 +19,10 @@ module.exports.run = childChain => {
       // Get latest block for descending manner
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_blocknumber
       cb(null, childChain.blockHeight)
+    },
+    eth_getBlockByNumber: (args, cb) => {
+      console.log('eth_getBlockByNumber', args);
+      cb(null, childChain.block);
     },
     eth_getBlockTransactionCountByNumber: (args, cb) => {
       // Get block info for them
