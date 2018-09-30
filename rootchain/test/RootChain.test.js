@@ -200,12 +200,12 @@ contract('RootChain', function ([user, owner, recipient, anotherAccount]) {
         utils.bufferToHex(zeroAddress),
         {from: recipient, gasLimit: 100000});
       const txindex = block1.getTxIndex(tx12);
-      const getRxitResult = await this.rootChain.getExit(
+      const getExitResultAfter = await this.rootChain.getExit(
         owner,
         utxoPos + txindex * 10000 + 0,
         {from: user, gasLimit: 100000});
-      assert.equal(getRxitResult[0], '0x0000000000000000000000000000000000000000');
-      assert.equal(getRxitResult[3].toNumber(), 0);
+      assert.equal(getExitResultAfter[0], '0x0000000000000000000000000000000000000000');
+      assert.equal(getExitResultAfter[3].toNumber(), 0);
     });
 
     it('should challengeExit', async function () {
