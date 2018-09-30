@@ -11,9 +11,7 @@
 - Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
 - Not only for value transfer, but also for some simple application.
 - Child chain is UTXO model and they have state.
-- State transition can be verified in child chain and root chain.
 - Chamber language generates possible state transition at the childchain. And it also generates tx verifier on the rootchain.
-- 
 
 ## Folder Structure
 
