@@ -304,14 +304,12 @@ contract RootChain {
     )
       public
     {
-      var exitingTx = TxVerification.getTx(_txBytes);
-      uint256 eUtxoPos = exitingTx.inputs[_eUtxoIndex].blkNum + exitingTx.inputs[_eUtxoIndex].txIndex + exitingTx.inputs[_eUtxoIndex].oIndex;
+      var challengeTx = TxVerification.getTx(_txBytes);
+      uint256 eUtxoPos = challengeTx.inputs[_eUtxoIndex].blkNum + challengeTx.inputs[_eUtxoIndex].txIndex + challengeTx.inputs[_eUtxoIndex].oIndex;
       uint256 txindex = (_cUtxoPos % 1000000000) / 10000;
       bytes32 root = childChains[_chain].blocks[_cUtxoPos / 1000000000].root;
       var txHash = keccak256(_txBytes);
-      for(uint i = 0;i < exitingTx.inputs[_eUtxoIndex].owners.length;i++) {
-        require(exitingTx.inputs[_eUtxoIndex].owners[i] == childChains[_chain].exits[eUtxoPos].owners[i]);
-      }
+      require(keccak256TxInput(challengeTx.inputs[_eUtxoIndex]) == keccak256Exit(childChains[_chain].exits[eUtxoPos]));
       
       // var confirmationHash = keccak256(txHash, root);
       var merkleHash = keccak256(txHash, _sigs);
@@ -421,14 +419,15 @@ contract RootChain {
     function getExit(address _chain, uint256 _utxoPos)
         public
         view
-        returns (address, address[], address, uint256)
+        returns (address, address[], address, uint256, bytes)
     {
       ChildChain childChain = childChains[_chain];
       return (
         childChain.exits[_utxoPos].exitor,
         childChain.exits[_utxoPos].owners,
         childChain.exits[_utxoPos].value.assetId,
-        childChain.exits[_utxoPos].value.amount
+        childChain.exits[_utxoPos].value.amount,
+        childChain.exits[_utxoPos].state
       );
     }
 
@@ -481,6 +480,22 @@ contract RootChain {
     pure
   {
     TxVerification.verifyTransaction(txBytes, sigs);
+  }
+
+  function keccak256Exit(Exit exit)
+    private
+    pure
+    returns (bytes32)
+  {
+    return keccak256(exit.owners, exit.value.assetId, exit.value.amount, exit.state);
+  }
+
+  function keccak256TxInput(TxVerification.TxInput input)
+    private
+    pure
+    returns (bytes32)
+  {
+    return keccak256(input.owners, input.value.assetId, input.value.amount, input.stateBytes);
   }
 
 }

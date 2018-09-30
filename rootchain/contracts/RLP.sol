@@ -191,6 +191,15 @@ library RLP {
         return result;
     }
 
+    function listAsBytes(RLPItem memory item) internal pure returns (bytes) {
+        bytes memory result = new bytes(item.len);
+        uint destPtr;
+        assembly {
+            destPtr := add(0x20, result)
+        }
+        copy(item.memPtr, destPtr, item.len);
+        return result;
+    }
 
     /*
     * @param src Pointer to source
