@@ -27,3 +27,33 @@
 - Clients' must see his own state on childchain via his local proof
 - Watcher will do some more complehensive watching but must be decentralized. See Tesuji Plasma.
 
+## Development
+
+### Install
+
+```
+git clone git@github.com:cryptoeconomicslab/plasma-chamber.git
+yarn install
+```
+
+### Test
+
+Run all tests.
+
+```
+yarn all-run test
+```
+
+### Test run
+
+
+Launch child chain.
+
+```
+yarn run start
+```
+
+You can use child chain's JSON RPC from a sample app.
+
+https://github.com/cryptoeconomicslab/plasma-sample-app
+
