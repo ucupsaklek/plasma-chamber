@@ -40,7 +40,7 @@ yarn install
 Run all tests.
 
 ```
-yarn all-run test
+yarn run-all test
 ```
 
 ### Test run
