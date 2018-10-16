@@ -52,10 +52,10 @@ class Chain {
   }
   
   createDepositTx(depositor, amount, depositBlock) {
-    const wethTokenAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
+    const wethCoin = 0;
     const output = new TransactionOutput(
       [depositor],
-      new Asset(wethTokenAddress, amount)
+      [wethCoin]
     );
     const depositTx = new Transaction(
       0,        // label

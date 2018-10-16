@@ -1,45 +1,12 @@
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
 
-class Asset {
-  constructor(assetId, amount) {
-    this.assetId = assetId;
-    this.amount = amount;
-  }
-
-  getTuple() {
-    return [this.assetId, this.amount];
-  }
-
-  getBytes() {
-    return RLP.encode(this.getTuple());
-  }
-
-  static fromTuple(decoded) {
-    return new Asset(decoded[0], decoded[1]);
-  }
-
-  clone() {
-    return new Asset(this.assetId, this.amount);
-  }
-
-  compare(asset) {
-    return (this.assetId == asset.assetId && this.amount == asset.amount);
-  }
-
-  static empty() {
-    return new Asset(null, 0);
-  }
-
-}
-
-const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
 
 class TransactionOutput {
-  constructor(owners, value, state, blkNum, txIndex, oIndex) {
+  constructor(owners, value, state, blkNum) {
     // addresses, tx need their signatures
     this.owners = owners || [];
-    // values
+    // values are uid list
     this.value = value;
     // contract address include verification function, 20byte
     this.contract = 0;
@@ -47,27 +14,21 @@ class TransactionOutput {
     this.state = state || [];
     // block number
     this.blkNum = blkNum;
-    // transaction index
-    this.txIndex = txIndex;
-    // outputs index
-    this.oIndex = oIndex;
   }
 
   getTuple() {
-    if(this.blkNum != undefined && this.txIndex != undefined && this.oIndex != undefined) {
+    if(this.blkNum != undefined) {
       return [
         this.owners,
-        this.value.getTuple(),
+        this.value,
         this.contract,
         this.state,
-        this.blkNum,
-        this.txIndex,
-        this.oIndex
+        this.blkNum
       ]
     }else{
       return [
         this.owners,
-        this.value.getTuple(),
+        this.value,
         this.contract,
         this.state
       ]
@@ -82,11 +43,9 @@ class TransactionOutput {
   static fromTuple(decoded) {
     return new TransactionOutput(
       decoded[0],
-      Asset.fromTuple(decoded[1]),
+      decoded[1],
       decoded[3],
-      decoded[4], // blkNum
-      decoded[5], // txIndex
-      decoded[6]  // oIndex
+      decoded[4] // blkNum
     );
   }
 
@@ -97,18 +56,16 @@ class TransactionOutput {
   clone() {
     return new TransactionOutput(
       [].concat(this.owners),
-      this.value.clone(),
+      [].concat(this.value),
       [].concat(this.state),
-      this.blkNum,
-      this.txIndex,
-      this.oIndex
+      this.blkNum
     )
   }
 
   static empty() {
     return new TransactionOutput(
       [], // owners
-      Asset.empty(),
+      [],
       []
     )
   }
@@ -209,7 +166,6 @@ class Transaction {
 }
 
 module.exports = {
-  Asset,
   Transaction,
   TransactionOutput
 }

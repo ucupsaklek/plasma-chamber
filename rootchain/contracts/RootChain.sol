@@ -26,9 +26,8 @@ contract RootChain {
     event Deposit(
       address chainIndex,
       address indexed depositor,
-      uint256 indexed depositBlock,
-      address token,
-      uint256 amount
+      uint256 amount,
+      uint256 uid
     );
 
     event DepositFromShelter(
@@ -74,10 +73,14 @@ contract RootChain {
     Shelter internal shelter;
 
     struct Exit {
+      bool hasValue;
+      uint exitTime;
+      uint exitTxBlkNum;
+      bytes exitTx;
+      uint txBeforeExitTxBlkNum;
+      bytes txBeforeExitTx;
       address exitor;
       address[] owners;
-      TxVerification.PlasmaValue value;
-      bytes state;
     }
 
     struct ChildBlock {
@@ -88,6 +91,7 @@ contract RootChain {
     struct ChildChain {
       bool initialized;
       address operator;
+      uint256 depositCount;
       mapping (uint256 => ChildBlock) blocks;
       uint256 currentChildBlock;
       uint256 currentDepositBlock;
@@ -182,20 +186,12 @@ contract RootChain {
         public
         payable
     {
-        ChildChain childChain = childChains[_chain];
-        // Only allow up to CHILD_BLOCK_INTERVAL deposits per child block.
-        require(childChain.currentDepositBlock < CHILD_BLOCK_INTERVAL);
-
-        bytes32 root = keccak256(msg.sender, address(0), msg.value);
-        uint256 depositBlock = getDepositBlock(_chain);
-        childChain.blocks[depositBlock] = ChildBlock({
-            root: root,
-            timestamp: block.timestamp
-        });
-        childChain.currentDepositBlock = childChain.currentDepositBlock.add(1);
-        childChain.weights[address(0)] += msg.value;
-
-        emit Deposit(_chain, msg.sender, depositBlock, address(0), msg.value);
+      uint256 amount = msg.value;
+      ChildChain childChain = childChains[_chain];
+      uint uid = uint256(keccak256(address(0), msg.sender, childChain.depositCount));
+      childChain.wallet[uid] = amount;
+      childChain.depositCount += 1;
+      emit Deposit(_chain, msg.sender, amount, uid);
     }
 
     /**
@@ -206,38 +202,33 @@ contract RootChain {
      */
     function startDepositExit(
       address _chain,
-      uint256 _depositPos,
-      address _token,
-      uint256 _amount
+      uint256 blknum,
+      uint256 uid
     )
       public
     {
       ChildChain childChain = childChains[_chain];
-      uint256 blknum = _depositPos / 1000000000;
 
       // Check that the given UTXO is a deposit.
       require(blknum % CHILD_BLOCK_INTERVAL != 0);
 
       // Validate the given owner and amount.
       bytes32 root = childChain.blocks[blknum].root;
-      bytes32 depositHash = keccak256(msg.sender, _token, _amount);
+      bytes32 depositHash = keccak256(msg.sender, uid);
       require(root == depositHash);
       address[] memory owners = new address[](1);
       owners[0] = msg.sender;
       addExitToQueue(
         _chain,
-        _depositPos,
+        uid,
         msg.sender,
         TxVerification.TxState({
           owners: owners,
-          value: TxVerification.PlasmaValue({
-            assetId: _token,
-            amount: _amount
-          }),
           state: RLP.toList(RLP.toRlpItem(hex"c100")),
           stateBytes: hex"c100"
         }),
-        childChain.blocks[blknum].timestamp
+        childChain.blocks[blknum].timestamp,
+        blknum
       );
     }
 
@@ -250,18 +241,16 @@ contract RootChain {
      */
     function startExit(
       address _chain,
-      uint256 _utxoPos,
+      uint256 _blkNum,
+      uint256 _uid,
       bytes _txBytes,
       bytes _proof,
       bytes _sigs
     )
       public
     {
-      uint256 blknum = _utxoPos / 1000000000;
-      uint256 txindex = (_utxoPos % 1000000000) / 10000;
-      uint256 oindex = _utxoPos - blknum * 1000000000 - txindex * 10000; 
       var exitingTx = TxVerification.getTx(_txBytes);
-      var output = exitingTx.outputs[oindex];
+      var output = getOutput(exitingTx, _uid);
       bool isOwner = false;
       for(uint i = 0;i < output.owners.length;i++) {
         if(output.owners[i] == msg.sender) {
@@ -270,37 +259,36 @@ contract RootChain {
       }
       require(isOwner);
 
-      var childBlock = childChains[_chain].blocks[blknum];
+      var childBlock = childChains[_chain].blocks[_blkNum];
       bytes32 merkleHash = keccak256(keccak256(_txBytes), ByteUtils.slice(_sigs, 0, 65 * exitingTx.inputs.length));
       // need signature for transaction
-      require(merkleHash.checkMembership(txindex, childBlock.root, _proof));
+      require(merkleHash.checkMembership(_uid, childBlock.root, _proof));
       verifyTransaction(_txBytes, _sigs);
 
       addExitToQueue(
         _chain,
-        _utxoPos,
+        _uid,
         msg.sender,
         output,
-        childBlock.timestamp);
+        childBlock.timestamp,
+        _blkNum);
     }
 
     /**
      * @dev Allows anyone to challenge an exiting transaction by submitting proof of a double spend on the child chain.
-     * @param _cUtxoPos The position of the challenging utxo.
-     * @param _eUtxoIndex The output position of the exiting utxo.
+     * @param _cBlkNum challenging block number
+     * @param _uid coin id
      * @param _txBytes The challenging transaction in bytes RLP form.
      * @param _proof Proof of inclusion for the transaction used to challenge.
      * @param _sigs Signatures for the transaction used to challenge.
-     * @param _confirmationSig The confirmation signature for the transaction used to challenge.
      */
     function challengeExit(
       address _chain,
-      uint256 _cUtxoPos,
-      uint256 _eUtxoIndex,
+      uint256 _cBlkNum,
+      uint256 _uid,
       bytes _txBytes,
       bytes _proof,
-      bytes _sigs,
-      bytes _confirmationSig
+      bytes _sigs
     )
       public
     {
@@ -321,7 +309,16 @@ contract RootChain {
       verifyTransaction(_txBytes, _sigs);
 
       // Delete the owner but keep the amount to prevent another exit.
-      delete childChains[_chain].exits[eUtxoPos].exitor;
+      if(_cUtxoPos > childChains[_chain].exits[eUtxoPos].exitTxBlkNum) {
+        delete childChains[_chain].exits[eUtxoPos].exitor;
+      } else if (
+        _cUtxoPos < childChains[_chain].exits[eUtxoPos].exitTxBlkNum
+        && txBeforeExitTxObj.newOwner == challengeTxObj.signer) {
+        delete childChains[_chain].exits[eUtxoPos].exitor;
+      } else if (
+        _cUtxoPos < childChains[_chain].exits[eUtxoPos].exitTxBlkNum) {
+        // challenges.push()
+      }
     }
 
     /**
@@ -445,10 +442,11 @@ contract RootChain {
      */
     function addExitToQueue(
       address _chain, 
-      uint256 _utxoPos,
+      uint256 _uid,
       address _exitor,
       TxVerification.TxState _utxo,
-      uint256 _created_at
+      uint256 _created_at,
+      uint256 _exitTxBlkNum
     )
       private
     {
@@ -458,21 +456,22 @@ contract RootChain {
 
       // Check exit is valid and doesn't already exist.
       // require(_amount > 0);
-      require(childChains[_chain].exits[_utxoPos].exitor == address(0));
+      require(childChains[_chain].exits[_uid].exitor == address(0));
 
       // Calculate priority.
       uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
       PriorityQueue queue = PriorityQueue(childChains[_chain].exitsQueues[_utxo.value.assetId]);
-      queue.insert(exitableAt, _utxoPos);
+      queue.insert(exitableAt, _uid);
 
-      childChains[_chain].exits[_utxoPos] = Exit({
+      childChains[_chain].exits[_uid] = Exit({
         exitor: _exitor,
         owners: _utxo.owners,
         value: _utxo.value,
-        state: _utxo.stateBytes
+        state: _utxo.stateBytes,
+        exitTxBlkNum: _exitTxBlkNum
       });
 
-      emit ExitStarted(msg.sender, _utxoPos, _utxo);
+      emit ExitStarted(msg.sender, _uid, _utxo);
     }
 
   function verifyTransaction(bytes txBytes, bytes sigs)
@@ -496,6 +495,20 @@ contract RootChain {
     returns (bytes32)
   {
     return keccak256(input.owners, input.value.assetId, input.value.amount, input.stateBytes);
+  }
+
+  function getOutput(TxVerification.Tx transaction, uint256 uid)
+    private
+    pure
+    returns (TxVerification.TxState)
+  {
+    for(uint8 i = 0;i < transaction.outputs.length;i++) {
+      for(uint8 j = 0;j < transaction.outputs[i].value.length;j++) {
+        if(transaction.outputs[i].value[j] == uid) {
+          return transaction.outputs[i];
+        }
+      }
+    }
   }
 
 }

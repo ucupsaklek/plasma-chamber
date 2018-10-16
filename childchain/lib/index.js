@@ -1,7 +1,6 @@
 const Block = require('./block');
 const Chain = require('./chain');
 const {
-  Asset,
   Transaction,
   TransactionOutput
 } = require('./tx');
@@ -12,7 +11,6 @@ const RootChain = require('./rootchain');
 
 module.exports = {
   RootChain: RootChain,
-  Asset: Asset,
   Block: Block,
   Chain: Chain,
   Transaction: Transaction,
