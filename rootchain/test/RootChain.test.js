@@ -124,14 +124,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   });
 
+  /*
   describe('startExit', function () {
-    /*
-     * Test Case
-     * block1
-     *  tx11, tx12
-     * block2
-     *  tx21, tx22, tx23
-     */
     const blockNumber = 1000;
     const utxoPos = blockNumber * 1000000000;
     const blockNumber2 = 1000 * 2;
@@ -173,10 +167,12 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const proof = block1.createTxProof(tx11);
       const result = await this.rootChain.startExit(
         owner,
-        utxoPos + txindex * 10000,
+        blockNumber,
+        0,
         utils.bufferToHex(tx11.getBytes()),
         utils.bufferToHex(proof),
         utils.bufferToHex(sign1),
+        "",
         {from: recipient, gasLimit: 100000});
       assert(result.hasOwnProperty('receipt'));
 
@@ -262,6 +258,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     });
 
   });
+  */
 
   function createTx(sender, receiver, coinId, blockNumber, txIndex) {
     const input = new TransactionOutput(

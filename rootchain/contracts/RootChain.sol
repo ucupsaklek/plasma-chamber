@@ -274,7 +274,7 @@ contract RootChain {
         require(keccak256(_txBytes).checkMembership(
           output.value[c],
           childBlock.root,
-          ByteUtils.slice(_proofs, c*512, (c+1)*512)
+          ByteUtils.slice(_proofs, c*512, 512)
         ));
       }
       // verify transaction
