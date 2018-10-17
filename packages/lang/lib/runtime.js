@@ -152,10 +152,7 @@ class Predefined {
 
   static isAsset(ctx, values) {
     const data = values[0];
-    ctx.variable[data.getName()] = new Asset(
-      data.getValue()[0],
-      data.getValue()[1]
-    );
+    ctx.variable[data.getName()] = data.getValue()[0];
   }
 
   static hasState(ctx, values) {

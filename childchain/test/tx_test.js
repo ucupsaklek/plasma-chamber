@@ -2,24 +2,24 @@ const assert = require('assert');
 const utils = require('ethereumjs-util');
 const Block = require('../lib/block');
 const {
-  Asset,
   Transaction,
   TransactionOutput
 } = require('../lib/tx');
 
 describe('Transaction', function() {
   const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
+  const coinId1 = 1;
   const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
   const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
   const testAddress1 = utils.privateToAddress(privKey1);
   const testAddress2 = utils.privateToAddress(privKey2);
   const input = new TransactionOutput(
     [testAddress1],
-    new Asset(zeroAddress, 2)
+    [coinId1]
   );
   const output = new TransactionOutput(
     [testAddress1],
-    new Asset(zeroAddress, 2)
+    [coinId1]
   );
   const tx = new Transaction(
     0,    // label
@@ -35,19 +35,19 @@ describe('Transaction', function() {
     tx.sigs[0] = sign1;
 
     it('should return bytes', function() {
-      assert.equal(tx.getBytes().toString('hex'), 'f8678080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001');
+      assert.equal(tx.getBytes().toString('hex'), 'f83d8080c180dbdad594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc10180c0dbdad594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc10180c001');
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f8ac8080c180f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c0f0efd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfd69400000000000000000000000000000000000000000280c001f843b841df7670f1748b9f52832239cf451cb4cd656a41a34796f6b74b759c3ef1fc7d2b246f40187b53169f046681ea3ba158939b2acfaf9ffea973cd1df6741bf735c41b');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f8828080c180dbdad594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc10180c0dbdad594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc10180c001f843b84126838eb62ef4e4dbd674a98677a05c7ba3296a7c17691c68bcd472b23936b8916d0a190002099264518129a9944639e4e660da24ae817fe08cb3756d1862a5641b');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash().toString('hex'), '535868f6becf1b11a30693cca9ac6e5938ee015c96326bfc6d7b030bf231f823');
+      assert.equal(tx.hash().toString('hex'), '50bb8fe653a928aa2a52afccf48b674219cc459dcf2b864722d99e71f483cc64');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash().toString('hex'), '944cf9830844e27c529eb1478dd2d001667c150ef1df9070fd6377228882ae08');
+      assert.equal(tx.merkleHash().toString('hex'), 'e4214a87394dadb32ee01a63ee8b09c3cc23a557b3d7f90778d0d5a516cc8c96');
     });
 
   });

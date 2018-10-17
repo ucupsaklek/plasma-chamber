@@ -26,8 +26,16 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const testAddress4 = utils.privateToAddress(privKey4);
   const testAddress5 = utils.privateToAddress(privKey5);
   const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
+  const coin1Id = 1;
+  const coin2Id = 2;
+  // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
+  // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
+  // 0x0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
+  // 0xc88b703fb08cbea894b6aeff5a544fb92e78a18e19814cd85da83b71f772aa6c
+  // 0x388c684f0ba1ef5017716adb5d21a053ea8e90277d0868337519f97bede61418
 
   beforeEach(async function () {
+    console.log(user);
     this.rootChain = await RootChain.new();
     this.chain = await this.rootChain.addChain({from: owner});
   });
@@ -62,13 +70,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     it('should verify transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        new Asset(zeroAddress, 2),
+        [coin1Id],
         [],
         0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
-        new Asset(zeroAddress, 2)
+        [coin1Id]
       );
       const tx = new Transaction(
         0,
@@ -89,13 +97,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     it('should verify game transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        new Asset(zeroAddress, 2),
+        [coin1Id],
         [testAddress1, testAddress2, 3, 0],
         0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
-        new Asset(zeroAddress, 2),
+        [coin1Id],
         [testAddress2, testAddress1, 4, 0]
       );
       const tx = new Transaction(
@@ -116,20 +124,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   });
 
+  /*
   describe('startExit', function () {
-    /*
-     * Test Case
-     * block1
-     *  tx11, tx12
-     * block2
-     *  tx21, tx22, tx23
-     */
     const blockNumber = 1000;
     const utxoPos = blockNumber * 1000000000;
     const blockNumber2 = 1000 * 2;
     const utxoPos2 = blockNumber2 * 1000000000;
-    const tx11 = createTx(testAddress1, testAddress3, 2, 0, 0);
-    const tx12 = createTx(testAddress1, testAddress4, 2, 0, 0);
+    const tx11 = createTx(testAddress1, testAddress3, coin1Id, 0, 0);
+    const tx12 = createTx(testAddress1, testAddress4, coin1Id, 0, 0);
     const sign1 = tx11.sign(privKey1);
     tx11.sigs.push(sign1);
     const sign2 = tx12.sign(privKey1);
@@ -139,8 +141,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block1.appendTx(tx12);
     const txindex = block1.getTxIndex(tx11);
 
-    const tx21 = createTx(testAddress3, testAddress1, 2, utxoPos, txindex);
-    const tx22 = createTx(testAddress1, testAddress4, 2, 0, 0);
+    const tx21 = createTx(testAddress3, testAddress1, coin1Id, utxoPos, txindex);
+    const tx22 = createTx(testAddress1, testAddress4, coin1Id, 0, 0);
     const sign21 = tx21.sign(privKey3);
     tx21.sigs.push(sign21);
     const sign22 = tx22.sign(privKey1);
@@ -165,10 +167,12 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const proof = block1.createTxProof(tx11);
       const result = await this.rootChain.startExit(
         owner,
-        utxoPos + txindex * 10000,
+        blockNumber,
+        0,
         utils.bufferToHex(tx11.getBytes()),
         utils.bufferToHex(proof),
         utils.bufferToHex(sign1),
+        "",
         {from: recipient, gasLimit: 100000});
       assert(result.hasOwnProperty('receipt'));
 
@@ -254,11 +258,12 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     });
 
   });
+  */
 
-  function createTx(sender, receiver, amount, blockNumber, txIndex) {
+  function createTx(sender, receiver, coinId, blockNumber, txIndex) {
     const input = new TransactionOutput(
       [sender],
-      new Asset(zeroAddress, amount),
+      [coinId],
       [0],
       blockNumber || 0,
       txIndex || 0,
@@ -266,7 +271,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     );
     const output = new TransactionOutput(
       [receiver],
-      new Asset(zeroAddress, amount),
+      [coinId],
       [0]
     );
     return new Transaction(

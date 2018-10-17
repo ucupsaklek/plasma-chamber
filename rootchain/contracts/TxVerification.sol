@@ -13,26 +13,19 @@ library TxVerification {
   /*
    * standard structure
    */
-  struct PlasmaValue {
-    address assetId;
-    uint256 amount;
-  }
-
   struct TxState {
     address[] owners;
-    PlasmaValue value;
+    uint256[] value;
     RLP.RLPItem[] state;
     bytes stateBytes;
   }
 
   struct TxInput {
     address[] owners;
-    PlasmaValue value;
+    uint256[] value;
     RLP.RLPItem[] state;
     bytes stateBytes;
     uint256 blkNum;
-    uint256 txIndex;
-    uint256 oIndex;
   }
 
   struct Tx {
@@ -82,18 +75,6 @@ library TxVerification {
     return true;
   }
 
-  function getPlasmaValue(RLP.RLPItem memory valueItem)
-    internal
-    pure
-    returns (PlasmaValue)
-  {
-    RLP.RLPItem[] memory valueList = RLP.toList(valueItem);
-    return PlasmaValue({
-      assetId: RLP.toAddress(valueList[0]),
-      amount: RLP.toUint(valueList[1])
-    });
-  }
-
   /**
    * @dev tx input bytes to TxInput
    * @param txState txState
@@ -105,19 +86,22 @@ library TxVerification {
   {
     RLP.RLPItem[] memory txStateList = RLP.toList(txState);
     RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
+    RLP.RLPItem[] memory valueList = RLP.toList(txStateList[1]);
     address[] memory owners = new address[](ownerList.length);
+    uint256[] memory values = new uint256[](valueList.length);
     uint i = 0;
     for (i = 0; i < ownerList.length; i++) {
       owners[i] = RLP.toAddress(ownerList[i]);
     }
+    for (i = 0; i < valueList.length; i++) {
+      values[i] = RLP.toUint(valueList[i]);
+    }
     return TxInput({
       owners: owners,
-      value: getPlasmaValue(txStateList[1]),
+      value: values,
       state: RLP.toList(txStateList[3]),
       stateBytes: RLP.listAsBytes(txStateList[3]),
-      blkNum: RLP.toUint(txStateList[4]),
-      txIndex: RLP.toUint(txStateList[5]),
-      oIndex: RLP.toUint(txStateList[6])
+      blkNum: RLP.toUint(txStateList[4])
     });
   }
 
@@ -132,14 +116,19 @@ library TxVerification {
   {
     RLP.RLPItem[] memory txStateList = RLP.toList(txState);
     RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
+    RLP.RLPItem[] memory valueList = RLP.toList(txStateList[1]);
     address[] memory owners = new address[](ownerList.length);
+    uint256[] memory values = new uint256[](valueList.length);
     uint i = 0;
     for (i = 0; i < ownerList.length; i++) {
       owners[i] = RLP.toAddress(ownerList[i]);
     }
+    for (i = 0; i < valueList.length; i++) {
+      values[i] = RLP.toUint(valueList[i]);
+    }
     return TxState({
       owners: owners,
-      value: getPlasmaValue(txStateList[1]),
+      value: values,
       state: RLP.toList(txStateList[3]),
       stateBytes: RLP.listAsBytes(txStateList[3])
     });
@@ -371,17 +360,14 @@ library TxVerification {
     TxInput memory preState2 = transaction.inputs[1];
     TxState memory afterState1 = transaction.outputs[0];
     TxState memory afterState2 = transaction.outputs[1];
-    AppStateStdOrderBook memory orderbookState = getAppStateStdOrderBook(preState1.state);
 
-    require(orderbookState.assetId == preState2.value.assetId);
-    require(orderbookState.amount == preState2.value.amount);
     require(preState1.owners[0] == afterState2.owners[0]);
     require(preState2.owners[0] == afterState1.owners[0]);
-    require(preState1.value.amount == afterState1.value.amount);
-    require(preState2.value.amount == afterState2.value.amount);
+    require(preState1.value[0] == afterState1.value[0]);
+    require(preState2.value[0] == afterState2.value[0]);
   }
 
-  function verifyWithdrawal(address[] owners, PlasmaValue value, bytes stateBytes)
+  function verifyWithdrawal(address[] owners, uint256 uid, bytes stateBytes)
     internal
     pure
     returns (bool)
