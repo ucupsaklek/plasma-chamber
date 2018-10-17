@@ -7,11 +7,8 @@
 **This is experimental software, don't run in production.**
 
 ## Overview
-- A generator of single operator PlasmaMVP with embeded TxVM-like contract
-- Derived from Kelvin's great article [Why is EVM-on-Plasma hard?](https://medium.com/@kelvinfichter/why-is-evm-on-plasma-hard-bf2d99c48df7)
-- Not only for value transfer, but also for some simple application.
-- Child chain is UTXO model and they have state.
-- Chamber language generates possible state transition at the childchain. And it also generates tx verifier on the rootchain.
+
+Plasma is a scaling framework for blockchain, and it's one of the 2nd layer technologies. We use Plasma as a framework for general purpose, like game, asset exchange, etc. Our solution name is "Plasma Chamber", it generate a specific Plasma implementation from Plasma specific language. It's the kind of extention of Plasma Cash, but support more complex transaction without security downside. Firstly we describe the structure and mechanism of chamber, and exit, challenge mecanism. Secondary describe about the language dapp developers write. Finally we explain some challenges and future works.
 
 ## Folder Structure
 
