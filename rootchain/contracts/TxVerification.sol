@@ -360,14 +360,11 @@ library TxVerification {
     TxInput memory preState2 = transaction.inputs[1];
     TxState memory afterState1 = transaction.outputs[0];
     TxState memory afterState2 = transaction.outputs[1];
-    AppStateStdOrderBook memory orderbookState = getAppStateStdOrderBook(preState1.state);
 
-    require(orderbookState.assetId == preState2.value.assetId);
-    require(orderbookState.amount == preState2.value.amount);
     require(preState1.owners[0] == afterState2.owners[0]);
     require(preState2.owners[0] == afterState1.owners[0]);
-    require(preState1.value.amount == afterState1.value.amount);
-    require(preState2.value.amount == afterState2.value.amount);
+    require(preState1.value[0] == afterState1.value[0]);
+    require(preState2.value[0] == afterState2.value[0]);
   }
 
   function verifyWithdrawal(address[] owners, uint256 uid, bytes stateBytes)
