@@ -1,4 +1,6 @@
-const MerkleTree = require('./merkle');
+const SparseMerkleTree = require('./smt');
+
+const SMT_DEPTH = 16;
 
 /*
 * Only concerns for latest raw Block
@@ -17,6 +19,7 @@ class Block {
     this.nonce = null;
     this.gaslimit = 0;
     this.gasused = 0;
+    this.tree = null;
   }
 
   appendTx(tx) {
@@ -32,13 +35,35 @@ class Block {
     return -1;
   }
 
-  createTxProof(tx) {
-    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
-    return tree.proof(tx.merkleHash());
+  createTree() {
+    if(this.tree !== null) return this.tree;
+    const leaf = Array.from(Array(Math.pow(2, SMT_DEPTH)), (item, index) => null);
+    this.txs.forEach(tx=>{
+      tx.outputs.forEach((o) => {
+        o.value.forEach((uid) => {
+          leaf[uid] = tx.merkleHash()
+        })
+      })
+    })
+    this.tree = new SparseMerkleTree(SMT_DEPTH, leaf);
+    return this.tree;
+  }
+
+  createCoinProof(uid) {
+    const tree = this.createTree();
+    return tree.proof(uid);
+  }
+
+  createTXOProof(txo) {
+    const uids = txo.outputs.reduce((uids, o) => {
+      return uids.concat(o.value);
+    }, []);
+    const tree = this.createTree();
+    return uids.map((uid) => tree.proof(uid));
   }
 
   merkleHash() {
-    const tree = new MerkleTree(this.txs.map(tx=>tx.merkleHash()));
+    const tree = this.createTree();
     return tree.root();
   }
 
