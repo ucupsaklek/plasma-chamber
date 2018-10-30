@@ -153,15 +153,9 @@ library RLP {
 
     function toAddress(RLPItem memory item) internal pure returns (address) {
         // 1 byte for the length prefix according to RLP spec
-        require(item.len == 21);
-        
-        uint memPtr = item.memPtr + 1; // skip the length prefix
-        uint addr;
-        assembly {
-            addr := div(mload(memPtr), exp(256, 12)) // right shift 12 bytes. we want the most significant 20 bytes
-        }
-        
-        return address(addr);
+        require(item.len <= 21);
+
+        return address(toUint(item));
     }
 
     function toUint(RLPItem memory item) internal pure returns (uint) {
