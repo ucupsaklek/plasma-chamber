@@ -214,30 +214,30 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(getExitResult1[1][0].toNumber(), coin2Id);
     });
 
-    /*
-
     it('should finalizeExits', async function () {
       const getExitResult = await this.rootChain.getExit(
         owner,
-        utxoPos + block1.getTxIndex(tx11) * 10000 + 0,
+        utxoPos + tx11.outputs[0].value[0] * 10000 + 0,
         {from: recipient, gasLimit: 100000});
       
-      assert.equal(getExitResult[0], recipient);
-      assert.equal(getExitResult[3].toNumber(), 2);
+      assert.equal(getExitResult[0][0], recipient);
+      assert.equal(getExitResult[1][0].toNumber(), coin1Id);
 
       increaseTime(15 * 24 * 60 * 60);
       await this.rootChain.finalizeExits(
         owner,
-        utils.bufferToHex(zeroAddress),
+        utxoPos + tx11.outputs[0].value[0] * 10000 + 0,
         {from: recipient, gasLimit: 100000});
       const txindex = block1.getTxIndex(tx12);
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
-        utxoPos + txindex * 10000 + 0,
+        utxoPos + tx11.outputs[0].value[0] * 10000 + 0,
         {from: user, gasLimit: 100000});
-      assert.equal(getExitResultAfter[0], '0x0000000000000000000000000000000000000000');
-      assert.equal(getExitResultAfter[3].toNumber(), 0);
+      assert.equal(getExitResultAfter[0].length, 0);
+      assert.equal(getExitResultAfter[1].length, 0);
     });
+
+    /*
 
     it('should challengeExit', async function () {
 

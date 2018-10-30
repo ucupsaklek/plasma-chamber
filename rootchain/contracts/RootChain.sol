@@ -345,30 +345,23 @@ contract RootChain {
 
     /**
      * @dev Processes any exits that have completed the challenge period. 
-     * @param _token Token type to process.
+     * @param _utxoPos exit position
      */
-    function finalizeExits(address _chain, address _token)
+    function finalizeExits(address _chain, uint _utxoPos)
         public
     {
       ChildChain childChain = childChains[_chain];
-      uint256 utxoPos;
-      uint256 exitableAt;
-      (exitableAt, utxoPos) = getNextExit(_chain, _token);
-      PriorityQueue queue = PriorityQueue(childChain.exitsQueues[_token]);
-      Exit memory currentExit = childChain.exits[utxoPos];
-      while (exitableAt < block.timestamp) {
-        currentExit = childChain.exits[utxoPos];
-
-        // TODO: handle ERC-20 transfer
-        require(address(0) == _token);
-
-        delete childChain.exits[utxoPos];
-
-        if (queue.currentSize() > 0) {
-            (exitableAt, utxoPos) = getNextExit(_chain, _token);
-        } else {
-            return;
+      Exit memory currentExit = childChain.exits[_utxoPos];
+      if (currentExit.exitableAt < block.timestamp) {
+        // state specific withdrawal
+        if(currentExit.exitors.length == 1) {
+          for(uint i = 0;i < currentExit.values.length;i++) {
+            currentExit.exitors[0].transfer(
+              childChain.coins[currentExit.values[i]].amount
+            );
+          }
         }
+        delete childChain.exits[_utxoPos];
       }
     }
 
