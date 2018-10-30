@@ -129,6 +129,12 @@ class Transaction {
     }, []);
   }
 
+  getOutput(uid) {
+    return this.outputs.filter((o) => {
+      return (o.value.indexOf(uid) >= 0)
+    })[0];
+  }
+
   checkSigns() {
     const owners = this.getOwners();
     if(this.sigs.length != owners.length) {
