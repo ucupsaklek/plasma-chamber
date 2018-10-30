@@ -190,27 +190,31 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(getChildChainResult[0], utils.bufferToHex(block1.merkleHash()));
     });
 
-    /*
-
     it('should startExit', async function () {
-      const txindex = block1.getTxIndex(tx12);
-      const proof = block1.createTxProof(tx12);
+      const slot = tx12.outputs[0].value[0];
+      const proof = block1.createTXOProof(tx12.outputs[0]);
       const result = await this.rootChain.startExit(
         owner,
-        utxoPos + txindex * 10000 + 0,
+        blockNumber,
+        0,
         utils.bufferToHex(tx12.getBytes()),
         utils.bufferToHex(proof),
         utils.bufferToHex(sign2),
+        "",
         {from: user4, gasLimit: 100000});
       assert(result.hasOwnProperty('receipt'));
       const getExitResult1 = await this.rootChain.getExit(
         owner,
-        utxoPos + txindex * 10000 + 0,
+        utxoPos + slot * 10000 + 0,
         {from: user, gasLimit: 100000});
 
-      assert.equal(getExitResult1[0], user4);
-      assert.equal(getExitResult1[3].toNumber(), 2);
+      console.log(getExitResult1)
+
+      assert.equal(getExitResult1[0][0], user4);
+      assert.equal(getExitResult1[1][0].toNumber(), coin2Id);
     });
+
+    /*
 
     it('should finalizeExits', async function () {
       const getExitResult = await this.rootChain.getExit(

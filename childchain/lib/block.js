@@ -66,7 +66,7 @@ class Block {
       return uids.concat(o.value);
     }, []);
     const tree = this.createTree();
-    return txo.value.map((uid) => tree.proof(uid)).reduce((acc, p) => {
+    return uids.map((uid) => tree.proof(uid)).reduce((acc, p) => {
       return Buffer.concat(acc.concat([p]))
     }, []);
   }

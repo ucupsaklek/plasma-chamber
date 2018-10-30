@@ -445,7 +445,7 @@ contract RootChain {
     )
       private
     {
-      uint256 _utxoPos = _blkNum * 1000000000 + _oIndex;
+      uint256 _utxoPos = _blkNum * 1000000000 + _utxo.value[0] * 10000 + _oIndex;
       uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
       // need to check the coin already isn't exiting status
       for(uint c = 0; c < _utxo.value.length; c++) {
