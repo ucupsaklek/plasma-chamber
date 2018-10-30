@@ -84,7 +84,7 @@ class SparseMerkleTree {
     return Buffer.concat(proof);
   }
 
-  verify(value, index, root, proof) {
+  static verify(value, index, root, proof) {
     if(!value || !root) {
       return false;
     }

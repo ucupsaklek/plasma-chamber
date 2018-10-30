@@ -8,10 +8,12 @@ const {
   Transaction,
   TransactionOutput
 } = require('../../childchain/lib/tx');
+const Merkle = require('../../childchain/lib/smt');
 const utils = require('ethereumjs-util');
 const {
   increaseTime
 } = require('openzeppelin-solidity/test/helpers/increaseTime');
+const RLP = require('rlp');
 
 contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
@@ -124,14 +126,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   });
 
-  /*
   describe('startExit', function () {
     const blockNumber = 1000;
     const utxoPos = blockNumber * 1000000000;
     const blockNumber2 = 1000 * 2;
     const utxoPos2 = blockNumber2 * 1000000000;
     const tx11 = createTx(testAddress1, testAddress3, coin1Id, 0, 0);
-    const tx12 = createTx(testAddress1, testAddress4, coin1Id, 0, 0);
+    const tx12 = createTx(testAddress1, testAddress4, coin2Id, 0, 0);
     const sign1 = tx11.sign(privKey1);
     tx11.sigs.push(sign1);
     const sign2 = tx12.sign(privKey1);
@@ -142,7 +143,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     const txindex = block1.getTxIndex(tx11);
 
     const tx21 = createTx(testAddress3, testAddress1, coin1Id, utxoPos, txindex);
-    const tx22 = createTx(testAddress1, testAddress4, coin1Id, 0, 0);
+    const tx22 = createTx(testAddress1, testAddress4, coin2Id, 0, 0);
     const sign21 = tx21.sign(privKey3);
     tx21.sigs.push(sign21);
     const sign22 = tx22.sign(privKey1);
@@ -164,7 +165,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
       assert.equal(submitBlockResult.logs[0].event, 'BlockSubmitted');
 
-      const proof = block1.createTxProof(tx11);
+      const proof = block1.createTXOProof(tx11.outputs[0]);
+
+      assert.equal(Merkle.verify(tx11.hash(), tx11.outputs[0].value[0], rootHash, proof), true);
+
       const result = await this.rootChain.startExit(
         owner,
         blockNumber,
@@ -185,6 +189,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         {from: owner, gasLimit: 100000});
       assert.equal(getChildChainResult[0], utils.bufferToHex(block1.merkleHash()));
     });
+
+    /*
 
     it('should startExit', async function () {
       const txindex = block1.getTxIndex(tx12);
@@ -256,9 +262,9 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(getExitResultAfter[0], '0x0000000000000000000000000000000000000000');
 
     });
+    */
 
   });
-  */
 
   function createTx(sender, receiver, coinId, blockNumber, txIndex) {
     const input = new TransactionOutput(

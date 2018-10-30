@@ -2,7 +2,6 @@ pragma solidity ^0.4.24;
 
 import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
 import "./Math.sol";
-import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
 import "./PriorityQueue.sol";
@@ -16,8 +15,6 @@ import "./TxVerification.sol";
 contract RootChain {
     using SafeMath for uint256;
     using Merkle for bytes32;
-    using PlasmaRLP for bytes;
-
 
     /*
      * Events
@@ -274,7 +271,8 @@ contract RootChain {
         require(keccak256(_txBytes).checkMembership(
           output.value[c],
           childBlock.root,
-          ByteUtils.slice(_proofs, c*512, 512)
+          _proofs
+//          ByteUtils.slice(_proofs, c*512, 512)
         ));
       }
       // verify transaction

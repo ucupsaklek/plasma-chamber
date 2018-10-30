@@ -192,12 +192,14 @@ library RLP {
     }
 
     function listAsBytes(RLPItem memory item) internal pure returns (bytes) {
-        bytes memory result = new bytes(item.len);
+        uint offset = _payloadOffset(item.memPtr);
+        uint len = item.len - offset;
+        bytes memory result = new bytes(len);
         uint destPtr;
         assembly {
             destPtr := add(0x20, result)
         }
-        copy(item.memPtr, destPtr, item.len);
+        copy(item.memPtr, destPtr, len);
         return result;
     }
 
@@ -210,7 +212,7 @@ library RLP {
         // copy as many word sizes as possible
         for (; len >= WORD_SIZE; len -= WORD_SIZE) {
             assembly {
-                mstore(dest, mload(dest))
+                mstore(dest, mload(src))
             }
 
             src += WORD_SIZE;
