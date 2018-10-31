@@ -12,7 +12,9 @@ library Math {
   }
 
   function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
-    return _a - _b;
+    require(_b <= _a);
+    uint256 c = _a - _b;
+    return c;
   }
 
   function max(uint256 _a, uint256 _b) internal pure returns (uint256) {

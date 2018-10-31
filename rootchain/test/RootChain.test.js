@@ -222,7 +222,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: recipient, gas: 6000000});
+        {from: recipient, gas: 1000000});
       assert(result.hasOwnProperty('receipt'));
 
     });

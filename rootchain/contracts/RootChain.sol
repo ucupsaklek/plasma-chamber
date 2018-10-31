@@ -284,15 +284,15 @@ contract RootChain {
       ExitTx[] memory txList2 = new ExitTx[](txList.length);
       uint256 blkNum = _blkNum;
       require(txList.length == 2);
-      for (uint i = (txList.length - 1); (i >= 0 && i < 10); i = i.sub(1)) {
-        require(i < 2);
-        txList2[i] = parseExitTx(
+      for(uint256 i = 0; i < txList.length; i++) {
+        uint256 ii = txList.length - i - 1;
+        txList2[ii] = parseExitTx(
           childChains[chain].blocks[blkNum],
-          txList[i]);
-        blkNum = txList2[i].tx.inputs[0].blkNum;
-        if(i < txList2.length - 1) {
+          txList[ii]);
+        blkNum = txList2[ii].tx.inputs[0].blkNum;
+        if(ii < txList2.length - 1) {
           require(
-            keccak256TxInput(txList2[i + 1].tx.inputs[0]) == keccak256TxOutput(txList2[i].tx.outputs[txList2[i].index]));
+            keccak256TxInput(txList2[ii + 1].tx.inputs[0]) == keccak256TxOutput(txList2[ii].tx.outputs[txList2[ii].index]));
         }
       }
       if(txList2[0].tx.inputs.length >= 2) {
@@ -309,7 +309,7 @@ contract RootChain {
 
     function parseExitTx(ChildBlock childBlock, RLP.RLPItem txItem)
       internal
-      view
+      pure
       returns (ExitTx)
     {
       var txList = RLP.toList(txItem);
@@ -324,7 +324,6 @@ contract RootChain {
       TxVerification.Tx memory transaction = TxVerification.getTx(txBytes);
       var output = transaction.outputs[index];
 
-      emit Log(childBlock.root);
       checkInclusion(
         childBlock,
         txBytes,
