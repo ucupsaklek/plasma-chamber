@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "export MODULE_RELATIVE_PATH=../ && truffle test"
+    "test": "export MODULE_RELATIVE_PATH=../ && truffle test --network test"
   },
   "author": "",
   "license": "ISC",

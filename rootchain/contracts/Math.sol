@@ -6,6 +6,15 @@ pragma solidity ^0.4.24;
  * @dev Assorted math operations
  */
 library Math {
+
+  function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    return _a + _b;
+  }
+
+  function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+    return _a - _b;
+  }
+
   function max(uint256 _a, uint256 _b) internal pure returns (uint256) {
     return _a >= _b ? _a : _b;
   }

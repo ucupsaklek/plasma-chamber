@@ -134,25 +134,6 @@ library TxVerification {
     });
   }
 
-  function getTxOwners(Tx memory transaction)
-    internal
-    pure
-    returns (address[] memory)
-  {
-    uint s = 0;
-    uint i = 0;
-    for(i = 0; i < transaction.inputs.length; i++) {
-      s += transaction.inputs[i].owners.length;
-    }
-    address[] memory owners = new address[](s);
-    for(i = 0; i < transaction.inputs.length; i++) {
-      for(uint j = 0; j < transaction.inputs[i].owners.length; j++) {
-        owners[i * transaction.inputs.length + j] = transaction.inputs[i].owners[j];
-      }
-    }
-    return owners;
-  }
-
   /**
    * @dev txBytes to tx
    * @param txByte txByte
@@ -222,13 +203,11 @@ library TxVerification {
    * application specific functions 
    */
 
-  function verifyTransaction(bytes txBytes, bytes sigs)
+  function verifyTransaction(Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
-    Tx memory transaction = getTx(txBytes);
-    address[] memory owners = getTxOwners(transaction);
-    require(checkSigs(owners, sigs, keccak256(txBytes)) == true);
+    // require(checkSigs(owners, sigs, txHash) == true);
     if(transaction.label == 0) {
       transfer(transaction);
     }else if(transaction.label == 1) {

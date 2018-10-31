@@ -6,6 +6,7 @@ node_js:
 before_install:
   - npm install -g yarn
 script:
+  - ganache-cli -p 7545
   - yarn run-all test
 
 dist: trusty
