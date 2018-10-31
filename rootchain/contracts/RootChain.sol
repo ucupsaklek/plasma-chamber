@@ -352,7 +352,9 @@ contract RootChain {
     {
       ChildChain childChain = childChains[_chain];
       Exit memory currentExit = childChain.exits[_utxoPos];
-      if (currentExit.exitableAt < block.timestamp) {
+      if(
+        currentExit.exitableAt < block.timestamp
+        && !currentExit.challenged) {
         // state specific withdrawal
         if(currentExit.exitors.length == 1) {
           for(uint i = 0;i < currentExit.values.length;i++) {
