@@ -207,11 +207,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(Merkle.verify(tx21.hash(), tx21.outputs[0].value[0], new Buffer(r2[0].substr(2), 'hex'), proof2), true);
 
       const txList = RLP.encode([[
+        blockNumber,
         tx11.getBytes(),
         proof1,
         sign1,
         0
       ],[
+        blockNumber2,
         tx21.getBytes(),
         proof2,
         sign21,
@@ -242,11 +244,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const proof2 = block2.createTXOProof(tx22.outputs[0]);
 
       const txList = RLP.encode([[
+        blockNumber,
         tx12.getBytes(),
         proof,
         sign2,
         0
       ],[
+        blockNumber2,
         tx22.getBytes(),
         proof2,
         sign22,
