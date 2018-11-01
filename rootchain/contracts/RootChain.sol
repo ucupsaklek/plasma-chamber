@@ -275,6 +275,12 @@ contract RootChain {
       return owners;
     }
 
+    /**
+     * @dev parseExitTxList is core logic for exit
+     * checking all transactions are in merkle root
+     * checking state transitions are correct
+     * checking confirmation signatures if needed
+     */
     function parseExitTxList(address chain, uint256 _blkNum, bytes txListBytes)
       internal
       view
@@ -328,7 +334,7 @@ contract RootChain {
         childBlock,
         txBytes,
         proof,
-        output
+        output.value
       );
       TxVerification.verifyTransaction(
         transaction, keccak256(txBytes), sigs);
@@ -347,14 +353,14 @@ contract RootChain {
       ChildBlock childBlock,
       bytes _txBytes,
       bytes _proofs,
-      TxVerification.TxState output
+      uint256[] value
     )
       private
       pure
     {
-      for(uint c = 0; c < output.value.length; c++) {
+      for(uint c = 0; c < value.length; c++) {
         require(keccak256(_txBytes).checkMembership(
-          output.value[c],
+          value[c],
           childBlock.root,
           ByteUtils.slice(_proofs, c*512, 512)
         ));
@@ -362,6 +368,7 @@ contract RootChain {
     }
 
     /**
+     * @dev start exit UTXO
      * @param _blkNum block number of exit utxo
      * @param _oIndex index of output
      * @param _txListBytes tx bytes list of exit utxo
@@ -376,7 +383,7 @@ contract RootChain {
     {
       var childBlock = childChains[_chain].blocks[_blkNum];
       var output = parseExitTxList(_chain, _blkNum, _txListBytes);
-      // check exitor
+      // msg.sender must be exitor
       bool isOwner = false;
       for(uint i = 0;i < output.owners.length;i++) {
         if(output.owners[i] == msg.sender) {
@@ -395,47 +402,49 @@ contract RootChain {
     }
 
     /**
-     * @dev challenge exiting coin
-     * @param _cBlkNum challenging block number
-     * @param _uid coin id
+     * @dev challenge by spent transaction
+     * @param _cIndex the index of inputs
+     * @param _cBlkNum block number of challenge tx
+     * @param _eUtxoPos exiting utxo position
      * @param _txBytes The challenging transaction in bytes RLP form.
      * @param _proof Proof of inclusion for the transaction used to challenge.
      * @param _sigs Signatures for the transaction used to challenge.
      */
-    function challengeExit(
+    function challengeAfter(
       address _chain,
+      uint256 _cIndex,
       uint256 _cBlkNum,
-      uint256 _uid,
+      uint256 _eUtxoPos,
       bytes _txBytes,
       bytes _proof,
-      bytes _sigs
+      bytes _sigs,
+      bytes _confsigs
     )
       public
     {
-      // There is exit for coin
-      require(childChains[_chain].coins[_uid].exit > 0);
-      uint256 _eUtxoPos = childChains[_chain].coins[_uid].exit;
+      require(_cBlkNum > exit.blkNum);
       Exit exit = childChains[_chain].exits[_eUtxoPos];
       var challengeTx = TxVerification.getTx(_txBytes);
-      bytes32 root = childChains[_chain].blocks[_cBlkNum].root;
-      var txHash = keccak256(_txBytes);
-      require(keccak256TxInput(challengeTx.inputs[exit.oIndex]) == keccak256Exit(exit));
-      
-      // var confirmationHash = keccak256(txHash, root);
-      var merkleHash = keccak256(txHash, _sigs);
-      //address owner = childChains[_chain].exits[eUtxoPos].exitor;
-
-      // Validate the spending transaction.
-      //require(owner == ECRecovery.recover(confirmationHash, _confirmationSig));
-      require(merkleHash.checkMembership(_uid, root, _proof));
-      TxVerification.verifyTransaction(challengeTx, txHash, _sigs);
-
-      // Delete the owner but keep the amount to prevent another exit.
-      if(_cBlkNum > exit.blkNum) {
-        exit.challenged = true;
-      } else {
-        // other challenges
+      ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+      checkInclusion(
+        childBlock,
+        _txBytes,
+        _proof,
+        challengeTx.inputs[_cIndex].value
+      );
+      require(keccak256TxInput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
+      TxVerification.verifyTransaction(challengeTx, keccak256(_txBytes), _sigs);
+      // require confirmation signatures if inputs are more than 2.
+      if(challengeTx.inputs.length >= 2) {
+        require(
+          checkConfSigs(
+            getTxOwners(challengeTx),
+            _confsigs,
+            keccak256(keccak256(_txBytes), childBlock.root)
+          ) == true
+        );
       }
+      delete childChains[_chain].exits[_eUtxoPos];
     }
 
     /**

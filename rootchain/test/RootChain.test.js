@@ -294,36 +294,34 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(getExitResultAfter[1].length, 0);
     });
 
-    /*
-
     it('should challengeExit', async function () {
 
       const submitBlockResult = await this.rootChain.submitBlock(
         owner,
-        utils.bufferToHex(block2.merkleHash()),
+        utils.bufferToHex(block3.merkleHash()),
         {from: owner, gasLimit: 100000});
 
       assert.equal(submitBlockResult.logs[0].event, 'BlockSubmitted');
 
-      const proof21 = block2.createTxProof(tx21);
+      const proof31 = block3.createTxProof(tx31);
 
-      await this.rootChain.challengeExit(
+      await this.rootChain.challengeAfter(
         owner,
-        utxoPos2 + block2.getTxIndex(tx21) * 10000,
         0,
-        utils.bufferToHex(tx21.getBytes()),
-        utils.bufferToHex(proof21),
-        utils.bufferToHex(sign21),
-        utils.bufferToHex(sign21),
+        blockNumber3,
+        utxoPos2 + coin1Id * 10000,
+        utils.bufferToHex(tx31.getBytes()),
+        utils.bufferToHex(proof31),
+        utils.bufferToHex(sign31),
+        "",
         {from: recipient, gasLimit: 100000});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
-        utxoPos + txindex * 10000 + 0,
+        utxoPos2 + coin1Id * 10000,
         {from: user, gasLimit: 100000});
-      assert.equal(getExitResultAfter[0], '0x0000000000000000000000000000000000000000');
+      assert.equal(getExitResultAfter[0].length, 0);
 
     });
-    */
 
   });
 
