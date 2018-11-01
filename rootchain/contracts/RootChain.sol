@@ -274,18 +274,16 @@ contract RootChain {
       ExitTx[] memory exitTxList = new ExitTx[](txList.length);
       uint256 blkNum = _blkNum;
       require(txList.length == 2);
-      uint256 ii = txList.length - 1;
-      while(ii >= 0 && ii < 10) {
-        exitTxList[ii] = parseExitTx(
+      for(uint i = txList.length - 1;i >= 0 && i < txList.length; i--) {
+        exitTxList[i] = parseExitTx(
           chain.blocks[blkNum],
-          txList[ii]);
-        require(exitTxList[ii].blkNum == blkNum);
-        blkNum = exitTxList[ii].tx.inputs[0].blkNum;
-        if(ii < exitTxList.length - 1) {
+          txList[i]);
+        require(exitTxList[i].blkNum == blkNum);
+        blkNum = exitTxList[i].tx.inputs[0].blkNum;
+        if(i < exitTxList.length - 1) {
           require(
-            keccak256TxInput(exitTxList[ii + 1].tx.inputs[0]) == keccak256TxOutput(exitTxList[ii].tx.outputs[exitTxList[ii].index]));
+            keccak256TxInput(exitTxList[i + 1].tx.inputs[0]) == keccak256TxOutput(exitTxList[i].tx.outputs[exitTxList[i].index]));
         }
-        ii--;
       }
       if(exitTxList[0].tx.inputs.length >= 2) {
         require(
