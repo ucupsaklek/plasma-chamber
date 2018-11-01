@@ -209,7 +209,7 @@ library TxVerification {
   {
     // require(checkSigs(owners, sigs, txHash) == true);
     if(transaction.label == 0) {
-      transfer(transaction);
+      transfer(transaction, txHash, sigs);
     }else if(transaction.label == 1) {
       exchange(transaction);
     }else if(transaction.label == 100) {
@@ -220,11 +220,13 @@ library TxVerification {
   /**
    * @dev change owner
    */
-  function transfer(Tx transaction)
+  function transfer(Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
     address counter = RLP.toAddress(transaction.args[0]);
+    require(RLP.toUint(transaction.inputs[0].state[0]) == 0);
+    require(transaction.inputs[0].owners[0] == ECRecovery.recover(txHash, sigs));
     require(transaction.outputs[0].owners[0] == counter);
   }
 

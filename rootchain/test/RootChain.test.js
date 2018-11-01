@@ -73,12 +73,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const input = new TransactionOutput(
         [testAddress1],
         [coin1Id],
-        [],
-        0,0,0
+        [0],
+        0
       );
       const output = new TransactionOutput(
         [testAddress2],
-        [coin1Id]
+        [coin1Id],
+        [0]
       );
       const tx = new Transaction(
         0,
