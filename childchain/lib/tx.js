@@ -21,7 +21,6 @@ class TransactionOutput {
       return [
         this.owners,
         this.value,
-        this.contract,
         this.state,
         this.blkNum
       ]
@@ -29,7 +28,6 @@ class TransactionOutput {
       return [
         this.owners,
         this.value,
-        this.contract,
         this.state
       ]
 
@@ -44,8 +42,8 @@ class TransactionOutput {
     return new TransactionOutput(
       decoded[0],
       decoded[1],
-      decoded[3],
-      decoded[4] // blkNum
+      decoded[2],
+      decoded[3] // blkNum
     );
   }
 

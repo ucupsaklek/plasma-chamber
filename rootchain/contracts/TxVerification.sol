@@ -99,9 +99,9 @@ library TxVerification {
     return TxInput({
       owners: owners,
       value: values,
-      state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.listAsBytes(txStateList[3]),
-      blkNum: RLP.toUint(txStateList[4])
+      state: RLP.toList(txStateList[2]),
+      stateBytes: RLP.listAsBytes(txStateList[2]),
+      blkNum: RLP.toUint(txStateList[3])
     });
   }
 
@@ -129,8 +129,8 @@ library TxVerification {
     return TxState({
       owners: owners,
       value: values,
-      state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.listAsBytes(txStateList[3])
+      state: RLP.toList(txStateList[2]),
+      stateBytes: RLP.listAsBytes(txStateList[2])
     });
   }
 

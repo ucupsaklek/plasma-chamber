@@ -77,6 +77,7 @@ contract RootChain {
       address[] exitors;
       uint256[] values;
       bytes stateBytes;
+      uint256 blkNum;
       uint256 exitableAt;
       uint256 txListLength;
       mapping (uint256 => ExitingTx) txList;
@@ -409,7 +410,7 @@ contract RootChain {
     {
       ChildChain childChain = childChains[_chain];
       Exit exit = childChain.exits[_eUtxoPos];
-      require(_cBlkNum > exit.txList[exit.txListLength - 1].blkNum);
+      require(_cBlkNum > exit.blkNum);
       var challengeTx = TxVerification.getTx(_txBytes);
       checkTx(
         childChain.blocks[_cBlkNum].root,
@@ -439,16 +440,19 @@ contract RootChain {
       ChildChain childChain = childChains[_chain];
       Exit exit = childChain.exits[_eUtxoPos];
       require(exit.txListLength >= 2);
-      for(uint i = 0;i < exit.txListLength - 1;i++) {
-        if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < exit.txList[i + 1].blkNum) {
+      for(uint i = 0;i < exit.txListLength;i++) {
+        uint256 nextBlkNum = exit.blkNum;
+        if(i < exit.txListLength - 1) {
+          nextBlkNum = exit.txList[i + 1].blkNum;
+        }
+        if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < nextBlkNum) {
           TxVerification.Tx memory prevTx = TxVerification.getTx(exit.txList[i].txBytes);
           TxVerification.Tx memory challengeTx = TxVerification.getTx(_txInfos[0]);
           require(
             keccak256TxOutput(prevTx.outputs[exit.txList[i].index])
             == keccak256TxInput(challengeTx.inputs[_cIndex]));
-          ChildBlock childBlock = childChain.blocks[_cBlkNum];
           checkTx(
-            childBlock.root,
+            childChain.blocks[_cBlkNum].root,
             _txInfos[0],
             _txInfos[1],
             _txInfos[2],
@@ -690,11 +694,12 @@ contract RootChain {
         exitors: _utxo.owners,
         values: _utxo.value,
         stateBytes: _utxo.stateBytes,
+        blkNum: txList[txList.length - 1].blkNum,
         exitableAt: exitableAt,
         txListLength: txList.length,
         challenged: false
       });
-      for(uint i = 0;i < txList.length;i++) {
+      for(uint i = 0;i < txList.length - 1;i++) {
         childChains[_chain].exits[_utxoPos].txList[i] = ExitingTx({
           txBytes: txList[i].txBytes,
           blkNum: txList[i].blkNum,
