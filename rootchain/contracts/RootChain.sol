@@ -1,4 +1,5 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 import "./Math.sol";
 import "./Merkle.sol";
@@ -95,6 +96,7 @@ contract RootChain {
       uint256 currentFeeExit;
       mapping (uint256 => Coin) coins;
       mapping (uint256 => Exit) exits;
+      mapping (uint256 => ExitingTx) challenges;
       mapping (address => uint256) weights;
     }
 
@@ -316,7 +318,7 @@ contract RootChain {
       var output = transaction.outputs[index];
 
       checkInclusion(
-        childBlock,
+        childBlock.root,
         txBytes,
         proof,
         output.value
@@ -336,7 +338,7 @@ contract RootChain {
     }
 
     function checkInclusion(
-      ChildBlock childBlock,
+      bytes32 root,
       bytes _txBytes,
       bytes _proofs,
       uint256[] value
@@ -347,7 +349,7 @@ contract RootChain {
       for(uint c = 0; c < value.length; c++) {
         require(keccak256(_txBytes).checkMembership(
           value[c],
-          childBlock.root,
+          root,
           ByteUtils.slice(_proofs, c*512, 512)
         ));
       }
@@ -413,25 +415,173 @@ contract RootChain {
       require(_cBlkNum > exit.txList[exit.txListLength - 1].blkNum);
       var challengeTx = TxVerification.getTx(_txBytes);
       ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+      checkTx(
+        childBlock.root,
+        _txBytes,
+        _proof,
+        _sigs,
+        _confsigs,
+        _cIndex,
+        challengeTx
+      );
+      require(keccak256TxInput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
+      delete childChains[_chain].exits[_eUtxoPos];
+    }
+
+    /**
+     * @param _txInfos txBytes, proof, sigs, confsigs
+     */
+    function challengeBetween(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
+    )
+      public
+    {
+      Exit exit = childChains[_chain].exits[_eUtxoPos];
+      require(exit.txListLength >= 2);
+      for(uint i = 0;i < exit.txListLength - 1;i++) {
+        if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < exit.txList[i + 1].blkNum) {
+          TxVerification.Tx memory prevTx = TxVerification.getTx(exit.txList[i].txBytes);
+          TxVerification.Tx memory challengeTx = TxVerification.getTx(_txInfos[0]);
+          require(
+            keccak256TxOutput(prevTx.outputs[exit.txList[i].index])
+            == keccak256TxInput(challengeTx.inputs[_cIndex]));
+          ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+          checkTx(
+            childBlock.root,
+            _txInfos[0],
+            _txInfos[1],
+            _txInfos[2],
+            _txInfos[3],
+            _cIndex,
+            challengeTx
+          );
+          delete childChains[_chain].exits[_eUtxoPos];
+          break;
+        }
+      }
+    }
+
+    /**
+     * @param _txInfos txBytes, proof, sigs, confsigs
+     */
+    function challengeBefore(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
+    )
+      public
+    {
+      Exit exit = childChains[_chain].exits[_eUtxoPos];
+      require(_cBlkNum < exit.txList[0].blkNum);
+      var challengeTx = TxVerification.getTx(_txInfos[0]);
+      ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+      checkTx(
+        childBlock.root,
+        _txInfos[0],
+        _txInfos[1],
+        _txInfos[2],
+        _txInfos[3],
+        _cIndex,
+        challengeTx
+      );
+      require(hasSameCoin(
+        challengeTx,
+        childChains[_chain],
+        _eUtxoPos
+      ), 'challenge transaction should has same coin');
+      childChains[_chain].challenges[_eUtxoPos] = ExitingTx({
+        txBytes: _txInfos[0],
+        blkNum: _cBlkNum,
+        index: _cIndex
+      });
+      exit.challenged = true;
+    }
+
+    function checkTx(
+      bytes32 root,
+      bytes _txBytes,
+      bytes _proof,
+      bytes _sigs,
+      bytes _confsigs,
+      uint256 _cIndex,
+      TxVerification.Tx challengeTx
+    )
+      private
+      pure
+    {
       checkInclusion(
-        childBlock,
+        root,
         _txBytes,
         _proof,
         challengeTx.inputs[_cIndex].value
       );
-      require(keccak256TxInput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
       TxVerification.verifyTransaction(challengeTx, keccak256(_txBytes), _sigs);
-      // require confirmation signatures if inputs are more than 2.
       if(challengeTx.inputs.length >= 2) {
         require(
           checkConfSigs(
             getTxOwners(challengeTx),
             _confsigs,
-            keccak256(keccak256(_txBytes), childBlock.root)
+            keccak256(keccak256(_txBytes), root)
           ) == true
         );
       }
-      delete childChains[_chain].exits[_eUtxoPos];
+    }
+
+    function hasSameCoin(
+      TxVerification.Tx challengeTx,
+      ChildChain storage childChain,
+      uint256 _eUtxoPos
+    )
+      private
+      view
+      returns (bool)
+    {
+      for(uint i = 0;i < challengeTx.outputs.length;i++) {
+        for(uint j = 0;j < challengeTx.outputs[i].value.length;j++) {
+          if(childChain.coins[challengeTx.outputs[i].value[j]].exit == _eUtxoPos) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /**
+     * @param _txInfos txBytes, proof, sigs, confsigs
+     */
+    function respondChallenge(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
+    )
+      public
+    {
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
+      var challenge = childChain.challenges[_eUtxoPos];
+      var challengeTx = TxVerification.getTx(challenge.txBytes);
+      require(_cBlkNum > challenge.blkNum);
+      var respondTx = TxVerification.getTx(_txInfos[0]);
+      checkTx(
+        childChain.blocks[_cBlkNum].root,
+        _txInfos[0],
+        _txInfos[1],
+        _txInfos[2],
+        _txInfos[3],
+        _cIndex,
+        respondTx
+      );
+      require(keccak256TxInput(respondTx.inputs[_cIndex]) == keccak256TxOutput(challengeTx.outputs[challenge.index]));
+      delete childChain.challenges[_eUtxoPos];
+      exit.challenged = false;
     }
 
     /**
@@ -546,11 +696,11 @@ contract RootChain {
         challenged: false
       });
       for(uint i = 0;i < txList.length;i++) {
-        childChains[_chain].exits[_utxoPos].txList[i] = (ExitingTx({
+        childChains[_chain].exits[_utxoPos].txList[i] = ExitingTx({
           txBytes: txList[i].txBytes,
           blkNum: txList[i].blkNum,
           index: txList[i].index
-        }));
+        });
       }
 
       emit ExitStarted(msg.sender, _utxo);
