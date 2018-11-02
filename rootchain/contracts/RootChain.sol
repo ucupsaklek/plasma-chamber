@@ -378,7 +378,7 @@ contract RootChain {
       // msg.sender must be exitor
       require(output.owners.contains(msg.sender));
 
-      addExitInfo(
+      addToExitList(
         _chain,
         msg.sender,
         output,
@@ -667,7 +667,7 @@ contract RootChain {
      * @param _utxo UTXO data.
      * @param _created_at Time when the UTXO was created.
      */
-    function addExitInfo(
+    function addToExitList(
       address _chain, 
       address _exitor,
       TxVerification.TxState _utxo,
