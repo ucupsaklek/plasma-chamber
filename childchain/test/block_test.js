@@ -31,7 +31,7 @@ describe('Block', function() {
     it('should return hash', function() {
       const block = new Block();
       block.appendTx(tx);
-      assert.equal(block.merkleHash().toString('hex'), '678efd2db81ca04cfff83fc497dacd24d7e653e3ecbf6294ddaf993647a006e0');
+      assert.equal(block.merkleHash().toString('hex'), '034e5d6c35e5c46d9aa2e90c79835ca3c5d32c364c266d616721b7c186ec42f5');
     });
 
     it('should return hash', function() {
