@@ -169,7 +169,7 @@ contract RootChain {
       ChildChain storage childChain =  childChains[_chain];
       childChain.initialized = true;
       childChain.operator = _chain;
-      childChain.currentChildBlock = CHILD_BLOCK_INTERVAL;
+      childChain.currentChildBlock = 1;
       childChain.currentDepositBlock = 1;
       childChain.currentFeeExit = 1;
       return _chain;
@@ -192,8 +192,7 @@ contract RootChain {
       });
 
       // Update block numbers.
-      childChain.currentChildBlock = childChain.currentChildBlock.add(CHILD_BLOCK_INTERVAL);
-      childChain.currentDepositBlock = 1;
+      childChain.currentChildBlock = childChain.currentChildBlock.add(1);
 
       emit BlockSubmitted(_root, block.timestamp);
     }
@@ -212,7 +211,12 @@ contract RootChain {
         amount: amount,
         exit: 0
       });
-      childChain.depositCount += 1;
+      childChain.blocks[childChain.currentChildBlock] = ChildBlock({
+          root: keccak256(uid),
+          timestamp: block.timestamp
+      });
+      childChain.currentChildBlock = childChain.currentChildBlock.add(1);
+      childChain.depositCount++;
       emit Deposit(_chain, msg.sender, amount, uid);
     }
 

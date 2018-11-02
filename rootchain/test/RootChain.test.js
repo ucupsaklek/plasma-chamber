@@ -130,11 +130,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   });
 
   describe('startExit', function () {
-    const blockNumber = 1000;
+    const blockNumber = 1 * 2
     const utxoPos = blockNumber * 1000000000;
-    const blockNumber2 = 1000 * 2;
+    const blockNumber2 = 1 * 3;
     const utxoPos2 = blockNumber2 * 1000000000;
-    const blockNumber3 = 1000 * 3;
+    const blockNumber3 = 1 * 4;
     const utxoPos3 = blockNumber3 * 1000000000;
 
     const tx11 = createTx(testAddress2, testAddress1, coin1Id, 0);
@@ -177,6 +177,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         owner,
         utils.bufferToHex(rootHash1),
         {from: owner, gas: gasLimit});
+      const submitBlockGas = await this.rootChain.submitBlock.estimateGas(
+        owner,
+        utils.bufferToHex(rootHash2),
+        {from: owner, gas: gasLimit});
+      console.log('submitBlockGas', submitBlockGas);
       const submitBlockResult2 = await this.rootChain.submitBlock(
         owner,
         utils.bufferToHex(rootHash2),
