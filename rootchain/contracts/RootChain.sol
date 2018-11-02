@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
+import "./Array.sol";
 import "./Math.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
@@ -13,6 +14,7 @@ import "./TxVerification.sol";
  */
 contract RootChain {
     using Math for uint256;
+    using Array for address[];
     using Merkle for bytes32;
 
     /*
@@ -374,13 +376,7 @@ contract RootChain {
       var output = txList[txList.length - 1].tx.outputs[txList[txList.length - 1].index];
 
       // msg.sender must be exitor
-      bool isOwner = false;
-      for(uint i = 0;i < output.owners.length;i++) {
-        if(output.owners[i] == msg.sender) {
-          isOwner = true;
-        }
-      }
-      require(isOwner);
+      require(output.owners.contains(msg.sender));
 
       addExitInfo(
         _chain,
