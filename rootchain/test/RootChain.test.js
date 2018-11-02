@@ -30,6 +30,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
   const coin1Id = 1;
   const coin2Id = 2;
+  const gasLimit = 200000;
+  const startExitgasLimit = 700000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
   // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
   // 0x0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
@@ -93,7 +95,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const result = await this.rootChain.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(sign),
-        {from: user, gasLimit: 200000});
+        {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
 
@@ -121,7 +123,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const result = await this.rootChain.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(sign),
-        {from: user, gasLimit: 200000});
+        {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
 
@@ -174,11 +176,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const submitBlockResult1 = await this.rootChain.submitBlock(
         owner,
         utils.bufferToHex(rootHash1),
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
       const submitBlockResult2 = await this.rootChain.submitBlock(
         owner,
         utils.bufferToHex(rootHash2),
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
 
       assert.equal(submitBlockResult1.logs[0].event, 'BlockSubmitted');
       assert.equal(submitBlockResult2.logs[0].event, 'BlockSubmitted');
@@ -186,11 +188,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const r1 = await this.rootChain.getChildChain(
         owner,
         blockNumber,
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
       const r2  = await this.rootChain.getChildChain(
         owner,
         blockNumber2,
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
 
       const proof1 = block1.createTXOProof(tx11.outputs[0]);
       const proof2 = block2.createTXOProof(tx21.outputs[0]);
@@ -225,7 +227,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: recipient, gas: 1000000});
+        {from: recipient, gas: startExitgasLimit});
       assert(result.hasOwnProperty('receipt'));
 
     });
@@ -234,7 +236,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const getChildChainResult = await this.rootChain.getChildChain(
         owner,
         blockNumber,
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
       assert.equal(getChildChainResult[0], utils.bufferToHex(block1.merkleHash()));
     });
 
@@ -262,24 +264,23 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: user4, gasLimit: 1000000, gas: 1000000});
+        {from: user4, gas: startExitgasLimit});
       assert(result.hasOwnProperty('receipt'));
       const getExitResult1 = await this.rootChain.getExit(
         owner,
         utxoPos2 + slot * 10000 + 0,
-        {from: user, gasLimit: 100000, gasPrice: 0});
-
-      console.log(getExitResult1)
+        {from: user, gas: gasLimit});
 
       assert.equal(getExitResult1[0][0], user4);
       assert.equal(getExitResult1[1][0].toNumber(), coin2Id);
     });
 
     it('should finalizeExits', async function () {
+      const exitPos = utxoPos2 + coin1Id * 10000 + 0;
       const getExitResult = await this.rootChain.getExit(
         owner,
-        utxoPos2 + coin1Id * 10000 + 0,
-        {from: recipient, gasLimit: 100000});
+        exitPos,
+        {from: recipient, gas: gasLimit});
       
       assert.equal(getExitResult[0][0], recipient);
       assert.equal(getExitResult[1][0].toNumber(), coin1Id);
@@ -287,13 +288,12 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       increaseTime(15 * 24 * 60 * 60);
       await this.rootChain.finalizeExits(
         owner,
-        utxoPos2 + coin1Id * 10000 + 0,
-        {from: recipient, gasLimit: 100000});
-      const txindex = block1.getTxIndex(tx12);
+        exitPos,
+        {from: recipient, gas: gasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
-        utxoPos2 + coin1Id * 10000 + 0,
-        {from: user, gasLimit: 100000});
+        exitPos,
+        {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[0].length, 0);
       assert.equal(getExitResultAfter[1].length, 0);
     });
@@ -303,7 +303,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const submitBlockResult = await this.rootChain.submitBlock(
         owner,
         utils.bufferToHex(block3.merkleHash()),
-        {from: owner, gasLimit: 100000});
+        {from: owner, gas: gasLimit});
 
       assert.equal(submitBlockResult.logs[0].event, 'BlockSubmitted');
 
@@ -318,11 +318,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         utils.bufferToHex(proof31),
         utils.bufferToHex(sign31),
         "",
-        {from: recipient, gasLimit: 100000});
+        {from: recipient, gas: gasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
         utxoPos2 + coin1Id * 10000,
-        {from: user, gasLimit: 100000});
+        {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[0].length, 0);
 
     });
@@ -330,19 +330,21 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   });
 
   function createTx(sender, receiver, coinId, blockNumber) {
+    const OwnState = 0;
+    const TransferLabel = 0;
     const input = new TransactionOutput(
       [sender],
       [coinId],
-      [0],
+      [OwnState],
       blockNumber || 0
     );
     const output = new TransactionOutput(
       [receiver],
       [coinId],
-      [0]
+      [OwnState]
     );
     return new Transaction(
-      0,
+      TransferLabel,
       [receiver],
       (Math.random() * 100000) % 100000,
       [input],
