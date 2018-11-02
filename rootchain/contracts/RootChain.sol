@@ -407,12 +407,12 @@ contract RootChain {
     )
       public
     {
-      Exit exit = childChains[_chain].exits[_eUtxoPos];
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
       require(_cBlkNum > exit.txList[exit.txListLength - 1].blkNum);
       var challengeTx = TxVerification.getTx(_txBytes);
-      ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
       checkTx(
-        childBlock.root,
+        childChain.blocks[_cBlkNum].root,
         _txBytes,
         _proof,
         _sigs,
@@ -421,7 +421,7 @@ contract RootChain {
         challengeTx
       );
       require(keccak256TxInput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
-      delete childChains[_chain].exits[_eUtxoPos];
+      delete childChain.exits[_eUtxoPos];
     }
 
     /**
@@ -436,7 +436,8 @@ contract RootChain {
     )
       public
     {
-      Exit exit = childChains[_chain].exits[_eUtxoPos];
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
       require(exit.txListLength >= 2);
       for(uint i = 0;i < exit.txListLength - 1;i++) {
         if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < exit.txList[i + 1].blkNum) {
@@ -445,7 +446,7 @@ contract RootChain {
           require(
             keccak256TxOutput(prevTx.outputs[exit.txList[i].index])
             == keccak256TxInput(challengeTx.inputs[_cIndex]));
-          ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+          ChildBlock childBlock = childChain.blocks[_cBlkNum];
           checkTx(
             childBlock.root,
             _txInfos[0],
@@ -455,7 +456,7 @@ contract RootChain {
             _cIndex,
             challengeTx
           );
-          delete childChains[_chain].exits[_eUtxoPos];
+          delete childChain.exits[_eUtxoPos];
           break;
         }
       }
@@ -473,10 +474,11 @@ contract RootChain {
     )
       public
     {
-      Exit exit = childChains[_chain].exits[_eUtxoPos];
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
       require(_cBlkNum < exit.txList[0].blkNum);
       var challengeTx = TxVerification.getTx(_txInfos[0]);
-      ChildBlock childBlock = childChains[_chain].blocks[_cBlkNum];
+      ChildBlock childBlock = childChain.blocks[_cBlkNum];
       checkTx(
         childBlock.root,
         _txInfos[0],
@@ -488,10 +490,10 @@ contract RootChain {
       );
       require(hasSameCoin(
         challengeTx,
-        childChains[_chain],
+        childChain,
         _eUtxoPos
       ), 'challenge transaction should has same coin');
-      childChains[_chain].challenges[_eUtxoPos] = ExitingTx({
+      childChain.challenges[_eUtxoPos] = ExitingTx({
         txBytes: _txInfos[0],
         blkNum: _cBlkNum,
         index: _cIndex
