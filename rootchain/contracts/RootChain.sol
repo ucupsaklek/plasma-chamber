@@ -317,16 +317,16 @@ contract RootChain {
         confsigs = RLP.toBytes(txList[5]);
       }
       TxVerification.Tx memory transaction = TxVerification.getTx(txBytes);
-      var output = transaction.outputs[index];
+      bytes32 txHash = keccak256(txBytes);
 
       checkInclusion(
         childBlock.root,
-        txBytes,
+        txHash,
         proof,
-        output.value
+        transaction.outputs[index].value
       );
       TxVerification.verifyTransaction(
-        transaction, keccak256(txBytes), sigs);
+        transaction, txHash, sigs);
 
       return ExitTx({
         blkNum: blkNum,
@@ -341,7 +341,7 @@ contract RootChain {
 
     function checkInclusion(
       bytes32 root,
-      bytes _txBytes,
+      bytes32 txHash,
       bytes _proofs,
       uint256[] value
     )
@@ -349,7 +349,7 @@ contract RootChain {
       pure
     {
       for(uint c = 0; c < value.length; c++) {
-        require(keccak256(_txBytes).checkMembership(
+        require(txHash.checkMembership(
           value[c],
           root,
           ByteUtils.slice(_proofs, c*512, 512)
@@ -513,19 +513,20 @@ contract RootChain {
       private
       pure
     {
+      bytes32 txHash = keccak256(_txBytes);
       checkInclusion(
         root,
-        _txBytes,
+        txHash,
         _proof,
         challengeTx.inputs[_cIndex].value
       );
-      TxVerification.verifyTransaction(challengeTx, keccak256(_txBytes), _sigs);
+      TxVerification.verifyTransaction(challengeTx, txHash, _sigs);
       if(challengeTx.inputs.length >= 2) {
         require(
           checkConfSigs(
             getTxOwners(challengeTx),
             _confsigs,
-            keccak256(keccak256(_txBytes), root)
+            keccak256(txHash, root)
           ) == true
         );
       }

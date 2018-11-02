@@ -31,7 +31,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const coin1Id = 1;
   const coin2Id = 2;
   const gasLimit = 200000;
-  const startExitgasLimit = 700000;
+  const startExitgasLimit = 650000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
   // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
   // 0x0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
@@ -196,7 +196,6 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
       const proof1 = block1.createTXOProof(tx11.outputs[0]);
       const proof2 = block2.createTXOProof(tx21.outputs[0]);
-      console.log(utils.bufferToHex(rootHash1), utils.bufferToHex(rootHash2));
 
       assert.equal(
         r1[0], utils.bufferToHex(rootHash1)
@@ -222,6 +221,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         0
       ]]);
 
+      const gas = await this.rootChain.startExit.estimateGas(
+        owner,
+        blockNumber2,
+        0,
+        utils.bufferToHex(txList),
+        {from: recipient, gas: startExitgasLimit});
+      console.log('gas', gas);
       const result = await this.rootChain.startExit(
         owner,
         blockNumber2,
