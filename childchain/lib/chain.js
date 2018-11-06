@@ -41,6 +41,7 @@ class Chain {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
       returnValues.depositor,
+      returnValues.uid,
       returnValues.amount,
       returnValues.depositBlock
     );
@@ -51,11 +52,10 @@ class Chain {
     });
   }
   
-  createDepositTx(depositor, amount, depositBlock) {
-    const wethCoin = 0;
+  createDepositTx(depositor, uid, amount, depositBlock) {
     const output = new TransactionOutput(
       [depositor],
-      [wethCoin]
+      [uid]
     );
     const depositTx = new Transaction(
       0,        // label
