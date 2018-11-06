@@ -206,7 +206,7 @@ contract RootChain {
     {
       uint256 amount = msg.value;
       ChildChain childChain = childChains[_chain];
-      uint uid = uint256(keccak256(address(0), msg.sender, childChain.depositCount));
+      uint uid = uint256(bytes2(keccak256(address(0), msg.sender, childChain.depositCount)));
       childChain.coins[uid] = Coin({
         amount: amount,
         exit: 0
