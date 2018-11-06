@@ -38,17 +38,17 @@ module.exports.run = childChain => {
   childChain.events.Ready((e) => {
   })
 
+  childChain.events.Deposited((e) => {
+    console.log('childChain.Deposited', e);
+  })
+
   childChain.events.TxAdded(async (e) => {
     await childChain.saveCommitmentTxs(); //async func
 
-    if (e.type == "deposit") {
-      await childChain.generateBlock();
-    } else if (e.type == "basic") {
 
-      // TODO: Must make it blocksize
-      if (childChain.commitmentTxs.length > 100) {
-        await childChain.generateBlock();
-      }
+    // TODO: Must make it blocksize
+    if (childChain.commitmentTxs.length > 100) {
+      await childChain.generateBlock();
     }
   })
   childChain.events.BlockGenerated((e) => {
@@ -59,9 +59,9 @@ module.exports.run = childChain => {
      */
     // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
   })
-  eventListener.getEvents('Deposit', 1, (e) => {
-    console.log('Deposit', e.transactionHash);
-    childChain.applyDeposit(e);
+  eventListener.getEvents('Deposit', 1, async (e) => {
+    console.log('eventListener.Deposit', e.transactionHash);
+    await childChain.applyDeposit(e);
   })
   // rootChain.events.BlockSubmitted((e) => {
   //   console.log(e);

@@ -22,7 +22,9 @@ module.exports.run = childChain => {
     },
     eth_getBlockByNumber: (args, cb) => {
       console.log('eth_getBlockByNumber', args);
-      cb(null, childChain.block);
+      childChain.getBlock(args[0]).then((block) => {
+        cb(null, block);
+      })
     },
     eth_getBlockTransactionCountByNumber: (args, cb) => {
       // Get block info for them
@@ -34,9 +36,9 @@ module.exports.run = childChain => {
     eth_getFilterLogs: (args, cb) => {
 
     },
-    chamber_block: (args, cb) => {
-      childChain.getBlock(args[0]).then((block) => {
-        cb(null, block);
+    chamber_proof: (args, cb) => {
+      childChain.getProof(args[0], args[1]).then((proof) => {
+        cb(null, proof);
       })
     }
   });

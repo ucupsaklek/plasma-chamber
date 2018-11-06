@@ -9,6 +9,9 @@ class ChainEvent extends EventEmitter {
   Ready(cb){
     this.on("Ready", cb)
   }
+  Deposited(cb){
+    this.on("Deposited", cb)
+  }
   TxAdded(cb){
     this.on("TxAdded", cb)
   }

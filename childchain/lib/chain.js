@@ -1,7 +1,7 @@
+const utils = require('ethereumjs-util');
 const Block = require('./block');
 const Snapshot = require('./state/snapshot');
 const {
-  Asset,
   Transaction,
   TransactionOutput
 } = require('./tx');
@@ -37,7 +37,7 @@ class Chain {
    * apply deposit event
    * @param {*} event event object of web3
    */
-  applyDeposit(event) {
+  async applyDeposit(event) {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
       returnValues.depositor,
@@ -45,11 +45,18 @@ class Chain {
       returnValues.amount,
       returnValues.depositBlock
     );
-    this.commitmentTxs.push(tx);
-    this.emit("TxAdded", {
+    this.blockHeight++;
+    await this.saveBlockHeight();
+
+    const newBlock = new Block(this.blockHeight, true);
+    newBlock.appendTx(tx)
+    await this.saveBlock(newBlock); //async func
+
+    this.emit("Deposited", {
       type: "deposit",
       payload: tx
     });
+    this.emit("BlockGenerated", { payload: newBlock })
   }
   
   createDepositTx(depositor, uid, amount, depositBlock) {
@@ -136,6 +143,17 @@ class Chain {
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
     return Block.fromString(blockStr);
+  }
+  async getProof(blockHeight, utxo) {
+    const blockStr = await this.blockDB.get(blockHeight);
+    const block = Block.fromString(blockStr);
+    if(block.isDepositBlock) {
+      let buf = new Buffer(2);
+      buf.writeUInt16BE(block.txs[0].outputs[0].value[0], 0);
+      return utils.sha3(buf).toString('hex')
+    }else{
+      return block.createTXOProof(utxo);
+    }
   }
 
   gracefulStop(){
