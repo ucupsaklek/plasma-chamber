@@ -34,6 +34,11 @@ module.exports.run = childChain => {
     eth_getFilterLogs: (args, cb) => {
 
     },
+    chamber_block: (args, cb) => {
+      childChain.getBlock(args[0]).then((block) => {
+        cb(null, block);
+      })
+    }
   });
   app.use(cors({methods: ['POST']}));
   app.use(jsonParser());

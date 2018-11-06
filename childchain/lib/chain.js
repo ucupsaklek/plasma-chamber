@@ -80,7 +80,7 @@ class Chain {
     return tx.hash();
   }
   
-  /**
+  /**saveBlock
    * generate block
    */
   async generateBlock() {
@@ -133,6 +133,11 @@ class Chain {
   async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
+  async getBlock(blockHeight) {
+    const blockStr = await this.blockDB.get(blockHeight);
+    return Block.fromString(blockStr);
+  }
+
   gracefulStop(){
     return new Promise((resolve, reject) => {
       this.blockDB.close(_=>{

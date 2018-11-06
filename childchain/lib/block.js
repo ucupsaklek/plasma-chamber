@@ -91,6 +91,18 @@ class Block {
     })
   }
 
+  static fromString(str) {
+    const empty = new Block();
+    const block = JSON.parse(str);
+    empty.id = block.id;
+    empty.number = block.number;
+    empty.hash = block.hash;
+    empty.txs = block.txs;
+    return empty;
+  }
+
+
+
 }
 
 module.exports = Block
