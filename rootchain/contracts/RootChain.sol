@@ -1,11 +1,10 @@
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import "./Array.sol";
 import "./Math.sol";
-import "./PlasmaRLP.sol";
 import "./Merkle.sol";
 import "./Validate.sol";
-import "./PriorityQueue.sol";
 import "./TxVerification.sol";
 
 /**
@@ -14,10 +13,9 @@ import "./TxVerification.sol";
  * based on https://github.com/omisego/plasma-mvp/blob/master/plasma/root_chain/contracts/RootChain.sol
  */
 contract RootChain {
-    using SafeMath for uint256;
+    using Math for uint256;
+    using Array for address[];
     using Merkle for bytes32;
-    using PlasmaRLP for bytes;
-
 
     /*
      * Events
@@ -54,7 +52,7 @@ contract RootChain {
     );
 
     event Log(
-      RLP.RLPItem no
+      bytes32 data
     );
 
 
@@ -65,7 +63,7 @@ contract RootChain {
 
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
 
-    mapping (address => ChildChain) internal childChains;
+    mapping (address => ChildChain) public childChains;
 
     uint256 childChainNum;
 
@@ -79,9 +77,10 @@ contract RootChain {
       address[] exitors;
       uint256[] values;
       bytes stateBytes;
-      uint256 exitableAt;
-      uint256 oIndex;
       uint256 blkNum;
+      uint256 exitableAt;
+      uint256 txListLength;
+      mapping (uint256 => ExitingTx) txList;
       bool challenged;
     }
 
@@ -100,7 +99,7 @@ contract RootChain {
       uint256 currentFeeExit;
       mapping (uint256 => Coin) coins;
       mapping (uint256 => Exit) exits;
-      mapping (address => address) exitsQueues;
+      mapping (uint256 => ExitingTx) challenges;
       mapping (address => uint256) weights;
     }
 
@@ -108,7 +107,25 @@ contract RootChain {
       mapping (address => uint256) weights;
       mapping (uint256 => Exit) packets;
     }
-    
+
+    struct ExitTx {
+      TxVerification.Tx tx;
+      uint256 blkNum;
+      bytes txBytes;
+      bytes proof;
+      bytes sigs;
+      uint256 index;
+      bytes confsigs;
+    }
+
+    struct ExitingTx {
+      bytes txBytes;
+      // TxVerification.Tx tx;
+      uint256 blkNum;
+      uint256 index;
+    }
+
+
     /*
      * Modifiers
      */
@@ -152,10 +169,9 @@ contract RootChain {
       ChildChain storage childChain =  childChains[_chain];
       childChain.initialized = true;
       childChain.operator = _chain;
-      childChain.currentChildBlock = CHILD_BLOCK_INTERVAL;
+      childChain.currentChildBlock = 1;
       childChain.currentDepositBlock = 1;
       childChain.currentFeeExit = 1;
-      childChain.exitsQueues[address(0)] = address(new PriorityQueue());
       return _chain;
     }
 
@@ -176,8 +192,7 @@ contract RootChain {
       });
 
       // Update block numbers.
-      childChain.currentChildBlock = childChain.currentChildBlock.add(CHILD_BLOCK_INTERVAL);
-      childChain.currentDepositBlock = 1;
+      childChain.currentChildBlock = childChain.currentChildBlock.add(1);
 
       emit BlockSubmitted(_root, block.timestamp);
     }
@@ -196,7 +211,12 @@ contract RootChain {
         amount: amount,
         exit: 0
       });
-      childChain.depositCount += 1;
+      childChain.blocks[childChain.currentChildBlock] = ChildBlock({
+          root: keccak256(uid),
+          timestamp: block.timestamp
+      });
+      childChain.currentChildBlock = childChain.currentChildBlock.add(1);
+      childChain.depositCount++;
       emit Deposit(_chain, msg.sender, amount, uid);
     }
 
@@ -210,168 +230,388 @@ contract RootChain {
     )
       public
     {
-      ChildChain childChain = childChains[_chain];
 
-      // Check that the given UTXO is a deposit.
-      require(blknum % CHILD_BLOCK_INTERVAL != 0);
+    }
 
-      // Validate the given owner and amount.
-      bytes32 root = childChain.blocks[blknum].root;
-      bytes32 depositHash = keccak256(msg.sender, uid);
-      require(root == depositHash);
-      address[] memory owners = new address[](1);
-      owners[0] = msg.sender;
-      uint256[] memory value = new uint256[](1);
-      value[0] = uid;
-      addExitToQueue(
-        _chain,
-        msg.sender,
-        TxVerification.TxState({
-          owners: owners,
-          value: value,
-          state: RLP.toList(RLP.toRlpItem(hex"c100")),
-          stateBytes: hex"c100"
-        }),
-        blknum,
-        0,
-        childChain.blocks[blknum].timestamp
-      );
+    function checkConfSigs(address[] owners, bytes sigs, bytes32 txHash)
+      internal
+      pure
+      returns (bool)
+    {
+      uint32 i = 0;
+      for (uint256 offset = 0; offset < sigs.length; offset += 65) {
+        bytes memory sig = ByteUtils.slice(sigs, offset, 65);
+        if(owners[i] != ECRecovery.recover(txHash, sig)) {
+          return false;
+        }
+        i = i + 1;
+      }
+      return true;
+    }
+
+    function getTxOwners(TxVerification.Tx memory transaction)
+      internal
+      pure
+      returns (address[] memory)
+    {
+      uint s = 0;
+      uint i = 0;
+      for(i = 0; i < transaction.inputs.length; i++) {
+        s += transaction.inputs[i].owners.length;
+      }
+      address[] memory owners = new address[](s);
+      for(i = 0; i < transaction.inputs.length; i++) {
+        for(uint j = 0; j < transaction.inputs[i].owners.length; j++) {
+          owners[i * transaction.inputs.length + j] = transaction.inputs[i].owners[j];
+        }
+      }
+      return owners;
     }
 
     /**
+     * @dev parseExitTxList is core logic for exit
+     * checking all transactions are in merkle root
+     * checking state transitions are correct
+     * checking confirmation signatures if needed
+     */
+    function parseExitTxList(ChildChain storage chain, uint256 _blkNum, bytes txListBytes)
+      internal
+      view
+      returns (ExitTx[])
+    {
+      RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(txListBytes));
+      ExitTx[] memory exitTxList = new ExitTx[](txList.length);
+      uint256 blkNum = _blkNum;
+      require(txList.length == 2);
+      for(uint i = txList.length - 1;i >= 0 && i < txList.length; i--) {
+        exitTxList[i] = parseExitTx(
+          chain.blocks[blkNum],
+          txList[i]);
+        require(exitTxList[i].blkNum == blkNum);
+        blkNum = exitTxList[i].tx.inputs[0].blkNum;
+        if(i < exitTxList.length - 1) {
+          require(
+            keccak256TxInput(exitTxList[i + 1].tx.inputs[0]) == keccak256TxOutput(exitTxList[i].tx.outputs[exitTxList[i].index]));
+        }
+      }
+      if(exitTxList[0].tx.inputs.length >= 2) {
+        require(
+          checkConfSigs(
+            getTxOwners(exitTxList[0].tx),
+            exitTxList[0].confsigs,
+            keccak256(keccak256(exitTxList[0].txBytes), chain.blocks[blkNum].root)
+          ) == true
+        );
+      }
+      return exitTxList;
+    }
+
+    function parseExitTx(ChildBlock childBlock, RLP.RLPItem txItem)
+      internal
+      pure
+      returns (ExitTx)
+    {
+      var txList = RLP.toList(txItem);
+      uint256 blkNum = RLP.toUint(txList[0]);
+      bytes memory txBytes = RLP.toBytes(txList[1]);
+      bytes memory proof = RLP.toBytes(txList[2]);
+      bytes memory sigs = RLP.toBytes(txList[3]);
+      uint index = RLP.toUint(txList[4]);
+      bytes memory confsigs;
+      if(txList.length > 5) {
+        confsigs = RLP.toBytes(txList[5]);
+      }
+      TxVerification.Tx memory transaction = TxVerification.getTx(txBytes);
+      bytes32 txHash = keccak256(txBytes);
+
+      checkInclusion(
+        childBlock.root,
+        txHash,
+        proof,
+        transaction.outputs[index].value
+      );
+      TxVerification.verifyTransaction(
+        transaction, txHash, sigs);
+
+      return ExitTx({
+        blkNum: blkNum,
+        tx: transaction,
+        txBytes: txBytes,
+        proof: proof,
+        sigs: sigs,
+        index: index,
+        confsigs: confsigs
+      });
+    }
+
+    function checkInclusion(
+      bytes32 root,
+      bytes32 txHash,
+      bytes _proofs,
+      uint256[] value
+    )
+      private
+      pure
+    {
+      for(uint c = 0; c < value.length; c++) {
+        require(txHash.checkMembership(
+          value[c],
+          root,
+          ByteUtils.slice(_proofs, c*512, 512)
+        ));
+      }
+    }
+
+    /**
+     * @dev start exit UTXO
      * @param _blkNum block number of exit utxo
      * @param _oIndex index of output
-     * @param _txBytes tx bytes of exit utxo
-     * @param _proofs of coins which include in utxo
-     * @param _sigs signatures
-     * @param _confsigs confirmation signatures(if needed)
+     * @param _txListBytes tx bytes list of exit utxo
      */
     function startExit(
       address _chain,
       uint256 _blkNum,
       uint8 _oIndex,
+      bytes _txListBytes
+    )
+      public
+    {
+      var childBlock = childChains[_chain].blocks[_blkNum];
+      var txList = parseExitTxList(childChains[_chain], _blkNum, _txListBytes);
+      var output = txList[txList.length - 1].tx.outputs[txList[txList.length - 1].index];
+
+      // msg.sender must be exitor
+      require(output.owners.contains(msg.sender));
+
+      addToExitList(
+        _chain,
+        msg.sender,
+        output,
+        txList,
+        childBlock.timestamp);
+    }
+
+    /**
+     * @dev challenge by spent transaction
+     * @param _cIndex the index of inputs
+     * @param _cBlkNum block number of challenge tx
+     * @param _eUtxoPos exiting utxo position
+     * @param _txBytes The challenging transaction in bytes RLP form.
+     * @param _proof Proof of inclusion for the transaction used to challenge.
+     * @param _sigs Signatures for the transaction used to challenge.
+     */
+    function challengeAfter(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
       bytes _txBytes,
-      bytes _proofs,
+      bytes _proof,
       bytes _sigs,
       bytes _confsigs
     )
       public
     {
-      var exitingTx = TxVerification.getTx(_txBytes);
-      var output = exitingTx.outputs[_oIndex];
-      // check exitor
-      bool isOwner = false;
-      for(uint i = 0;i < output.owners.length;i++) {
-        if(output.owners[i] == msg.sender) {
-          isOwner = true;
-        }
-      }
-      require(isOwner);
-      // output.value is list of coin id
-      // confirm tx inclusion proof for each coin
-      var childBlock = childChains[_chain].blocks[_blkNum];
-      for(uint c = 0; c < output.value.length; c++) {
-        require(keccak256(_txBytes).checkMembership(
-          output.value[c],
-          childBlock.root,
-          ByteUtils.slice(_proofs, c*512, 512)
-        ));
-      }
-      // verify transaction
-      verifyTransaction(_txBytes, _sigs);
-
-      addExitToQueue(
-        _chain,
-        msg.sender,
-        output,
-        _blkNum,
-        _oIndex,
-        childBlock.timestamp);
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
+      require(_cBlkNum > exit.blkNum);
+      var challengeTx = TxVerification.getTx(_txBytes);
+      checkTx(
+        childChain.blocks[_cBlkNum].root,
+        _txBytes,
+        _proof,
+        _sigs,
+        _confsigs,
+        _cIndex,
+        challengeTx
+      );
+      require(keccak256TxInput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
+      delete childChain.exits[_eUtxoPos];
     }
 
     /**
-     * @dev challenge exiting coin
-     * @param _cBlkNum challenging block number
-     * @param _uid coin id
-     * @param _txBytes The challenging transaction in bytes RLP form.
-     * @param _proof Proof of inclusion for the transaction used to challenge.
-     * @param _sigs Signatures for the transaction used to challenge.
+     * @param _txInfos txBytes, proof, sigs, confsigs
      */
-    function challengeExit(
+    function challengeBetween(
       address _chain,
+      uint256 _cIndex,
       uint256 _cBlkNum,
-      uint256 _uid,
-      bytes _txBytes,
-      bytes _proof,
-      bytes _sigs
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
     )
       public
     {
-      // There is exit for coin
-      require(childChains[_chain].coins[_uid].exit > 0);
-      uint256 _eUtxoPos = childChains[_chain].coins[_uid].exit;
-      Exit exit = childChains[_chain].exits[_eUtxoPos];
-      var challengeTx = TxVerification.getTx(_txBytes);
-      bytes32 root = childChains[_chain].blocks[_cBlkNum].root;
-      var txHash = keccak256(_txBytes);
-      require(keccak256TxInput(challengeTx.inputs[exit.oIndex]) == keccak256Exit(exit));
-      
-      // var confirmationHash = keccak256(txHash, root);
-      var merkleHash = keccak256(txHash, _sigs);
-      //address owner = childChains[_chain].exits[eUtxoPos].exitor;
-
-      // Validate the spending transaction.
-      //require(owner == ECRecovery.recover(confirmationHash, _confirmationSig));
-      require(merkleHash.checkMembership(_uid, root, _proof));
-      verifyTransaction(_txBytes, _sigs);
-
-      // Delete the owner but keep the amount to prevent another exit.
-      if(_cBlkNum > exit.blkNum) {
-        exit.challenged = true;
-      } else {
-        // other challenges
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
+      require(exit.txListLength >= 2);
+      for(uint i = 0;i < exit.txListLength;i++) {
+        uint256 nextBlkNum = exit.blkNum;
+        if(i < exit.txListLength - 1) {
+          nextBlkNum = exit.txList[i + 1].blkNum;
+        }
+        if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < nextBlkNum) {
+          TxVerification.Tx memory prevTx = TxVerification.getTx(exit.txList[i].txBytes);
+          TxVerification.Tx memory challengeTx = TxVerification.getTx(_txInfos[0]);
+          require(
+            keccak256TxOutput(prevTx.outputs[exit.txList[i].index])
+            == keccak256TxInput(challengeTx.inputs[_cIndex]));
+          checkTx(
+            childChain.blocks[_cBlkNum].root,
+            _txInfos[0],
+            _txInfos[1],
+            _txInfos[2],
+            _txInfos[3],
+            _cIndex,
+            challengeTx
+          );
+          delete childChain.exits[_eUtxoPos];
+          break;
+        }
       }
     }
 
     /**
-     * @dev Determines the next exit to be processed.
-     * @param _token Asset type to be exited.
-     * @return A tuple of the position and time when this exit can be processed.
+     * @param _txInfos txBytes, proof, sigs, confsigs
      */
-    function getNextExit(address _chain, address _token)
-        public
-        view
-        returns (uint256, uint256)
+    function challengeBefore(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
+    )
+      public
     {
-        return PriorityQueue(childChains[_chain].exitsQueues[_token]).getMin();
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
+      require(_cBlkNum < exit.txList[0].blkNum);
+      var challengeTx = TxVerification.getTx(_txInfos[0]);
+      ChildBlock childBlock = childChain.blocks[_cBlkNum];
+      checkTx(
+        childBlock.root,
+        _txInfos[0],
+        _txInfos[1],
+        _txInfos[2],
+        _txInfos[3],
+        _cIndex,
+        challengeTx
+      );
+      require(hasSameCoin(
+        challengeTx,
+        childChain,
+        _eUtxoPos
+      ), 'challenge transaction should has same coin');
+      childChain.challenges[_eUtxoPos] = ExitingTx({
+        txBytes: _txInfos[0],
+        blkNum: _cBlkNum,
+        index: _cIndex
+      });
+      exit.challenged = true;
+    }
+
+    function checkTx(
+      bytes32 root,
+      bytes _txBytes,
+      bytes _proof,
+      bytes _sigs,
+      bytes _confsigs,
+      uint256 _cIndex,
+      TxVerification.Tx challengeTx
+    )
+      private
+      pure
+    {
+      bytes32 txHash = keccak256(_txBytes);
+      checkInclusion(
+        root,
+        txHash,
+        _proof,
+        challengeTx.inputs[_cIndex].value
+      );
+      TxVerification.verifyTransaction(challengeTx, txHash, _sigs);
+      if(challengeTx.inputs.length >= 2) {
+        require(
+          checkConfSigs(
+            getTxOwners(challengeTx),
+            _confsigs,
+            keccak256(txHash, root)
+          ) == true
+        );
+      }
+    }
+
+    function hasSameCoin(
+      TxVerification.Tx challengeTx,
+      ChildChain storage childChain,
+      uint256 _eUtxoPos
+    )
+      private
+      view
+      returns (bool)
+    {
+      for(uint i = 0;i < challengeTx.outputs.length;i++) {
+        for(uint j = 0;j < challengeTx.outputs[i].value.length;j++) {
+          if(childChain.coins[challengeTx.outputs[i].value[j]].exit == _eUtxoPos) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    /**
+     * @param _txInfos txBytes, proof, sigs, confsigs
+     */
+    function respondChallenge(
+      address _chain,
+      uint256 _cIndex,
+      uint256 _cBlkNum,
+      uint256 _eUtxoPos,
+      bytes[] _txInfos
+    )
+      public
+    {
+      ChildChain childChain = childChains[_chain];
+      Exit exit = childChain.exits[_eUtxoPos];
+      var challenge = childChain.challenges[_eUtxoPos];
+      var challengeTx = TxVerification.getTx(challenge.txBytes);
+      require(_cBlkNum > challenge.blkNum);
+      var respondTx = TxVerification.getTx(_txInfos[0]);
+      checkTx(
+        childChain.blocks[_cBlkNum].root,
+        _txInfos[0],
+        _txInfos[1],
+        _txInfos[2],
+        _txInfos[3],
+        _cIndex,
+        respondTx
+      );
+      require(keccak256TxInput(respondTx.inputs[_cIndex]) == keccak256TxOutput(challengeTx.outputs[challenge.index]));
+      delete childChain.challenges[_eUtxoPos];
+      exit.challenged = false;
     }
 
     /**
      * @dev Processes any exits that have completed the challenge period. 
-     * @param _token Token type to process.
+     * @param _utxoPos exit position
      */
-    function finalizeExits(address _chain, address _token)
+    function finalizeExits(address _chain, uint _utxoPos)
         public
     {
       ChildChain childChain = childChains[_chain];
-      uint256 utxoPos;
-      uint256 exitableAt;
-      (exitableAt, utxoPos) = getNextExit(_chain, _token);
-      PriorityQueue queue = PriorityQueue(childChain.exitsQueues[_token]);
-      Exit memory currentExit = childChain.exits[utxoPos];
-      while (exitableAt < block.timestamp) {
-        currentExit = childChain.exits[utxoPos];
-
-        // TODO: handle ERC-20 transfer
-        require(address(0) == _token);
-
-        delete childChain.exits[utxoPos];
-
-        if (queue.currentSize() > 0) {
-            (exitableAt, utxoPos) = getNextExit(_chain, _token);
-        } else {
-            return;
+      Exit memory currentExit = childChain.exits[_utxoPos];
+      if(
+        currentExit.exitableAt < block.timestamp
+        && !currentExit.challenged) {
+        // state specific withdrawal
+        if(currentExit.exitors.length == 1) {
+          for(uint i = 0;i < currentExit.values.length;i++) {
+            currentExit.exitors[0].transfer(
+              childChain.coins[currentExit.values[i]].amount
+            );
+          }
         }
+        delete childChain.exits[_utxoPos];
       }
     }
 
@@ -438,32 +678,38 @@ contract RootChain {
      * @param _utxo UTXO data.
      * @param _created_at Time when the UTXO was created.
      */
-    function addExitToQueue(
+    function addToExitList(
       address _chain, 
       address _exitor,
       TxVerification.TxState _utxo,
-      uint256 _blkNum,
-      uint256 _oIndex,
+      ExitTx[] txList,
       uint256 _created_at
     )
       private
     {
-      uint256 _utxoPos = _blkNum * 1000000000 + _oIndex;
+      
+      uint256 _utxoPos = txList[txList.length - 1].blkNum * 1000000000 + _utxo.value[0] * 10000 + txList[txList.length - 1].index;
       uint256 exitableAt = Math.max(_created_at + 2 weeks, block.timestamp + 1 weeks);
       // need to check the coin already isn't exiting status
       for(uint c = 0; c < _utxo.value.length; c++) {
         childChains[_chain].coins[c].exit = _utxoPos;
       }
-
       childChains[_chain].exits[_utxoPos] = Exit({
         exitors: _utxo.owners,
         values: _utxo.value,
         stateBytes: _utxo.stateBytes,
+        blkNum: txList[txList.length - 1].blkNum,
         exitableAt: exitableAt,
-        oIndex: _oIndex,
-        blkNum: _blkNum,
+        txListLength: txList.length,
         challenged: false
       });
+      for(uint i = 0;i < txList.length - 1;i++) {
+        childChains[_chain].exits[_utxoPos].txList[i] = ExitingTx({
+          txBytes: txList[i].txBytes,
+          blkNum: txList[i].blkNum,
+          index: txList[i].index
+        });
+      }
 
       emit ExitStarted(msg.sender, _utxo);
     }
@@ -472,7 +718,7 @@ contract RootChain {
     public
     pure
   {
-    TxVerification.verifyTransaction(txBytes, sigs);
+    TxVerification.verifyTransaction(TxVerification.getTx(txBytes), keccak256(txBytes), sigs);
   }
 
   function keccak256Exit(Exit exit)
@@ -489,6 +735,14 @@ contract RootChain {
     returns (bytes32)
   {
     return keccak256(input.owners, input.value, input.stateBytes);
+  }
+
+  function keccak256TxOutput(TxVerification.TxState output)
+    private
+    pure
+    returns (bytes32)
+  {
+    return keccak256(output.owners, output.value, output.stateBytes);
   }
 
 }

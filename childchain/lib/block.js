@@ -37,15 +37,15 @@ class Block {
 
   createTree() {
     if(this.tree !== null) return this.tree;
-    const leaf = Array.from(Array(Math.pow(2, SMT_DEPTH)), (item, index) => null);
+    let leaves = Array.from(Array(Math.pow(2, SMT_DEPTH)), (item, index) => null);
     this.txs.forEach(tx=>{
       tx.outputs.forEach((o) => {
         o.value.forEach((uid) => {
-          leaf[uid] = tx.merkleHash()
+          leaves[uid] = tx.hash();
         })
       })
     })
-    this.tree = new SparseMerkleTree(SMT_DEPTH, leaf);
+    this.tree = new SparseMerkleTree(SMT_DEPTH, leaves);
     return this.tree;
   }
 
@@ -55,11 +55,20 @@ class Block {
   }
 
   createTXOProof(txo) {
+    const tree = this.createTree();
+    return txo.value.map((uid) => tree.proof(uid)).reduce((acc, p) => {
+      return Buffer.concat(acc.concat([p]))
+    }, []);
+  }
+
+  createTxProof(txo) {
     const uids = txo.outputs.reduce((uids, o) => {
       return uids.concat(o.value);
     }, []);
     const tree = this.createTree();
-    return uids.map((uid) => tree.proof(uid));
+    return uids.map((uid) => tree.proof(uid)).reduce((acc, p) => {
+      return Buffer.concat(acc.concat([p]))
+    }, []);
   }
 
   merkleHash() {

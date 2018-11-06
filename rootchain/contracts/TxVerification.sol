@@ -99,9 +99,9 @@ library TxVerification {
     return TxInput({
       owners: owners,
       value: values,
-      state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.listAsBytes(txStateList[3]),
-      blkNum: RLP.toUint(txStateList[4])
+      state: RLP.toList(txStateList[2]),
+      stateBytes: RLP.listAsBytes(txStateList[2]),
+      blkNum: RLP.toUint(txStateList[3])
     });
   }
 
@@ -129,28 +129,9 @@ library TxVerification {
     return TxState({
       owners: owners,
       value: values,
-      state: RLP.toList(txStateList[3]),
-      stateBytes: RLP.listAsBytes(txStateList[3])
+      state: RLP.toList(txStateList[2]),
+      stateBytes: RLP.listAsBytes(txStateList[2])
     });
-  }
-
-  function getTxOwners(Tx memory transaction)
-    internal
-    pure
-    returns (address[] memory)
-  {
-    uint s = 0;
-    uint i = 0;
-    for(i = 0; i < transaction.inputs.length; i++) {
-      s += transaction.inputs[i].owners.length;
-    }
-    address[] memory owners = new address[](s);
-    for(i = 0; i < transaction.inputs.length; i++) {
-      for(uint j = 0; j < transaction.inputs[i].owners.length; j++) {
-        owners[i * transaction.inputs.length + j] = transaction.inputs[i].owners[j];
-      }
-    }
-    return owners;
   }
 
   /**
@@ -222,15 +203,13 @@ library TxVerification {
    * application specific functions 
    */
 
-  function verifyTransaction(bytes txBytes, bytes sigs)
+  function verifyTransaction(Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
-    Tx memory transaction = getTx(txBytes);
-    address[] memory owners = getTxOwners(transaction);
-    require(checkSigs(owners, sigs, keccak256(txBytes)) == true);
+    // require(checkSigs(owners, sigs, txHash) == true);
     if(transaction.label == 0) {
-      transfer(transaction);
+      transfer(transaction, txHash, sigs);
     }else if(transaction.label == 1) {
       exchange(transaction);
     }else if(transaction.label == 100) {
@@ -241,11 +220,13 @@ library TxVerification {
   /**
    * @dev change owner
    */
-  function transfer(Tx transaction)
+  function transfer(Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
     address counter = RLP.toAddress(transaction.args[0]);
+    require(RLP.toUint(transaction.inputs[0].state[0]) == 0);
+    require(transaction.inputs[0].owners[0] == ECRecovery.recover(txHash, sigs));
     require(transaction.outputs[0].owners[0] == counter);
   }
 
