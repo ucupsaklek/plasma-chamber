@@ -87,7 +87,7 @@ class Chain {
     return tx.hash();
   }
   
-  /**saveBlock
+  /**
    * generate block
    */
   async generateBlock() {

@@ -104,8 +104,6 @@ class Block {
     return empty;
   }
 
-
-
 }
 
 module.exports = Block
