@@ -34,6 +34,7 @@ class RootChainEventListener {
 module.exports.run = childChain => {
 
   const rootChainEventListener = new RootChainEventListener();
+  const RootChainConfirmationBlockNum = 1;
 
   childChain.events.Ready((e) => {
   })
@@ -59,7 +60,7 @@ module.exports.run = childChain => {
      */
     // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
   })
-  rootChainEventListener.getEvents('Deposit', 1, async (e) => {
+  rootChainEventListener.getEvents('Deposit', RootChainConfirmationBlockNum, async (e) => {
     console.log('eventListener.Deposit', e.transactionHash);
     await childChain.applyDeposit(e);
   })
