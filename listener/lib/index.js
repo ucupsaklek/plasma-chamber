@@ -5,7 +5,7 @@ const RootChainAbi = require('../assets/RootChain.json').abi;
 
 const rootChain = new web3.eth.Contract(RootChainAbi, process.env.ROOTCHAIN_ADDRESS);
 
-class EventListener {
+class RootChainEventListener {
 
   constructor() {
     this.seenEvents = {};
@@ -33,7 +33,7 @@ class EventListener {
 
 module.exports.run = childChain => {
 
-  const eventListener = new EventListener();
+  const rootChainEventListener = new RootChainEventListener();
 
   childChain.events.Ready((e) => {
   })
@@ -59,7 +59,7 @@ module.exports.run = childChain => {
      */
     // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
   })
-  eventListener.getEvents('Deposit', 1, async (e) => {
+  rootChainEventListener.getEvents('Deposit', 1, async (e) => {
     console.log('eventListener.Deposit', e.transactionHash);
     await childChain.applyDeposit(e);
   })
