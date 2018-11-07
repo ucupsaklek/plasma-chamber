@@ -2,9 +2,7 @@
  * state transition standard library
  */
 
-const {
-  Asset
-} = require('../tx');
+const OWN_STATE = 0;
 
 function transfer(inputs, args) {
   const output = inputs[0].clone()
@@ -27,5 +25,6 @@ function exchange(inputs, args) {
 
 module.exports = {
   transfer,
-  exchange
+  exchange,
+  OWN_STATE
 }
