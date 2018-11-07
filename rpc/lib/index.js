@@ -35,11 +35,6 @@ module.exports.run = childChain => {
     },
     eth_getFilterLogs: (args, cb) => {
 
-    },
-    chamber_proof: (args, cb) => {
-      childChain.getProof(args[0], args[1]).then((proof) => {
-        cb(null, proof);
-      })
     }
   });
   app.use(cors({methods: ['POST']}));

@@ -144,17 +144,6 @@ class Chain {
     const blockStr = await this.blockDB.get(blockHeight);
     return Block.fromString(blockStr);
   }
-  async getProof(blockHeight, utxo) {
-    const blockStr = await this.blockDB.get(blockHeight);
-    const block = Block.fromString(blockStr);
-    if(block.isDepositBlock) {
-      let buf = new Buffer(2);
-      buf.writeUInt16BE(block.txs[0].outputs[0].value[0], 0);
-      return utils.sha3(buf).toString('hex')
-    }else{
-      return block.createTXOProof(utxo);
-    }
-  }
 
   gracefulStop(){
     return new Promise((resolve, reject) => {
