@@ -82,7 +82,6 @@ class Transaction {
     this.outputs = outputs || [];
     // hash of tx, 32byte
     this.nonce = nonce;
-    this.id = this.hash();
     // signatures
     this.sigs = [];
   }

@@ -1,7 +1,7 @@
+const utils = require('ethereumjs-util');
 const Block = require('./block');
 const Snapshot = require('./state/snapshot');
 const {
-  Asset,
   Transaction,
   TransactionOutput
 } = require('./tx');
@@ -37,25 +37,32 @@ class Chain {
    * apply deposit event
    * @param {*} event event object of web3
    */
-  applyDeposit(event) {
+  async applyDeposit(event) {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
       returnValues.depositor,
+      returnValues.uid,
       returnValues.amount,
       returnValues.depositBlock
     );
-    this.commitmentTxs.push(tx);
-    this.emit("TxAdded", {
+    this.blockHeight++;
+    await this.saveBlockHeight();
+
+    const newBlock = new Block(this.blockHeight, true);
+    newBlock.appendTx(tx)
+    await this.saveBlock(newBlock); //async func
+
+    this.emit("Deposited", {
       type: "deposit",
       payload: tx
     });
+    this.emit("BlockGenerated", { payload: newBlock })
   }
   
-  createDepositTx(depositor, amount, depositBlock) {
-    const wethCoin = 0;
+  createDepositTx(depositor, uid, amount, depositBlock) {
     const output = new TransactionOutput(
       [depositor],
-      [wethCoin]
+      [uid]
     );
     const depositTx = new Transaction(
       0,        // label
@@ -133,6 +140,11 @@ class Chain {
   async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
+  async getBlock(blockHeight) {
+    const blockStr = await this.blockDB.get(blockHeight);
+    return Block.fromString(blockStr);
+  }
+
   gracefulStop(){
     return new Promise((resolve, reject) => {
       this.blockDB.close(_=>{

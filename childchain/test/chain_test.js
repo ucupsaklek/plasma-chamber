@@ -5,6 +5,10 @@ const Listener = require('../../listener/lib/index')
 const memdown = require('memdown');
 
 describe('Chain', function() {
+
+  const depositor = '0x627306090abab3a6e1400e9345bc60c78a8bef57'
+  const uid = 0x123;
+
   describe('applyDeposit()', function() {
     it('should apply deposit', function(done) {
       chainManager.start({
@@ -17,8 +21,8 @@ describe('Chain', function() {
 
         chain.applyDeposit({
           returnValues: {
-            depositor: 'e0d7a297a4f17f4122af3088a20374493c897cbd8689c870fca6fb71aa3db8c1',
-            amount: 20
+            depositor: depositor,
+            uid: uid
           }
         })
   
@@ -30,4 +34,31 @@ describe('Chain', function() {
       })
     }).timeout(2000);
   });
+
+  describe('getBlock()', function() {
+    it('should getBlock', function(done) {
+      chainManager.start({
+        blockdb: memdown(),
+        metadb: memdown(),
+        snapshotdb: memdown()
+      }).then(chain=>{
+        Listener.run(chain);
+
+        chain.applyDeposit({
+          returnValues: {
+            depositor: depositor,
+            uid: uid
+          }
+        }).then(() => {
+          return chain.getBlock(chain.blockHeight);
+        }).then(block => {
+          assert(block.number === chain.blockHeight);
+          assert(block.txs.length === 1);
+          chainManager.stop();
+          done();
+        })
+      })
+    }).timeout(2000);
+  });
+
 });

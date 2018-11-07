@@ -22,7 +22,9 @@ module.exports.run = childChain => {
     },
     eth_getBlockByNumber: (args, cb) => {
       console.log('eth_getBlockByNumber', args);
-      cb(null, childChain.block);
+      childChain.getBlock(args[0]).then((block) => {
+        cb(null, block);
+      })
     },
     eth_getBlockTransactionCountByNumber: (args, cb) => {
       // Get block info for them
@@ -33,7 +35,7 @@ module.exports.run = childChain => {
     },
     eth_getFilterLogs: (args, cb) => {
 
-    },
+    }
   });
   app.use(cors({methods: ['POST']}));
   app.use(jsonParser());

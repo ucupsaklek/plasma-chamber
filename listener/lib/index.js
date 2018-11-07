@@ -5,7 +5,7 @@ const RootChainAbi = require('../assets/RootChain.json').abi;
 
 const rootChain = new web3.eth.Contract(RootChainAbi, process.env.ROOTCHAIN_ADDRESS);
 
-class EventListener {
+class RootChainEventListener {
 
   constructor() {
     this.seenEvents = {};
@@ -33,22 +33,23 @@ class EventListener {
 
 module.exports.run = childChain => {
 
-  const eventListener = new EventListener();
+  const rootChainEventListener = new RootChainEventListener();
+  const RootChainConfirmationBlockNum = 1;
 
   childChain.events.Ready((e) => {
+  })
+
+  childChain.events.Deposited((e) => {
+    console.log('childChain.Deposited', e);
   })
 
   childChain.events.TxAdded(async (e) => {
     await childChain.saveCommitmentTxs(); //async func
 
-    if (e.type == "deposit") {
-      await childChain.generateBlock();
-    } else if (e.type == "basic") {
 
-      // TODO: Must make it blocksize
-      if (childChain.commitmentTxs.length > 100) {
-        await childChain.generateBlock();
-      }
+    // TODO: Must make it blocksize
+    if (childChain.commitmentTxs.length > 100) {
+      await childChain.generateBlock();
     }
   })
   childChain.events.BlockGenerated((e) => {
@@ -59,9 +60,9 @@ module.exports.run = childChain => {
      */
     // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
   })
-  eventListener.getEvents('Deposit', 1, (e) => {
-    console.log('Deposit', e.transactionHash);
-    childChain.applyDeposit(e);
+  rootChainEventListener.getEvents('Deposit', RootChainConfirmationBlockNum, async (e) => {
+    console.log('eventListener.Deposit', e.transactionHash);
+    await childChain.applyDeposit(e);
   })
   // rootChain.events.BlockSubmitted((e) => {
   //   console.log(e);

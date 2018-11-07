@@ -8,12 +8,13 @@ const SMT_DEPTH = 16;
 */
 class Block {
   
-  constructor(number) {
+  constructor(number, isDepositBlock) {
     this.id = null;
     this.number = number;
     this.hash = null;
     this.prevhash = null;
     this.txs_root = null;
+    this.isDepositBlock = isDepositBlock || false;
     this.txs = [];
     this.timestamp = Date.now();
     this.nonce = null;
@@ -87,8 +88,20 @@ class Block {
       timestamp: this.timestamp,
       nonce: this.nonce,
       gaslimit: this.gaslimit,
-      gasused: this.gasused
+      gasused: this.gasused,
+      isDepositBlock: this.isDepositBlock
+      
     })
+  }
+
+  static fromString(str) {
+    const block = JSON.parse(str);
+    const empty = new Block(block.number, block.isDepositBlock);
+    empty.id = block.id;
+    empty.number = block.number;
+    empty.hash = block.hash;
+    empty.txs = block.txs;
+    return empty;
   }
 
 }
