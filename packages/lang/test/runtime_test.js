@@ -11,8 +11,8 @@ const {
 
 describe('runtime', function() {
 
-  const zeroAddress = 0;
-  const oneAddress = 1;
+  const zeroAddress = '0xa81b2cb421c67ca1cd88d3fe883370089f740e40';
+  const oneAddress = '0x326b42675a72863b8b1287b41dec3e2101fc5263';
   const coinAddress = 2;
   const asset1Address = 11;
   const asset2Address = 12;

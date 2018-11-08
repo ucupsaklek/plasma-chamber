@@ -7,15 +7,28 @@ class BufferUtils {
     if(buf.length == 0) return 0;
     return new BigNumber('0x' + buf.toString('hex')).toNumber();
   }
+  static hexToBuffer(hex) {
+    return new Buffer(hex.substr(2), 'hex');
+  }
 }
+
 class TransactionOutput {
   constructor(owners, value, state, blkNum) {
     // addresses, tx need their signatures
     this.owners = owners || [];
+    this.owners = this.owners.map(owner => {
+      if(owner instanceof Buffer) {
+        return utils.toChecksumAddress(utils.bufferToHex(owner));
+      }else if(utils.isValidAddress(owner)) {
+        return owner;
+      }else{
+        throw new Error('invalid address');
+      }
+    })
     // values are uid list
     this.value = value;
     // contract address include verification function, 20byte
-    this.contract = 0;
+    // this.contract = 0;
     // state in bytes
     this.state = state || [];
     // block number
@@ -25,14 +38,14 @@ class TransactionOutput {
   getTuple() {
     if(this.blkNum != undefined) {
       return [
-        this.owners,
+        this.owners.map(BufferUtils.hexToBuffer),
         this.value,
         this.state,
         this.blkNum
       ]
     }else{
       return [
-        this.owners,
+        this.owners.map(BufferUtils.hexToBuffer),
         this.value,
         this.state
       ]
@@ -156,7 +169,7 @@ class Transaction {
         sig.slice(0, 32),
         sig.slice(32, 64)
       );
-      return Buffer.compare(utils.pubToAddress(pubKey), owners[i]) != 0;
+      return utils.bufferToHex(utils.pubToAddress(pubKey)) === owners[i];
     });
     if(unmatchSigs != 0) {
       throw new Error('signatures not match');
@@ -181,6 +194,7 @@ class Transaction {
 }
 
 module.exports = {
+  BufferUtils,
   Transaction,
   TransactionOutput
 }

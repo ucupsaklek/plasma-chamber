@@ -14,8 +14,8 @@ describe('Transaction', function() {
   const blkNum2 = 1234567;
   const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
   const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
-  const testAddress1 = utils.privateToAddress(privKey1);
-  const testAddress2 = utils.privateToAddress(privKey2);
+  const testAddress1 = utils.toChecksumAddress(utils.bufferToHex(utils.privateToAddress(privKey1)));
+  const testAddress2 = utils.toChecksumAddress(utils.bufferToHex(utils.privateToAddress(privKey2)));
   const input = new TransactionOutput(
     [testAddress1],
     [coinId1],
@@ -87,8 +87,8 @@ describe('Transaction', function() {
       assert.equal(decoded.inputs[0].value[0], coinId1);
       assert.equal(decoded.outputs[0].value[0], coinId1);
       assert.equal(decoded.inputs[0].blkNum, blkNum1);
-      assert.equal(decoded.inputs[0].owners[0].toString(), testAddress1.toString());
-      assert(decoded.inputs[0].owners[0] instanceof Buffer);
+      assert.equal(decoded.inputs[0].owners[0], testAddress1);
+      assert(typeof decoded.inputs[0].owners[0] == 'string');
       assert(decoded.args[0] instanceof Buffer);
       assert.equal(decoded.label, 0);
     });
@@ -103,7 +103,7 @@ describe('Transaction', function() {
       assert.equal(decoded.outputs[0].value[0], coinId2);
       assert.equal(decoded.inputs[0].blkNum, blkNum2);
       assert.equal(decoded.inputs[0].owners[0].toString(), testAddress1.toString());
-      assert(decoded.inputs[0].owners[0] instanceof Buffer);
+      assert(typeof decoded.inputs[0].owners[0] == 'string');
       assert.equal(decoded.label, 0);
     });
 

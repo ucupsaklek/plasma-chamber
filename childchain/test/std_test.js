@@ -1,3 +1,4 @@
+const utils = require('ethereumjs-util');
 const assert = require('assert');
 const {
   Transaction,
@@ -9,8 +10,8 @@ describe('verifier.std', function() {
   const coinId = 0;
   const coinId1 = 1;
   const coinId2 = 2;
-  const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
-  const oneAddress = new Buffer("0000000000000000000000000000000000000001", 'hex');
+  const zeroAddress = utils.bufferToHex(new Buffer("0000000000000000000000000000000000000000", 'hex'));
+  const oneAddress = utils.bufferToHex(new Buffer("0000000000000000000000000000000000000001", 'hex'));
 
   describe('transfer', function() {
     const input = new TransactionOutput(
