@@ -65,7 +65,7 @@ class Chain {
   createDepositTx(depositor, uid, amount, depositBlock) {
     const output = new TransactionOutput(
       [new Buffer(depositor.substr(2), 'hex')],
-      [uid],
+      [parseInt(uid)],
       [OWN_STATE]
     );
     const depositTx = new Transaction(
