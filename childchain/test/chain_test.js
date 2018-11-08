@@ -56,6 +56,8 @@ describe('Chain', function() {
           assert(block.txs.length === 1);
           chainManager.stop();
           done();
+        }).catch(e => {
+          console.error(e)
         })
       })
     }).timeout(2000);

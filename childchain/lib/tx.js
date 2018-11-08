@@ -1,7 +1,13 @@
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
+const BigNumber = require('bignumber.js');
 
-
+class BufferUtils {
+  static bufferToNum(buf) {
+    if(buf.length == 0) return 0;
+    return new BigNumber('0x' + buf.toString('hex')).toNumber();
+  }
+}
 class TransactionOutput {
   constructor(owners, value, state, blkNum) {
     // addresses, tx need their signatures
@@ -40,10 +46,16 @@ class TransactionOutput {
 
   static fromTuple(decoded) {
     return new TransactionOutput(
+      // owners
       decoded[0],
-      decoded[1],
-      decoded[2],
-      decoded[3] // blkNum
+      // value
+      decoded[1].map(v => {
+        return BufferUtils.bufferToNum(v);
+      }),
+      // state
+      [BufferUtils.bufferToNum(decoded[2][0])].concat(decoded[2].slice(1)),
+      // blkNum
+      decoded[3] ? BufferUtils.bufferToNum(decoded[3]) : undefined
     );
   }
 
@@ -104,9 +116,9 @@ class Transaction {
   static fromBytes(data) {
     const decoded = RLP.decode(data);
     const tx = new Transaction(
-      decoded[1],
+      BufferUtils.bufferToNum(decoded[1]),
       decoded[2],
-      decoded[5],
+      BufferUtils.bufferToNum(decoded[5]),
       decoded[3].map(d => TransactionOutput.fromTuple(d)),
       decoded[4].map(d => TransactionOutput.fromTuple(d)),
     );

@@ -1,4 +1,7 @@
 const SparseMerkleTree = require('./smt');
+const {
+  Transaction
+} = require('./tx');
 
 const SMT_DEPTH = 16;
 
@@ -84,13 +87,14 @@ class Block {
       hash: this.hash,
       prevhash: this.prevhash,
       txs_root: this.txs_root,
-      txs: this.txs,
+      txs: this.txs.map(tx => {
+        return tx.getBytes(true).toString('hex')
+      }),
       timestamp: this.timestamp,
       nonce: this.nonce,
       gaslimit: this.gaslimit,
       gasused: this.gasused,
       isDepositBlock: this.isDepositBlock
-      
     })
   }
 
@@ -100,7 +104,9 @@ class Block {
     empty.id = block.id;
     empty.number = block.number;
     empty.hash = block.hash;
-    empty.txs = block.txs;
+    empty.txs = block.txs ? block.txs.map(tx => {
+      return Transaction.fromBytes(new Buffer(tx, 'hex'))
+    }) : [];
     return empty;
   }
 
