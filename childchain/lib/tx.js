@@ -35,6 +35,9 @@ class TransactionOutput {
     this.blkNum = blkNum;
   }
 
+  /**
+   * @dev get list of items
+   */
   getTuple() {
     if(this.blkNum != undefined) {
       return [
@@ -53,10 +56,17 @@ class TransactionOutput {
     }
   }
 
+  /**
+   * @dev serialize to Buffer
+   */
   getBytes() {
     return RLP.encode(this.getTuple());
   }
 
+  /**
+   * @dev deserialize from Buffer
+   * @param {Array} decoded RLP Array
+   */
   static fromTuple(decoded) {
     return new TransactionOutput(
       // owners
@@ -72,6 +82,9 @@ class TransactionOutput {
     );
   }
 
+  /**
+   * @dev get hash of TransactionOutput
+   */
   hash() {
     return utils.sha3(this.getBytes());
   }
@@ -111,6 +124,10 @@ class Transaction {
     this.sigs = [];
   }
 
+  /**
+   * @dev serialize to buffer
+   * @param {boolean} includeSigs 
+   */
   getBytes(includeSigs) {
     let data = [
       0,
@@ -126,6 +143,10 @@ class Transaction {
     return RLP.encode(data);
   }
 
+  /**
+   * @dev deserialize from buffer
+   * @param {Buffer} data
+   */
   static fromBytes(data) {
     const decoded = RLP.decode(data);
     const tx = new Transaction(
@@ -139,6 +160,10 @@ class Transaction {
     return tx;
   }
 
+  /**
+   * @dev sign transaction hash
+   * @param {Buffer} privKey
+   */
   sign(privKey) {
     const sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
     const signBuffer = Buffer.concat([sign.r, sign.s, Buffer.from([sign.v])], 65);
@@ -156,7 +181,7 @@ class Transaction {
       return (o.value.indexOf(uid) >= 0)
     })[0];
   }
-
+  
   checkSigns() {
     const owners = this.getOwners();
     if(this.sigs.length != owners.length) {

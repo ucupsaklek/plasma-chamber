@@ -80,6 +80,9 @@ class Block {
     return tree.root();
   }
 
+  /**
+   * @dev serialize to string
+   */
   toString() {
     return JSON.stringify({
       id: this.id,
@@ -98,6 +101,9 @@ class Block {
     })
   }
 
+  /**
+   * @dev deserialize from string
+   */
   static fromString(str) {
     const block = JSON.parse(str);
     const empty = new Block(block.number, block.isDepositBlock);
