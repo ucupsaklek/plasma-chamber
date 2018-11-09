@@ -10,6 +10,9 @@ class BufferUtils {
   static hexToBuffer(hex) {
     return new Buffer(hex.substr(2), 'hex');
   }
+  static numToBuffer() {
+    return new Buffer(new BigNumber().toString(16), 'hex');
+  }
 }
 
 class TransactionOutput {
@@ -133,7 +136,7 @@ class Transaction {
     // args must be Buffers
     this.args = args || []
     this.args.forEach(arg => {
-      if(!arg instanceof Buffer) {
+      if(!(arg instanceof Buffer)) {
         throw new Error('invalid args at Transaction.constructor');
       }
     });

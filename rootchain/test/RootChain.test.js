@@ -4,7 +4,7 @@ injectInTruffle(web3, artifacts);
 const RootChain = artifacts.require('RootChain');
 const Block = require('../../childchain/lib/block');
 const {
-  Asset,
+  BufferUtils,
   Transaction,
   TransactionOutput
 } = require('../../childchain/lib/tx');
@@ -103,17 +103,17 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const input = new TransactionOutput(
         [testAddress1],
         [coin1Id],
-        [testAddress1, testAddress2, 3, 0],
+        [testAddress1, testAddress2, BufferUtils.numToBuffer(3), BufferUtils.numToBuffer(0)],
         0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
         [coin1Id],
-        [testAddress2, testAddress1, 4, 0]
+        [testAddress2, testAddress1, BufferUtils.numToBuffer(4), BufferUtils.numToBuffer(0)]
       );
       const tx = new Transaction(
         100,
-        [0, 1],
+        [BufferUtils.numToBuffer(0), BufferUtils.numToBuffer(1)],
         new Date().getTime(),
         [input],
         [output]
