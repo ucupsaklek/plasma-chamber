@@ -84,7 +84,11 @@ class Block {
    * @dev serialize to string
    */
   toString() {
-    return JSON.stringify({
+    return JSON.stringify(this.toJson());
+  }
+
+  toJson() {
+    return {
       id: this.id,
       number: this.number,
       hash: this.hash,
@@ -98,9 +102,9 @@ class Block {
       gaslimit: this.gaslimit,
       gasused: this.gasused,
       isDepositBlock: this.isDepositBlock
-    })
+    };
   }
-
+  
   /**
    * @dev deserialize from string
    */

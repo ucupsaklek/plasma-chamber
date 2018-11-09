@@ -146,7 +146,7 @@ class Chain {
   }
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
-    return Block.fromString(blockStr);
+    return Block.fromString(blockStr).toJson();
   }
 
   gracefulStop(){
