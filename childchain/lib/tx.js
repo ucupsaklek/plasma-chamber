@@ -13,6 +13,14 @@ class BufferUtils {
 }
 
 class TransactionOutput {
+
+  /**
+   * 
+   * @param {Array[string]} owners 
+   * @param {Array[number]} value 
+   * @param {Array[Buffer]} state first item is number
+   * @param {number} blkNum 
+   */
   constructor(owners, value, state, blkNum) {
     // addresses, tx need their signatures
     this.owners = owners || [];
@@ -109,11 +117,26 @@ class TransactionOutput {
 }
 
 class Transaction {
-  
+
+  /**
+   * 
+   * @param {number} label 
+   * @param {Array[Buffer]} args 
+   * @param {number} nonce 
+   * @param {Array[TransactionOutput]} inputs 
+   * @param {Array[TransactionOutput]} outputs 
+   */
   constructor(label, args, nonce, inputs, outputs) {
-    // arguments for tx, first argument is function label
+    // label must be number
+    if(typeof label != 'number') throw new Error('invalid label at Transaction.constructor');
     this.label = label;
+    // args must be Buffers
     this.args = args || []
+    this.args.forEach(arg => {
+      if(!arg instanceof Buffer) {
+        throw new Error('invalid args at Transaction.constructor');
+      }
+    });
     // inputs UTXO
     this.inputs = inputs || [];
     // outputs UTXO
