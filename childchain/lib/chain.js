@@ -6,6 +6,7 @@ const {
   TransactionOutput
 } = require('./tx');
 const ChainEvent = require('./chainevent');
+const Verifier = require('./verifier');
 
 class Chain {
   
@@ -49,6 +50,7 @@ class Chain {
     await this.saveBlockHeight();
 
     const newBlock = new Block(this.blockHeight, true);
+    this.snapshot.applyTx(tx, this.blockHeight);
     newBlock.appendTx(tx)
     await this.saveBlock(newBlock); //async func
 
@@ -78,11 +80,9 @@ class Chain {
     // decode signedTx
     const tx = Transaction.fromBytes(new Buffer(txData, 'hex'));
     // check signatures
-    tx.checkSigns();
     // check state transition
     // TODO
     // applyTx to snapshot
-    this.snapshot.applyTx(tx);
     this.commitmentTxs.push(tx);
     return tx.hash();
   }
@@ -101,13 +101,26 @@ class Chain {
     await this.saveBlockHeight();
 
     const newBlock = new Block(this.blockHeight);
-    commitmentTxs
-      .filter((tx) => !!this.snapshot.applyTx(tx) )
-      .forEach((tx) => newBlock.appendTx(tx) );
+    const passedTxs = await Chain.checkTxs(
+      commitmentTxs,
+      this.snapshot,
+      this.blockHeight
+    );
+    passedTxs
+      .filter(tx => !!tx)
+      .forEach((tx) => newBlock.appendTx(tx));
+
     await this.saveBlock(newBlock); //async func
 
-
     this.emit("BlockGenerated", { payload: newBlock })
+  }
+
+  static async checkTxs(commitmentTxs, snapshot, blockHeight) {
+    return Promise.all(commitmentTxs
+      .filter((tx) => !!Verifier.verify(tx) )
+      .map((tx) => {
+        return snapshot.applyTx(tx, blockHeight);
+      }));
   }
 
   /*

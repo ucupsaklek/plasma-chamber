@@ -16,13 +16,14 @@ class TransactionOutput {
     this.blkNum = blkNum;
   }
 
-  getTuple() {
-    if(this.blkNum != undefined) {
+  getTuple(_blkNum) {
+    const blkNum = _blkNum || this.blkNum;
+    if(blkNum !== undefined) {
       return [
         this.owners,
         this.value,
         this.state,
-        this.blkNum
+        blkNum
       ]
     }else{
       return [
@@ -34,8 +35,8 @@ class TransactionOutput {
     }
   }
 
-  getBytes() {
-    return RLP.encode(this.getTuple());
+  getBytes(blkNum) {
+    return RLP.encode(this.getTuple(blkNum));
   }
 
   static fromTuple(decoded) {
@@ -47,8 +48,8 @@ class TransactionOutput {
     );
   }
 
-  hash() {
-    return utils.sha3(this.getBytes());
+  hash(blkNum) {
+    return utils.sha3(this.getBytes(blkNum));
   }
 
   clone() {
@@ -56,7 +57,6 @@ class TransactionOutput {
       [].concat(this.owners),
       [].concat(this.value),
       [].concat(this.state),
-      this.blkNum
     )
   }
 
@@ -130,6 +130,10 @@ class Transaction {
     return this.outputs.filter((o) => {
       return (o.value.indexOf(uid) >= 0)
     })[0];
+  }
+
+  getSigns() {
+    return this.sigs;
   }
 
   checkSigns() {
