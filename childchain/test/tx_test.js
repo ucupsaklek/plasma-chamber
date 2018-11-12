@@ -64,4 +64,24 @@ describe('Transaction', function() {
 
   });
 
+  describe('decode utxo', function() {
+
+    it('should encode and decode', function() {
+      const encoded = input.getBytes();
+      const decoded = TransactionOutput.fromBytes(encoded);
+      assert(Buffer.compare(input.hash(), decoded.hash()) === 0);
+    });
+
+  });
+
+  describe('Transaction.toJson', function() {
+
+    it('should be converted to json', function() {
+      const json = tx.toJson();
+      assert.equal(json.label, 0);
+    });
+
+  });
+
+
 });
