@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
  * based on https://github.com/omisego/plasma-mvp/blob/master/plasma/root_chain/contracts/Merkle.sol
  */
 library Merkle {
-    function checkMembership(bytes32 leaf, uint256 index, bytes32 rootHash, bytes proof)
+    function checkMembership(bytes32 leaf, uint256 index, uint256 endIndex, bytes32 rootHash, bytes proof)
         internal
         pure
         returns (bool)

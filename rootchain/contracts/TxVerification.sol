@@ -13,16 +13,14 @@ library TxVerification {
   /*
    * standard structure
    */
-  struct TxState {
-    address[] owners;
-    uint256[] value;
-    RLP.RLPItem[] state;
-    bytes stateBytes;
+  struct Amount {
+    uint256 start;
+    uint256 end;
   }
 
-  struct TxInput {
+  struct TxState {
     address[] owners;
-    uint256[] value;
+    Amount[] value;
     RLP.RLPItem[] state;
     bytes stateBytes;
     uint256 blkNum;
@@ -31,7 +29,7 @@ library TxVerification {
   struct Tx {
     uint256 label;
     RLP.RLPItem[] args;
-    TxInput[] inputs;
+    TxState[] inputs;
     TxState[] outputs;
   }
 
@@ -75,6 +73,18 @@ library TxVerification {
     return true;
   }
 
+  function getAmount(RLP.RLPItem memory amountItem)
+    internal
+    pure
+    returns (Amount)
+  {
+    RLP.RLPItem[] memory amountList = RLP.toList(amountItem);
+    return Amount({
+      start: RLP.toUint(amountList[0]),
+      end: RLP.toUint(amountList[1])
+    });
+  }
+
   /**
    * @dev tx input bytes to TxInput
    * @param txState txState
@@ -82,21 +92,21 @@ library TxVerification {
   function getTxInput(RLP.RLPItem memory txState)
     internal
     pure
-    returns (TxInput)
+    returns (TxState)
   {
     RLP.RLPItem[] memory txStateList = RLP.toList(txState);
     RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
     RLP.RLPItem[] memory valueList = RLP.toList(txStateList[1]);
     address[] memory owners = new address[](ownerList.length);
-    uint256[] memory values = new uint256[](valueList.length);
+    Amount[] memory values = new Amount[](valueList.length);
     uint i = 0;
     for (i = 0; i < ownerList.length; i++) {
       owners[i] = RLP.toAddress(ownerList[i]);
     }
     for (i = 0; i < valueList.length; i++) {
-      values[i] = RLP.toUint(valueList[i]);
+      values[i] = getAmount(valueList[i]);
     }
-    return TxInput({
+    return TxState({
       owners: owners,
       value: values,
       state: RLP.toList(txStateList[2]),
@@ -118,19 +128,20 @@ library TxVerification {
     RLP.RLPItem[] memory ownerList = RLP.toList(txStateList[0]);
     RLP.RLPItem[] memory valueList = RLP.toList(txStateList[1]);
     address[] memory owners = new address[](ownerList.length);
-    uint256[] memory values = new uint256[](valueList.length);
+    Amount[] memory values = new Amount[](valueList.length);
     uint i = 0;
     for (i = 0; i < ownerList.length; i++) {
       owners[i] = RLP.toAddress(ownerList[i]);
     }
     for (i = 0; i < valueList.length; i++) {
-      values[i] = RLP.toUint(valueList[i]);
+      values[i] = getAmount(valueList[i]);
     }
     return TxState({
       owners: owners,
       value: values,
       state: RLP.toList(txStateList[2]),
-      stateBytes: RLP.listAsBytes(txStateList[2])
+      stateBytes: RLP.listAsBytes(txStateList[2]),
+      blkNum: 0
     });
   }
 
@@ -146,7 +157,7 @@ library TxVerification {
     var txList = RLP.toList(RLP.toRlpItem(txByte));
     RLP.RLPItem[] memory inputList = RLP.toList(txList[3]);
     RLP.RLPItem[] memory outputList = RLP.toList(txList[4]);
-    TxInput[] memory inputs = new TxInput[](inputList.length);
+    TxState[] memory inputs = new TxState[](inputList.length);
     TxState[] memory outputs = new TxState[](outputList.length);
     for (uint i = 0; i < inputList.length; i++) {
       inputs[i] = getTxInput(inputList[i]);
@@ -213,7 +224,7 @@ library TxVerification {
     }else if(transaction.label == 1) {
       exchange(transaction);
     }else if(transaction.label == 100) {
-      updateReverseStatus(transaction);
+      //updateReverseStatus(transaction);
     }
   }
 
@@ -233,11 +244,12 @@ library TxVerification {
   /**
    * @dev split value
    */
+   /*
   function updateReverseStatus(Tx transaction)
     internal
     pure
   {
-    TxInput memory input = transaction.inputs[0];
+    TxState memory input = transaction.inputs[0];
     TxState memory output = transaction.outputs[0];
     var appState = getAppStateTictactoe(input.state);
     var nextAppState = getAppStateTictactoe(output.state);
@@ -255,6 +267,7 @@ library TxVerification {
       require(nextAppState.map == newMap);
     }
   }
+
 
   function gameIsWin(uint256 map)
     internal
@@ -332,20 +345,21 @@ library TxVerification {
       return map3;
     }
   }
+  */
 
   function exchange(Tx transaction)
     internal
     pure
   {
-    TxInput memory preState1 = transaction.inputs[0];
-    TxInput memory preState2 = transaction.inputs[1];
+    TxState memory preState1 = transaction.inputs[0];
+    TxState memory preState2 = transaction.inputs[1];
     TxState memory afterState1 = transaction.outputs[0];
     TxState memory afterState2 = transaction.outputs[1];
 
     require(preState1.owners[0] == afterState2.owners[0]);
     require(preState2.owners[0] == afterState1.owners[0]);
-    require(preState1.value[0] == afterState1.value[0]);
-    require(preState2.value[0] == afterState2.value[0]);
+    require(preState1.value[0].start == afterState1.value[0].start);
+    require(preState2.value[0].start == afterState2.value[0].start);
   }
 
   function verifyWithdrawal(address[] owners, uint256 uid, bytes stateBytes)

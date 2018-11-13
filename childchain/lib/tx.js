@@ -8,10 +8,10 @@ class BufferUtils {
     return new BigNumber('0x' + buf.toString('hex')).toNumber();
   }
   static hexToBuffer(hex) {
-    return new Buffer(hex.substr(2), 'hex');
+    return Buffer.from(hex.substr(2), 'hex');
   }
-  static numToBuffer() {
-    return new Buffer(new BigNumber().toString(16), 'hex');
+  static numToBuffer(n) {
+    return Buffer.from(new BigNumber(n).toString(16), 'hex');
   }
 }
 
@@ -37,7 +37,12 @@ class TransactionOutput {
       }
     })
     // values are uid list
-    this.value = value;
+    this.value = value.map(v => {
+      return {
+        start: (typeof v.start === 'number') ? new BigNumber(v.start) : v.start,
+        end: (typeof v.end === 'number') ? new BigNumber(v.end) : v.end
+      }
+    })
     // contract address include verification function, 20byte
     // this.contract = 0;
     // state in bytes
@@ -53,17 +58,28 @@ class TransactionOutput {
     if(this.blkNum != undefined) {
       return [
         this.owners.map(BufferUtils.hexToBuffer),
-        this.value,
+        this.value.map(mapValue),
         this.state,
         this.blkNum
       ]
     }else{
       return [
         this.owners.map(BufferUtils.hexToBuffer),
-        this.value,
+        this.value.map(mapValue),
         this.state
       ]
-
+    }
+    function mapValue(v) {
+      return [toBuf(v.start), toBuf(v.end)];
+    }
+    function toBuf(n) {
+      if(typeof n == 'number') {
+        return n;
+      }else{
+        let s = n.toString(16);
+        if(s.length % 2 == 1) s = '0' + s;
+        return Buffer.from(s, 'hex');
+      }
     }
   }
 
@@ -191,7 +207,7 @@ class Transaction {
    * @param {Buffer} privKey
    */
   sign(privKey) {
-    const sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
+    const sign = utils.ecsign(Buffer.from(this.hash(), 'hex'), privKey);
     const signBuffer = Buffer.concat([sign.r, sign.s, Buffer.from([sign.v])], 65);
     return signBuffer;
   }
@@ -215,7 +231,7 @@ class Transaction {
     }
     const unmatchSigs = this.sigs.filter((sig, i) => {
       var pubKey = utils.ecrecover(
-        new Buffer(this.hash(), 'hex'),
+        Buffer.from(this.hash(), 'hex'),
         sig.slice(64, 65).readUInt8(0),
         sig.slice(0, 32),
         sig.slice(32, 64)
@@ -234,7 +250,7 @@ class Transaction {
   merkleHash() {
     this.checkSigns();
     const txHash = this.hash();
-    const buf = Buffer.concat([new Buffer(txHash, 'hex')].concat(this.sigs));
+    const buf = Buffer.concat([Buffer.from(txHash, 'hex')].concat(this.sigs));
     return utils.sha3(buf);
   }
 
