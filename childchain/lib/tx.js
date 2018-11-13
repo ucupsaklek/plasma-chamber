@@ -7,6 +7,10 @@ class BufferUtils {
     if(buf.length == 0) return 0;
     return new BigNumber('0x' + buf.toString('hex')).toNumber();
   }
+  static bufferToBignum(buf) {
+    if(buf.length == 0) return 0;
+    return new BigNumber('0x' + buf.toString('hex'));
+  }
   static hexToBuffer(hex) {
     return Buffer.from(hex.substr(2), 'hex');
   }
@@ -100,7 +104,10 @@ class TransactionOutput {
       decoded[0],
       // value
       decoded[1].map(v => {
-        return BufferUtils.bufferToNum(v);
+        return {
+          start: BufferUtils.bufferToBignum(v[0]),
+          end: BufferUtils.bufferToBignum(v[1])
+        }
       }),
       // state
       [BufferUtils.bufferToNum(decoded[2][0])].concat(decoded[2].slice(1)),

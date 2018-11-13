@@ -9,6 +9,7 @@ const ChainEvent = require('./chainevent');
 const {
   OWN_STATE
 } = require('./verifier/std');
+const BigNumber = require('bignumber.js');
 
 class Chain {
   
@@ -44,8 +45,8 @@ class Chain {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
       returnValues.depositor,
-      returnValues.uid,
-      returnValues.amount,
+      returnValues.start,
+      returnValues.end,
       returnValues.depositBlock
     );
     this.blockHeight++;
@@ -62,10 +63,10 @@ class Chain {
     this.emit("BlockGenerated", { payload: newBlock })
   }
   
-  createDepositTx(depositor, uid, amount, depositBlock) {
+  createDepositTx(depositor, start, end, depositBlock) {
     const output = new TransactionOutput(
       [new Buffer(depositor.substr(2), 'hex')],
-      [parseInt(uid)],
+      [{start: BigNumber(start), end: BigNumber(end)}],
       [OWN_STATE]
     );
     const depositTx = new Transaction(

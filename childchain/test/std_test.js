@@ -7,9 +7,9 @@ const {
 const std = require('../lib/verifier/std');
 
 describe('verifier.std', function() {
-  const coinId = 0;
-  const coinId1 = 1;
-  const coinId2 = 2;
+  const coinId = {start:0, end:1};
+  const coinId1 = {start:2, end:3};
+  const coinId2 = {start:4, end:5};
   const zeroAddress = utils.bufferToHex(new Buffer("0000000000000000000000000000000000000000", 'hex'));
   const oneAddress = utils.bufferToHex(new Buffer("0000000000000000000000000000000000000001", 'hex'));
 
@@ -42,9 +42,9 @@ describe('verifier.std', function() {
       const outputs = std.exchange([input1, input2], [oneAddress]);
       assert.equal(outputs.length, 2);
       assert.equal(outputs[0].owners[0], zeroAddress);
-      assert.equal(outputs[0].value[0], coinId2);
+      assert.equal(outputs[0].value[0].start.toString(), coinId2.start.toString());
       assert.equal(outputs[1].owners[0], oneAddress);
-      assert.equal(outputs[1].value[0], coinId1);
+      assert.equal(outputs[1].value[0].start.toString(), coinId1.start.toString());
     });
 
   });

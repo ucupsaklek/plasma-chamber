@@ -6,10 +6,12 @@ const {
   Transaction,
   TransactionOutput
 } = require('../lib/tx');
+const BigNumber = require('bignumber.js');
 
 describe('Transaction', function() {
-  const coinId1 = 1;
-  const coinId2 = 54321;
+  const CHUNK_SIZE = BigNumber('1000000000000000000');
+  const coinId1 = {start: 0, end: CHUNK_SIZE.minus(1)};
+  const coinId2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2).minus(1)};
   const ownState = 0;
   const blkNum1 = 123;
   const blkNum2 = 1234567;
@@ -81,19 +83,19 @@ describe('Transaction', function() {
     tx.sigs[0] = sign1;
 
     it('should return bytes', function() {
-      assert.equal(tx.getBytes().toString('hex'), 'f8528080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4adcdbd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc101c1807bdbdad59434fdeadc2b69fd24f3043a89f9231f10f1284a4ac101c18001');
+      assert.equal(tx.getBytes().toString('hex'), 'f8668080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001');
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f8978080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4adcdbd594953b8fb338ef870eda6d74c1dd4769b6c977b8cfc101c1807bdbdad59434fdeadc2b69fd24f3043a89f9231f10f1284a4ac101c18001f843b8419f0291918e1572c54d1cdf448ab08d329b6cd6a423d517d65ff557fe5b4e37e718672f6668f44411d57aae3a5c9df8bd8967b6f81bf52d3f5ed291c81b608f4f1b');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f8ab8080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001f843b841ea3141c70a3a6bbbf2cdce0987891a19ca6dbae78a127b7c767918d3dc65031123bab438ee67e5f1dcff05198475074ad2d1ab4be7f9782d46550fedcb34406c1b');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash().toString('hex'), '62095fc46af3c7408fa1d038f083f88cb690e00aaf7b96c90e07b53b739672d2');
+      assert.equal(tx.hash().toString('hex'), '227f149fc16214d048589523190a17e478e4a39af6d7635275e420ec42420ff7');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash().toString('hex'), '9b054ffd09059df27b260c067ed03fe513203c8e66641dbfb029f6674a6837db');
+      assert.equal(tx.merkleHash().toString('hex'), '0106fccd0ac906cf4bc21442c7e932645e302b759f4d75beb1618723c6c01ce6');
     });
 
   });
@@ -106,8 +108,8 @@ describe('Transaction', function() {
       const encoded = tx.getBytes();
       const decoded = Transaction.fromBytes(encoded);
       assert.equal(decoded.label, 0);
-      assert.equal(decoded.inputs[0].value[0], coinId1);
-      assert.equal(decoded.outputs[0].value[0], coinId1);
+      assert.equal(decoded.inputs[0].value[0].start.toString(), coinId1.start.toString());
+      assert.equal(decoded.outputs[0].value[0].start.toString(), coinId1.start.toString());
       assert.equal(decoded.inputs[0].blkNum, blkNum1);
       assert.equal(decoded.inputs[0].owners[0], testAddress1);
       assert(typeof decoded.inputs[0].owners[0] == 'string');
@@ -121,8 +123,8 @@ describe('Transaction', function() {
       const encoded = tx2.getBytes();
       const decoded = Transaction.fromBytes(encoded);
       assert.equal(decoded.label, 0);
-      assert.equal(decoded.inputs[0].value[0], coinId2);
-      assert.equal(decoded.outputs[0].value[0], coinId2);
+      assert.equal(decoded.inputs[0].value[0].start.toString(), coinId2.start.toString());
+      assert.equal(decoded.outputs[0].value[0].end.toString(), coinId2.end.toString());
       assert.equal(decoded.inputs[0].blkNum, blkNum2);
       assert.equal(decoded.inputs[0].owners[0].toString(), testAddress1.toString());
       assert(typeof decoded.inputs[0].owners[0] == 'string');
@@ -131,10 +133,10 @@ describe('Transaction', function() {
 
     it('should not change has after decode', function() {
       const encoded = tx2.getBytes();
-      const hash1 = tx2.hash();
       const decoded = Transaction.fromBytes(encoded);
-      const hash2 = decoded.hash();
-      assert.equal(hash1.toString('hex'), hash2.toString('hex'));
+      console.log(tx2.outputs[0].value[0].end)
+      console.log(decoded.outputs[0].value[0].end)
+      assert.equal(encoded.toString('hex'), decoded.getBytes().toString('hex'));
     });
 
     it('should not change has after decode 2', function() {

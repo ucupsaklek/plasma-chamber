@@ -11,8 +11,6 @@ function transfer(inputs, args) {
 }
 
 function exchange(inputs, args) {
-  const order = inputs[0].state[0];
-  if(inputs[1].value[0] != order) throw new Error('order not match');
   const output1 = inputs[0].clone();
   const output2 = inputs[1].clone();
   const swapValue = output1.value;

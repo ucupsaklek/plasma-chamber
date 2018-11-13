@@ -13,7 +13,7 @@ describe('runtime', function() {
 
   const zeroAddress = '0xa81b2cb421c67ca1cd88d3fe883370089f740e40';
   const oneAddress = '0x326b42675a72863b8b1287b41dec3e2101fc5263';
-  const coinAddress = 2;
+  const coinAddress = {start: 0, end: 2};
   const asset1Address = 11;
   const asset2Address = 12;
 
@@ -29,7 +29,7 @@ describe('runtime', function() {
     assert.equal(outputs.length, 1);
     assert.equal(outputs[0].owners.length, 1);
     assert.equal(outputs[0].owners[0], oneAddress);
-    assert.equal(outputs[0].value[0], [coinAddress]);
+    assert.equal(outputs[0].value[0].start.toNumber(), coinAddress.start);
     done()
   });
 

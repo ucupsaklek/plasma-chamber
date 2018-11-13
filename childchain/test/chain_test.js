@@ -23,7 +23,8 @@ describe('Chain', function() {
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
-            uid: uid
+            start: 0,
+            end: 2
           }
         })
   
@@ -48,7 +49,8 @@ describe('Chain', function() {
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
-            uid: uid
+            start: 0,
+            end: 2
           }
         }).then(() => {
           return chain.getBlock(chain.blockHeight);
