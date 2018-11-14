@@ -17,7 +17,6 @@ describe('Chain', function() {
         metadb: memdown(),
         snapshotdb: memdown()
       }).then(chain=>{
-        Listener.run(chain);
         const initialBlockHeight = chain.blockHeight;
 
         chain.applyDeposit({
@@ -43,8 +42,6 @@ describe('Chain', function() {
         metadb: memdown(),
         snapshotdb: memdown()
       }).then(chain=>{
-        Listener.run(chain);
-
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
