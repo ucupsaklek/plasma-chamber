@@ -24,8 +24,7 @@ contract RootChain {
       address chainIndex,
       address indexed depositor,
       uint256 start,
-      uint256 end,
-      uint256 uid
+      uint256 end
     );
 
     event ExitStarted(
@@ -55,10 +54,17 @@ contract RootChain {
 
     uint256 childChainNum;
 
-    struct Coin {
+    struct Segment {
       uint256 start;
       uint256 end;
+    }
+
+    struct Coin {
+      address token;
+      mapping (uint256 => Segment) withdrawals;
+      uint nWithdrawals;
       uint exit;
+      bool hasValue;
     }
     struct Exit {
       address[] exitors;
@@ -186,22 +192,28 @@ contract RootChain {
         payable
     {
       uint256 amount = msg.value;
+      require(amount % CHUNK_SIZE == 0);
       ChildChain childChain = childChains[_chain];
       uint start = childChain.depositCount;
       uint end = start + amount;
       uint slot = start / CHUNK_SIZE;
-      childChain.coins[slot] = Coin({
-        start: start,
-        end: end,
-        exit: 0
-      });
+      uint slotEnd = end / CHUNK_SIZE;
+      for(uint i = slot;i <= slotEnd;i++) {
+        require(!childChain.coins[i].hasValue);
+        childChain.coins[i] = Coin({
+          token: address(0),
+          nWithdrawals: 0,
+          exit: 0,
+          hasValue: true
+        });
+      }
       childChain.blocks[childChain.currentChildBlock] = ChildBlock({
           root: keccak256(slot),
           timestamp: block.timestamp
       });
       childChain.currentChildBlock = childChain.currentChildBlock.add(1);
       childChain.depositCount = end;
-      emit Deposit(_chain, msg.sender, start, end, slot);
+      emit Deposit(_chain, msg.sender, start, end);
     }
 
     /**
@@ -599,15 +611,58 @@ contract RootChain {
         // state specific withdrawal
         if(currentExit.exitors.length == 1) {
           for(uint i = 0;i < currentExit.values.length;i += 2) {
-            currentExit.exitors[0].transfer(
-              currentExit.values[i + 1] - currentExit.values[i]
-            );
+            withdrawValue(
+              childChain,
+              currentExit,
+              currentExit.values[i],
+              currentExit.values[i + 1]);
           }
         }
         delete childChain.exits[_utxoPos];
       }
     }
 
+    function withdrawValue(
+      ChildChain storage childChain,
+      Exit memory currentExit,
+      uint start,
+      uint end
+    )
+      private
+    {
+      uint slot = start / CHUNK_SIZE;
+      uint slotEnd = end / CHUNK_SIZE;
+
+      for(uint j = slot;j <= slotEnd;j++) {
+        Coin coin = childChain.coins[j];
+        for(uint k = 0;k < childChain.coins[j].nWithdrawals;k++) {
+          require(
+            !(end < childChain.coins[j].withdrawals[k].start
+            || childChain.coins[j].withdrawals[k].end < start));
+        }
+        if(start <= j * CHUNK_SIZE && (j+1) * CHUNK_SIZE <= end) {
+          delete childChain.coins[j];
+          // coin.token
+          currentExit.exitors[0].transfer(CHUNK_SIZE);
+        }else{
+          uint lstart = start;
+          uint lend = end;
+          if(start <= j * CHUNK_SIZE) {
+            lstart = j * CHUNK_SIZE;
+            lend = end;
+          }else if((j+1) * CHUNK_SIZE <= end) {
+            lstart = start;
+            lend = (j+1) * CHUNK_SIZE;
+          }
+          coin.withdrawals[coin.nWithdrawals] = Segment({
+            start: lstart,
+            end: lend
+          });
+          currentExit.exitors[0].transfer(lend - lstart);
+          coin.nWithdrawals++;
+        }
+      }
+    }
 
     /* 
      * Public view functions
