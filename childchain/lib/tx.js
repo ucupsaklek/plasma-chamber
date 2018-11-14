@@ -1,32 +1,65 @@
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
+const BigNumber = require('bignumber.js');
 
+class BufferUtils {
+  static bufferToNum(buf) {
+    if(buf.length == 0) return 0;
+    return new BigNumber('0x' + buf.toString('hex')).toNumber();
+  }
+  static hexToBuffer(hex) {
+    return new Buffer(hex.substr(2), 'hex');
+  }
+  static numToBuffer() {
+    return new Buffer(new BigNumber().toString(16), 'hex');
+  }
+}
 
 class TransactionOutput {
+
+  /**
+   * 
+   * @param {Array[string]} owners 
+   * @param {Array[number]} value 
+   * @param {Array[Buffer]} state first item is number
+   * @param {number} blkNum 
+   */
   constructor(owners, value, state, blkNum) {
     // addresses, tx need their signatures
     this.owners = owners || [];
+    this.owners = this.owners.map(owner => {
+      if(owner instanceof Buffer) {
+        return utils.toChecksumAddress(utils.bufferToHex(owner));
+      }else if(utils.isValidAddress(owner)) {
+        return owner;
+      }else{
+        throw new Error('invalid address');
+      }
+    })
     // values are uid list
     this.value = value;
     // contract address include verification function, 20byte
-    this.contract = 0;
+    // this.contract = 0;
     // state in bytes
     this.state = state || [];
     // block number
     this.blkNum = blkNum;
   }
 
+  /**
+   * @dev get list of items
+   */
   getTuple() {
     if(this.blkNum != undefined) {
       return [
-        this.owners,
+        this.owners.map(BufferUtils.hexToBuffer),
         this.value,
         this.state,
         this.blkNum
       ]
     }else{
       return [
-        this.owners,
+        this.owners.map(BufferUtils.hexToBuffer),
         this.value,
         this.state
       ]
@@ -34,19 +67,35 @@ class TransactionOutput {
     }
   }
 
+  /**
+   * @dev serialize to Buffer
+   */
   getBytes() {
     return RLP.encode(this.getTuple());
   }
 
+  /**
+   * @dev deserialize from Buffer
+   * @param {Array} decoded RLP Array
+   */
   static fromTuple(decoded) {
     return new TransactionOutput(
+      // owners
       decoded[0],
-      decoded[1],
-      decoded[2],
-      decoded[3] // blkNum
+      // value
+      decoded[1].map(v => {
+        return BufferUtils.bufferToNum(v);
+      }),
+      // state
+      [BufferUtils.bufferToNum(decoded[2][0])].concat(decoded[2].slice(1)),
+      // blkNum
+      decoded[3] ? BufferUtils.bufferToNum(decoded[3]) : undefined
     );
   }
 
+  /**
+   * @dev get hash of TransactionOutput
+   */
   hash() {
     return utils.sha3(this.getBytes());
   }
@@ -71,11 +120,26 @@ class TransactionOutput {
 }
 
 class Transaction {
-  
+
+  /**
+   * 
+   * @param {number} label 
+   * @param {Array[Buffer]} args 
+   * @param {number} nonce 
+   * @param {Array[TransactionOutput]} inputs 
+   * @param {Array[TransactionOutput]} outputs 
+   */
   constructor(label, args, nonce, inputs, outputs) {
-    // arguments for tx, first argument is function label
+    // label must be number
+    if(typeof label != 'number') throw new Error('invalid label at Transaction.constructor');
     this.label = label;
+    // args must be Buffers
     this.args = args || []
+    this.args.forEach(arg => {
+      if(!(arg instanceof Buffer)) {
+        throw new Error('invalid args at Transaction.constructor');
+      }
+    });
     // inputs UTXO
     this.inputs = inputs || [];
     // outputs UTXO
@@ -86,6 +150,10 @@ class Transaction {
     this.sigs = [];
   }
 
+  /**
+   * @dev serialize to buffer
+   * @param {boolean} includeSigs 
+   */
   getBytes(includeSigs) {
     let data = [
       0,
@@ -101,12 +169,16 @@ class Transaction {
     return RLP.encode(data);
   }
 
+  /**
+   * @dev deserialize from buffer
+   * @param {Buffer} data
+   */
   static fromBytes(data) {
     const decoded = RLP.decode(data);
     const tx = new Transaction(
-      decoded[1],
+      BufferUtils.bufferToNum(decoded[1]),
       decoded[2],
-      decoded[5],
+      BufferUtils.bufferToNum(decoded[5]),
       decoded[3].map(d => TransactionOutput.fromTuple(d)),
       decoded[4].map(d => TransactionOutput.fromTuple(d)),
     );
@@ -114,6 +186,10 @@ class Transaction {
     return tx;
   }
 
+  /**
+   * @dev sign transaction hash
+   * @param {Buffer} privKey
+   */
   sign(privKey) {
     const sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
     const signBuffer = Buffer.concat([sign.r, sign.s, Buffer.from([sign.v])], 65);
@@ -131,7 +207,7 @@ class Transaction {
       return (o.value.indexOf(uid) >= 0)
     })[0];
   }
-
+  
   checkSigns() {
     const owners = this.getOwners();
     if(this.sigs.length != owners.length) {
@@ -144,7 +220,7 @@ class Transaction {
         sig.slice(0, 32),
         sig.slice(32, 64)
       );
-      return Buffer.compare(utils.pubToAddress(pubKey), owners[i]) != 0;
+      return utils.bufferToHex(utils.pubToAddress(pubKey)) === owners[i];
     });
     if(unmatchSigs != 0) {
       throw new Error('signatures not match');
@@ -169,6 +245,7 @@ class Transaction {
 }
 
 module.exports = {
+  BufferUtils,
   Transaction,
   TransactionOutput
 }

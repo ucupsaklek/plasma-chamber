@@ -1,4 +1,7 @@
 const SparseMerkleTree = require('./smt');
+const {
+  Transaction
+} = require('./tx');
 
 const SMT_DEPTH = 16;
 
@@ -77,30 +80,43 @@ class Block {
     return tree.root();
   }
 
+  /**
+   * @dev serialize to string
+   */
   toString() {
-    return JSON.stringify({
+    return JSON.stringify(this.toJson());
+  }
+
+  toJson() {
+    return {
       id: this.id,
       number: this.number,
       hash: this.hash,
       prevhash: this.prevhash,
       txs_root: this.txs_root,
-      txs: this.txs,
+      txs: this.txs.map(tx => {
+        return tx.getBytes(true).toString('hex')
+      }),
       timestamp: this.timestamp,
       nonce: this.nonce,
       gaslimit: this.gaslimit,
       gasused: this.gasused,
       isDepositBlock: this.isDepositBlock
-      
-    })
+    };
   }
-
+  
+  /**
+   * @dev deserialize from string
+   */
   static fromString(str) {
     const block = JSON.parse(str);
     const empty = new Block(block.number, block.isDepositBlock);
     empty.id = block.id;
     empty.number = block.number;
     empty.hash = block.hash;
-    empty.txs = block.txs;
+    empty.txs = block.txs ? block.txs.map(tx => {
+      return Transaction.fromBytes(new Buffer(tx, 'hex'))
+    }) : [];
     return empty;
   }
 

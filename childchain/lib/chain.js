@@ -64,8 +64,8 @@ class Chain {
   
   createDepositTx(depositor, uid, amount, depositBlock) {
     const output = new TransactionOutput(
-      [depositor],
-      [uid],
+      [new Buffer(depositor.substr(2), 'hex')],
+      [parseInt(uid)],
       [OWN_STATE]
     );
     const depositTx = new Transaction(
@@ -146,7 +146,7 @@ class Chain {
   }
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
-    return Block.fromString(blockStr);
+    return Block.fromString(blockStr).toJson();
   }
 
   gracefulStop(){
