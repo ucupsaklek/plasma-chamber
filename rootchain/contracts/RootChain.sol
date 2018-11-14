@@ -383,9 +383,7 @@ contract RootChain {
      * @param _cIndex the index of inputs
      * @param _cBlkNum block number of challenge tx
      * @param _eUtxoPos exiting utxo position
-     * @param _txBytes The challenging transaction in bytes RLP form.
-     * @param _proof Proof of inclusion for the transaction used to challenge.
-     * @param _sigs Signatures for the transaction used to challenge.
+     * @param _txInfos The challenging transaction in bytes RLP form.
      */
     function challengeAfter(
       address _chain,
@@ -393,9 +391,7 @@ contract RootChain {
       uint256 _cBlkNum,
       uint256 _eUtxoPos,
       bytes _txBytes,
-      bytes _proof,
-      bytes _sigs,
-      bytes _confsigs
+      bytes _txInfos
     )
       public
     {
@@ -406,10 +402,8 @@ contract RootChain {
       checkTx(
         childChain.blocks[_cBlkNum].root,
         _txBytes,
-        _proof,
-        _sigs,
-        _confsigs,
-        _cIndex,
+        _txInfos,
+        challengeTx.inputs[_cIndex].value,
         challengeTx
       );
       require(keccak256TxOutput(challengeTx.inputs[_cIndex]) == keccak256Exit(exit));
@@ -424,7 +418,8 @@ contract RootChain {
       uint256 _cIndex,
       uint256 _cBlkNum,
       uint256 _eUtxoPos,
-      bytes[] _txInfos
+      bytes _txBytes,
+      bytes _txInfos
     )
       public
     {
@@ -438,17 +433,15 @@ contract RootChain {
         }
         if(exit.txList[i].blkNum < _cBlkNum && _cBlkNum < nextBlkNum) {
           TxVerification.Tx memory prevTx = TxVerification.getTx(exit.txList[i].txBytes);
-          TxVerification.Tx memory challengeTx = TxVerification.getTx(_txInfos[0]);
+          TxVerification.Tx memory challengeTx = TxVerification.getTx(_txBytes);
           require(
             keccak256TxOutput(prevTx.outputs[exit.txList[i].index])
             == keccak256TxOutput(challengeTx.inputs[_cIndex]));
           checkTx(
             childChain.blocks[_cBlkNum].root,
-            _txInfos[0],
-            _txInfos[1],
-            _txInfos[2],
-            _txInfos[3],
-            _cIndex,
+            _txBytes,
+            _txInfos,
+            challengeTx.inputs[_cIndex].value,
             challengeTx
           );
           delete childChain.exits[_eUtxoPos];
@@ -465,31 +458,30 @@ contract RootChain {
       uint256 _cIndex,
       uint256 _cBlkNum,
       uint256 _eUtxoPos,
-      bytes[] _txInfos
+      bytes _txBytes,
+      bytes _txInfos
     )
       public
     {
       ChildChain childChain = childChains[_chain];
       Exit exit = childChain.exits[_eUtxoPos];
       require(_cBlkNum < exit.txList[0].blkNum);
-      var challengeTx = TxVerification.getTx(_txInfos[0]);
+      var challengeTx = TxVerification.getTx(_txBytes);
       ChildBlock childBlock = childChain.blocks[_cBlkNum];
       checkTx(
         childBlock.root,
-        _txInfos[0],
-        _txInfos[1],
-        _txInfos[2],
-        _txInfos[3],
-        _cIndex,
+        _txBytes,
+        _txInfos,
+        challengeTx.outputs[_cIndex].value,
         challengeTx
       );
       require(withinRange(
-        challengeTx,
+        challengeTx.outputs[_cIndex].value,
         childChain,
         _eUtxoPos
       ), 'challenge transaction should has same coin');
       childChain.challenges[_eUtxoPos] = ExitingTx({
-        txBytes: _txInfos[0],
+        txBytes: _txBytes,
         blkNum: _cBlkNum,
         index: _cIndex
       });
@@ -499,28 +491,27 @@ contract RootChain {
     function checkTx(
       bytes32 root,
       bytes _txBytes,
-      bytes _proof,
-      bytes _sigs,
-      bytes _confsigs,
-      uint256 _cIndex,
+      bytes _txInfos,
+      TxVerification.Amount[] values,
       TxVerification.Tx challengeTx
     )
       private
       pure
     {
+      RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(_txInfos));
       bytes32 txHash = keccak256(_txBytes);
       checkInclusion(
         root,
         txHash,
-        _proof,
-        challengeTx.inputs[_cIndex].value
+        RLP.toBytes(txList[0]),
+        values
       );
-      TxVerification.verifyTransaction(challengeTx, txHash, _sigs);
+      TxVerification.verifyTransaction(challengeTx, txHash, RLP.toBytes(txList[1]));
       if(challengeTx.inputs.length >= 2) {
         require(
           checkConfSigs(
             getTxOwners(challengeTx),
-            _confsigs,
+            RLP.toBytes(txList[2]),
             keccak256(txHash, root)
           ) == true
         );
@@ -531,7 +522,7 @@ contract RootChain {
      * @dev tx include in exit
      */
     function withinRange(
-      TxVerification.Tx challengeTx,
+      TxVerification.Amount[] values,
       ChildChain storage childChain,
       uint256 _eUtxoPos
     )
@@ -540,13 +531,11 @@ contract RootChain {
       returns (bool)
     {
       Exit exit = childChain.exits[_eUtxoPos];
-      for(uint i = 0;i < challengeTx.outputs.length;i++) {
-        for(uint j = 0;j < challengeTx.outputs[i].value.length;j++) {
-          var (start, end) = getIndex(challengeTx.outputs[i].value[j]);
-          for(uint k = 0;k < exit.values.length;k += 2) {
-            if(exit.values[k] <= start && end <= exit.values[k + 1]) {
-              return true;
-            }
+      for(uint j = 0;j < values.length;j++) {
+        var (start, end) = getIndex(values[j]);
+        for(uint k = 0;k < exit.values.length;k += 2) {
+          if(!(end < exit.values[k] || exit.values[k + 1] < start)) {
+            return true;
           }
         }
       }
@@ -572,7 +561,8 @@ contract RootChain {
       uint256 _cIndex,
       uint256 _cBlkNum,
       uint256 _eUtxoPos,
-      bytes[] _txInfos
+      bytes _txBytes,
+      bytes _txInfos
     )
       public
     {
@@ -581,14 +571,12 @@ contract RootChain {
       var challenge = childChain.challenges[_eUtxoPos];
       var challengeTx = TxVerification.getTx(challenge.txBytes);
       require(_cBlkNum > challenge.blkNum);
-      var respondTx = TxVerification.getTx(_txInfos[0]);
+      var respondTx = TxVerification.getTx(_txBytes);
       checkTx(
         childChain.blocks[_cBlkNum].root,
-        _txInfos[0],
-        _txInfos[1],
-        _txInfos[2],
-        _txInfos[3],
-        _cIndex,
+        _txBytes,
+        _txInfos,
+        respondTx.inputs[_cIndex].value,
         respondTx
       );
       require(keccak256TxOutput(respondTx.inputs[_cIndex]) == keccak256TxOutput(challengeTx.outputs[challenge.index]));

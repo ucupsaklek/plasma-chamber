@@ -265,6 +265,11 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
       const proof31 = block3.createTxProof(tx31);
       const slot = 0;
+      const txList = RLP.encode([
+        proof31,
+        sign31,
+        Buffer.from('', 'hex')
+      ]);
 
       await this.rootChain.challengeAfter(
         owner,
@@ -272,10 +277,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber3,
         utxoPos2 + slot * 10000,
         utils.bufferToHex(tx31.getBytes()),
-        utils.bufferToHex(proof31),
-        utils.bufferToHex(sign31),
-        "",
-        {from: recipient, gas: gasLimit});
+        utils.bufferToHex(txList),
+        {from: recipient, gas: startExitgasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
         utxoPos2 + slot * 10000,
