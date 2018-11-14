@@ -6,6 +6,9 @@ const {
   TransactionOutput
 } = require('./tx');
 const ChainEvent = require('./chainevent');
+const {
+  OWN_STATE
+} = require('./verifier/std');
 
 class Chain {
   
@@ -62,7 +65,8 @@ class Chain {
   createDepositTx(depositor, uid, amount, depositBlock) {
     const output = new TransactionOutput(
       [depositor],
-      [uid]
+      [uid],
+      [OWN_STATE]
     );
     const depositTx = new Transaction(
       0,        // label
