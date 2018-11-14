@@ -41,6 +41,10 @@ contract RootChain {
         address token
     );
 
+    event Log(
+      uint n
+    );
+
 
     /*
      * Storage
@@ -490,7 +494,7 @@ contract RootChain {
       require(withinRange(
         challengeTx.outputs[_cIndex].value,
         childChain,
-        _eUtxoPos
+        exit
       ), 'challenge transaction should has same coin');
       childChain.challenges[_eUtxoPos] = ExitingTx({
         txBytes: _txBytes,
@@ -536,17 +540,15 @@ contract RootChain {
     function withinRange(
       TxVerification.Amount[] values,
       ChildChain storage childChain,
-      uint256 _eUtxoPos
+      Exit memory exit
     )
       private
       view
       returns (bool)
     {
-      Exit exit = childChain.exits[_eUtxoPos];
       for(uint j = 0;j < values.length;j++) {
-        var (start, end) = getIndex(values[j]);
         for(uint k = 0;k < exit.values.length;k += 2) {
-          if(!(end < exit.values[k] || exit.values[k + 1] < start)) {
+          if(!(values[j].end < exit.values[k] || exit.values[k + 1] < values[j].start)) {
             return true;
           }
         }
@@ -705,13 +707,14 @@ contract RootChain {
     function getExit(address _chain, uint256 _utxoPos)
         public
         view
-        returns (address[], uint256[], bytes)
+        returns (address[], uint256[], bytes, bool)
     {
       ChildChain childChain = childChains[_chain];
       return (
         childChain.exits[_utxoPos].exitors,
         childChain.exits[_utxoPos].values,
-        childChain.exits[_utxoPos].stateBytes
+        childChain.exits[_utxoPos].stateBytes,
+        childChain.exits[_utxoPos].challenged
       );
     }
 
