@@ -67,7 +67,7 @@ class Block {
   createTXOProof(txo) {
     const tree = this.createTree();
     return txo.value.map(({start, end}) => {
-      const slot = start.div(CHUNK_SIZE).toNumber();
+      const slot = start.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
       return tree.proof(slot);
     }).reduce((acc, p) => {
       return Buffer.concat(acc.concat([p]));
@@ -77,7 +77,7 @@ class Block {
   createTxProof(tx) {
     const slots = tx.outputs.reduce((slots, o) => {
       const slot = o.value.map(({start, end}) => {
-        return start.div(CHUNK_SIZE).toNumber();
+        return start.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
       });
       return slots.concat(slot);
     }, []);
