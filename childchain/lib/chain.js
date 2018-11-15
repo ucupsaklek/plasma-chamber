@@ -20,6 +20,7 @@ class Chain {
     this.commitmentTxs = []; // TxVM idiom. Eq pendingTx
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
+    this.blockHeight = 0;
   }
   setMetaDB(metaDB){
     this.metaDB = metaDB;
@@ -50,19 +51,20 @@ class Chain {
       returnValues.end,
       returnValues.depositBlock
     );
-    this.blockHeight++;
-    await this.saveBlockHeight();
-
-    const newBlock = new Block(this.blockHeight, true);
-    this.snapshot.applyTx(tx, this.blockHeight);
-    newBlock.appendTx(tx)
-    await this.saveBlock(newBlock); //async func
-
-    this.emit("Deposited", {
-      type: "deposit",
-      payload: tx
-    });
-    this.emit("BlockGenerated", { payload: newBlock })
+    const appliedTx = await this.snapshot.applyTx(tx, this.blockHeight + 1);
+    if(appliedTx) {
+      this.blockHeight++;
+      await this.saveBlockHeight();
+      const newBlock = new Block(this.blockHeight, true);
+      newBlock.appendTx(tx)
+      await this.saveBlock(newBlock);
+  
+      this.emit("Deposited", {
+        type: "deposit",
+        payload: tx
+      });
+      this.emit("BlockGenerated", { payload: newBlock })
+    }
   }
   
   createDepositTx(depositor, start, end, depositBlock) {

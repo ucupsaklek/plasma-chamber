@@ -8,6 +8,10 @@ class Verifier {
         // transfer
         const outputs = std.transfer(tx.inputs, tx.args, tx.getSigns(), tx.hash());
         return Verifier.eq(tx.outputs, outputs);
+      }else if(tx.label === 1) {
+        // transfer
+        const outputs = std.split(tx.inputs, tx.args, tx.getSigns(), tx.hash());
+        return Verifier.eq(tx.outputs, outputs);
       }
       return false;
     }catch(e) {
@@ -17,7 +21,6 @@ class Verifier {
   }
 
   static eq(outputs, b) {
-    console.log('verify.eq', outputs, b);
     return outputs.filter((o, i) => {
       return Buffer.compare(o.hash(), b[i].hash()) !== 0;
     }).length == 0;
