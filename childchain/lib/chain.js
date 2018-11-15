@@ -51,11 +51,12 @@ class Chain {
       returnValues.end,
       returnValues.depositBlock
     );
-    const appliedTx = await this.snapshot.applyTx(tx, this.blockHeight + 1);
+    this.blockHeight++;
+    const blkNum = this.blockHeight;
+    await this.saveBlockHeight();
+    const appliedTx = await this.snapshot.applyTx(tx, blkNum);
     if(appliedTx) {
-      this.blockHeight++;
-      await this.saveBlockHeight();
-      const newBlock = new Block(this.blockHeight, true);
+      const newBlock = new Block(blkNum, true);
       newBlock.appendTx(tx)
       await this.saveBlock(newBlock);
   
@@ -152,7 +153,7 @@ class Chain {
     }
   }
   async saveBlock(newBlock){
-    await this.blockDB.put(this.blockHeight, newBlock.toString());
+    await this.blockDB.put(newBlock.number, newBlock.toString());
   }
   async saveBlockHeight(){
     await this.metaDB.put("blockHeight", this.blockHeight);

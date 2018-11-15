@@ -126,7 +126,12 @@ class TransactionOutput {
   toJson() {
     return {
       owners: this.owners,
-      value: this.value,
+      value: this.value.map(v => {
+        return {
+          start: v.start.toString(),
+          end: v.end.toString()
+        }
+      }),
       state: this.state,
       blkNum: this.blkNum
     }
