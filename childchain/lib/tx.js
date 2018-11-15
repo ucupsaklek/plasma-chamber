@@ -49,13 +49,14 @@ class TransactionOutput {
   /**
    * @dev get list of items
    */
-  getTuple() {
-    if(this.blkNum != undefined) {
+  getTuple(_blkNum) {
+    const blkNum = _blkNum || this.blkNum;
+    if(blkNum !== undefined) {
       return [
         this.owners.map(BufferUtils.hexToBuffer),
         this.value,
         this.state,
-        this.blkNum
+        blkNum
       ]
     }else{
       return [
@@ -70,8 +71,8 @@ class TransactionOutput {
   /**
    * @dev serialize to Buffer
    */
-  getBytes() {
-    return RLP.encode(this.getTuple());
+  getBytes(blkNum) {
+    return RLP.encode(this.getTuple(blkNum));
   }
 
   /**
@@ -96,8 +97,8 @@ class TransactionOutput {
   /**
    * @dev get hash of TransactionOutput
    */
-  hash() {
-    return utils.sha3(this.getBytes());
+  hash(blkNum) {
+    return utils.sha3(this.getBytes(blkNum));
   }
 
   clone() {
@@ -105,7 +106,6 @@ class TransactionOutput {
       [].concat(this.owners),
       [].concat(this.value),
       [].concat(this.state),
-      this.blkNum
     )
   }
 
@@ -207,7 +207,11 @@ class Transaction {
       return (o.value.indexOf(uid) >= 0)
     })[0];
   }
-  
+
+  getSigns() {
+    return this.sigs;
+  }
+
   checkSigns() {
     const owners = this.getOwners();
     if(this.sigs.length != owners.length) {
