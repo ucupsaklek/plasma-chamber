@@ -76,9 +76,18 @@ describe('Transaction', function() {
 
   describe('Transaction.toJson', function() {
 
+    const testTx = new Transaction(
+      0,    // label
+      [Buffer.from('00', 'hex')],  // args
+      1,     // nonce,
+      [input],
+      [output]
+    );
+
     it('should be converted to json', function() {
-      const json = tx.toJson();
-      assert.equal(json.label, 0);
+      const json = testTx.toJson();
+      assert.strictEqual(json.label, 0);
+      assert.strictEqual(json.args[0], '00');
     });
 
   });
