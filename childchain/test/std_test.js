@@ -35,7 +35,7 @@ describe('verifier.std', function() {
       const sign = tx.sign(privKey1);
       const outputs = std.transfer(tx.inputs, tx.args, [sign], tx.hash());
       assert.equal(outputs.length, 1);
-      assert.equal(outputs[0].owners[0], testAddress2);
+      assert.equal(outputs[0].owners[0], utils.bufferToHex(testAddress2));
     });
 
   });
@@ -54,9 +54,9 @@ describe('verifier.std', function() {
     it('should return exchange output', function() {
       const outputs = std.exchange([input1, input2], [testAddress2]);
       assert.equal(outputs.length, 2);
-      assert.equal(outputs[0].owners[0], testAddress1);
+      assert.equal(outputs[0].owners[0], utils.toChecksumAddress(utils.bufferToHex(testAddress1)));
       assert.equal(outputs[0].value[0], coinId2);
-      assert.equal(outputs[1].owners[0], testAddress2);
+      assert.equal(outputs[1].owners[0], utils.toChecksumAddress(utils.bufferToHex(testAddress2)));
       assert.equal(outputs[1].value[0], coinId1);
     });
 
