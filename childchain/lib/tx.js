@@ -58,13 +58,14 @@ class TransactionOutput {
   /**
    * @dev get list of items
    */
-  getTuple() {
-    if(this.blkNum != undefined) {
+  getTuple(_blkNum) {
+    const blkNum = _blkNum || this.blkNum;
+    if(blkNum !== undefined) {
       return [
         this.owners.map(BufferUtils.hexToBuffer),
         this.value.map(mapValue),
         this.state,
-        this.blkNum
+        blkNum
       ]
     }else{
       return [
@@ -90,8 +91,8 @@ class TransactionOutput {
   /**
    * @dev serialize to Buffer
    */
-  getBytes() {
-    return RLP.encode(this.getTuple());
+  getBytes(blkNum) {
+    return RLP.encode(this.getTuple(blkNum));
   }
 
   /**
@@ -115,12 +116,25 @@ class TransactionOutput {
       decoded[3] ? BufferUtils.bufferToNum(decoded[3]) : undefined
     );
   }
+  
+  static fromBytes(data) {
+    return TransactionOutput.fromTuple(RLP.decode(data));
+  }
+
+  toJson() {
+    return {
+      owners: this.owners,
+      value: this.value,
+      state: this.state,
+      blkNum: this.blkNum
+    }
+  }
 
   /**
    * @dev get hash of TransactionOutput
    */
-  hash() {
-    return utils.sha3(this.getBytes());
+  hash(blkNum) {
+    return utils.sha3(this.getBytes(blkNum));
   }
 
   clone() {
@@ -128,7 +142,6 @@ class TransactionOutput {
       [].concat(this.owners),
       [].concat(this.value),
       [].concat(this.state),
-      this.blkNum
     )
   }
 
@@ -230,7 +243,11 @@ class Transaction {
       return (o.value.indexOf(uid) >= 0)
     })[0];
   }
-  
+
+  getSigns() {
+    return this.sigs;
+  }
+
   checkSigns() {
     const owners = this.getOwners();
     if(this.sigs.length != owners.length) {
@@ -263,6 +280,17 @@ class Transaction {
 
   hash() {
     return utils.sha3(this.getBytes());
+  }
+
+  toJson() {
+    return {
+      label: this.label,
+      args: this.args.map(buf => buf.toString('hex')),
+      inputs: this.inputs.map(i => i.toJson()),
+      outputs: this.outputs.map(o => o.toJson()),
+      nonce: this.nonce,
+      sigs: this.sigs.map(buf => buf.toString('hex'))
+    }
   }
 
 }

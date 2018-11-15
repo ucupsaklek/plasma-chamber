@@ -149,4 +149,33 @@ describe('Transaction', function() {
     
   });
 
+  describe('decode utxo', function() {
+
+    it('should encode and decode', function() {
+      const encoded = input.getBytes();
+      const decoded = TransactionOutput.fromBytes(encoded);
+      assert(Buffer.compare(input.hash(), decoded.hash()) === 0);
+    });
+
+  });
+
+  describe('Transaction.toJson', function() {
+
+    const testTx = new Transaction(
+      0,    // label
+      [Buffer.from('00', 'hex')],  // args
+      1,     // nonce,
+      [input],
+      [output]
+    );
+
+    it('should be converted to json', function() {
+      const json = testTx.toJson();
+      assert.strictEqual(json.label, 0);
+      assert.strictEqual(json.args[0], '00');
+    });
+
+  });
+
+
 });
