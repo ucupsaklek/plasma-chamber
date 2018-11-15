@@ -93,6 +93,19 @@ class TransactionOutput {
       decoded[3] ? BufferUtils.bufferToNum(decoded[3]) : undefined
     );
   }
+  
+  static fromBytes(data) {
+    return TransactionOutput.fromTuple(RLP.decode(data));
+  }
+
+  toJson() {
+    return {
+      owners: this.owners,
+      value: this.value,
+      state: this.state,
+      blkNum: this.blkNum
+    }
+  }
 
   /**
    * @dev get hash of TransactionOutput
@@ -244,6 +257,17 @@ class Transaction {
 
   hash() {
     return utils.sha3(this.getBytes());
+  }
+
+  toJson() {
+    return {
+      label: this.label,
+      args: this.args.map(buf => buf.toString('hex')),
+      inputs: this.inputs.map(i => i.toJson()),
+      outputs: this.outputs.map(o => o.toJson()),
+      nonce: this.nonce,
+      sigs: this.sigs.map(buf => buf.toString('hex'))
+    }
   }
 
 }
