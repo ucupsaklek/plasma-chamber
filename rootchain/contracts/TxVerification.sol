@@ -222,6 +222,8 @@ library TxVerification {
     if(transaction.label == 0) {
       transfer(transaction, txHash, sigs);
     }else if(transaction.label == 1) {
+      split(transaction, txHash, sigs);
+    }else if(transaction.label == 2) {
       exchange(transaction);
     }else if(transaction.label == 100) {
       //updateReverseStatus(transaction);
@@ -244,6 +246,23 @@ library TxVerification {
   /**
    * @dev split value
    */
+  function split(Tx transaction, bytes32 txHash, bytes sigs)
+    internal
+    pure
+  {
+    address counter = RLP.toAddress(transaction.args[0]);
+    uint amount = RLP.toUint(transaction.args[1]);
+    require(RLP.toUint(transaction.inputs[0].state[0]) == 0);
+    require(transaction.inputs[0].owners[0] == ECRecovery.recover(txHash, sigs));
+    require(transaction.outputs[0].owners[0] == counter);
+    require(transaction.outputs[1].owners[0] == transaction.inputs[0].owners[0]);
+    Amount memory amount0 = transaction.outputs[0].value[0];
+    Amount memory amount1 = transaction.outputs[1].value[0];
+    require(amount0.end - amount0.start == amount);
+    require(amount0.start + amount == amount1.start);
+    require(transaction.inputs[0].value[0].end == amount1.end);
+  }
+
    /*
   function updateReverseStatus(Tx transaction)
     internal

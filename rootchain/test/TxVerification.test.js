@@ -10,6 +10,7 @@ const {
 } = require('../../childchain/lib/tx');
 const utils = require('ethereumjs-util');
 const BigNumber = require('bignumber.js');
+const RLP = require('rlp');
 
 contract('TxVerificationTest', function ([user, owner, recipient, user4, user5]) {
 
@@ -45,6 +46,42 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
         new Date().getTime(),
         [input],
         [output]
+      );
+      let txBytes = tx.getBytes();
+      const sign = tx.sign(privKey1)
+      const result = await this.txVerificationTest.verifyTransaction(
+        utils.bufferToHex(txBytes),
+        utils.bufferToHex(sign),
+        {from: user, gas: gasLimit});
+      assert.equal(result, 0);
+    });
+
+    it('should verify split', async function () {
+      const seg1 = {start: 0, end: CHUNK_SIZE};
+      const seg2 = {start: 0, end: 100000};
+      const seg3 = {start: 100000, end: CHUNK_SIZE};
+      const input = new TransactionOutput(
+        [testAddress1],
+        [seg1],
+        [0],
+        0
+      );
+      const output1 = new TransactionOutput(
+        [testAddress2],
+        [seg2],
+        [0]
+      );
+      const output2 = new TransactionOutput(
+        [testAddress1],
+        [seg3],
+        [0]
+      );
+      const tx = new Transaction(
+        1,
+        [testAddress2, BufferUtils.numToBuffer(100000)],
+        new Date().getTime(),
+        [input],
+        [output1, output2]
       );
       let txBytes = tx.getBytes();
       const sign = tx.sign(privKey1)
