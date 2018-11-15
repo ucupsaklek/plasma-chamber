@@ -11,11 +11,12 @@ const Listener = require('../../listener/lib/index')
 const memdown = require('memdown');
 const utils = require('ethereumjs-util');
 const testData = require('./testdata');
+const BigNumber = require('bignumber.js');
 
 describe('Chain', function() {
 
-  const depositor = '0x627306090abab3a6e1400e9345bc60c78a8bef57'
-  const uid = 0x123;
+  const depositor = '0x627306090abab3a6e1400e9345bc60c78a8bef57';
+  const uid = new BigNumber(0x123);
 
   describe('applyDeposit()', function() {
     it('should apply deposit', function(done) {
@@ -24,7 +25,6 @@ describe('Chain', function() {
         metadb: memdown(),
         snapshotdb: memdown()
       }).then(chain=>{
-        Listener.run(chain);
         const initialBlockHeight = chain.blockHeight;
 
         chain.applyDeposit({
@@ -50,8 +50,6 @@ describe('Chain', function() {
         metadb: memdown(),
         snapshotdb: memdown()
       }).then(chain=>{
-        Listener.run(chain);
-
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
@@ -64,6 +62,8 @@ describe('Chain', function() {
           assert(block.txs.length === 1);
           chainManager.stop();
           done();
+        }).catch(e => {
+          console.error(e)
         })
       })
     }).timeout(2000);

@@ -1,10 +1,10 @@
+const utils = require('ethereumjs-util');
 const assert = require('assert');
 const {
   Transaction,
   TransactionOutput
 } = require('../lib/tx');
 const std = require('../lib/verifier/std');
-const utils = require('ethereumjs-util');
 
 describe('verifier.std', function() {
   const coinId1 = 1;

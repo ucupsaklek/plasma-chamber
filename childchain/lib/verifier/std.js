@@ -3,6 +3,7 @@
  */
 
 const utils = require('ethereumjs-util');
+const OWN_STATE = 0;
 
 function transfer(inputs, args, sigs, hash) {
   const output = inputs[0].clone()
@@ -13,7 +14,7 @@ function transfer(inputs, args, sigs, hash) {
     hash
   )
 
-  output.owners = [args[0]];
+  output.owners = [utils.bufferToHex(args[0])];
   return [output];
 }
 
@@ -39,7 +40,7 @@ function checkSigs(owners, sigs, hash) {
       sig.slice(0, 32),
       sig.slice(32, 64)
     );
-    return Buffer.compare(utils.pubToAddress(pubKey), owners[i]) != 0;
+    return utils.bufferToHex(utils.pubToAddress(pubKey)) === owners[i];
   });
   if(unmatchSigs != 0) {
     throw new Error('signatures not match');
@@ -48,5 +49,6 @@ function checkSigs(owners, sigs, hash) {
 
 module.exports = {
   transfer,
-  exchange
+  exchange,
+  OWN_STATE
 }

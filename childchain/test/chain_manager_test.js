@@ -20,7 +20,7 @@ describe('ChainManager', function() {
       const snapshotDB = levelup(memdownSnapshotDb);
       metaDB.put("blockHeight", "1")
         .then(_=> blockDB.put(1, JSON.stringify(new Block(1))) )
-        .then(_=> metaDB.put("commitmentTxs", JSON.stringify([new Transaction()])) )
+        .then(_=> metaDB.put("commitmentTxs", JSON.stringify([new Transaction(0)])) )
         .then(_=>{
           blockDB.close(_=>{
             metaDB.close(_=>{

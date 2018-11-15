@@ -1,6 +1,7 @@
 const Block = require('./block');
 const Chain = require('./chain');
 const {
+  BufferUtils,
   Transaction,
   TransactionOutput
 } = require('./tx');
@@ -12,6 +13,7 @@ const RootChain = require('./rootchain');
 module.exports = {
   RootChain: RootChain,
   Block: Block,
+  BufferUtils: BufferUtils,
   Chain: Chain,
   Transaction: Transaction,
   TransactionOutput: TransactionOutput,
