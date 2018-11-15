@@ -3,18 +3,19 @@
  */
 
 const utils = require('ethereumjs-util');
+const {
+  TransactionOutput
+} = require('../tx');
 const OWN_STATE = 0;
 
 function transfer(inputs, args, sigs, hash) {
-  const output = inputs[0].clone()
-
   checkSigs(
     inputs[0].owners,
     sigs,
     hash
   )
 
-  output.owners = [utils.bufferToHex(args[0])];
+  const output = new TransactionOutput([args[0]], inputs[0].value, inputs[0].state);
   return [output];
 }
 

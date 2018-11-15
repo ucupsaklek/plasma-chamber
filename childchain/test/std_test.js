@@ -35,7 +35,7 @@ describe('verifier.std', function() {
       const sign = tx.sign(privKey1);
       const outputs = std.transfer(tx.inputs, tx.args, [sign], tx.hash());
       assert.equal(outputs.length, 1);
-      assert.equal(outputs[0].owners[0], utils.bufferToHex(testAddress2));
+      assert.equal(outputs[0].owners[0], utils.toChecksumAddress(utils.bufferToHex(testAddress2)));
     });
 
   });
