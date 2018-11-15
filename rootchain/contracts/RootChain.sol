@@ -202,7 +202,7 @@ contract RootChain {
       uint end = start + amount;
       uint slot = start / CHUNK_SIZE;
       uint slotEnd = end / CHUNK_SIZE;
-      for(uint i = slot;i <= slotEnd;i++) {
+      for(uint i = slot;i < slotEnd;i++) {
         require(!childChain.coins[i].hasValue);
         childChain.coins[i] = Coin({
           token: address(0),
