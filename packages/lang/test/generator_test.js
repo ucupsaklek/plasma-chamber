@@ -7,7 +7,7 @@ const compiler = require('../lib/compiler');
 
 
 describe('generator', function() {
-  it('should parse and generate', function(done) {
+  it('should parse the chamber lang and generate solidity source code', function(done) {
     const src = fs.readFileSync(path.join(__dirname, '../examples/transfer.chr'));
     const solTemplate = fs.readFileSync(path.join(__dirname, '../lib/sol.ejs'));
     const result = compiler(src.toString());
@@ -15,6 +15,7 @@ describe('generator', function() {
     const output = template({
       facts: result
     });
+console.log(output.toString())
     assert.equal(output.toString().length > 0, true);
     done()
   });
