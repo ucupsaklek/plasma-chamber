@@ -15,7 +15,6 @@ describe('generator', function() {
     const output = template({
       facts: result
     });
-console.log(output.toString())
     assert.equal(output.toString().length > 0, true);
     done()
   });
