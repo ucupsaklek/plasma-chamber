@@ -35,6 +35,13 @@ abbrev@1.0.x:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
 
+abi-decode-functions@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/abi-decode-functions/-/abi-decode-functions-0.1.3.tgz#2ed4496bca46b873e995c687a12078179234e2b8"
+  dependencies:
+    ethereumjs-utils "^5.2.5"
+    truffle-code-utils "^1.1.1"
+
 abstract-leveldown@~2.6.0:
   version "2.6.3"
   resolved "https://registry.yarnpkg.com/abstract-leveldown/-/abstract-leveldown-2.6.3.tgz#1c5e8c6a5ef965ae8c35dfb3a8770c476b82c4b8"
@@ -1191,6 +1198,18 @@ ethereumjs-tx@^1.3.7:
 ethereumjs-util@^5.0.0, ethereumjs-util@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/ethereumjs-util/-/ethereumjs-util-5.2.0.tgz#3e0c0d1741471acf1036052d048623dee54ad642"
+  dependencies:
+    bn.js "^4.11.0"
+    create-hash "^1.1.2"
+    ethjs-util "^0.1.3"
+    keccak "^1.0.2"
+    rlp "^2.0.0"
+    safe-buffer "^5.1.1"
+    secp256k1 "^3.0.1"
+
+ethereumjs-utils@^5.2.5:
+  version "5.2.5"
+  resolved "https://registry.yarnpkg.com/ethereumjs-utils/-/ethereumjs-utils-5.2.5.tgz#76db76d021beb00f7d3f2fa9708a080444f079ea"
   dependencies:
     bn.js "^4.11.0"
     create-hash "^1.1.2"
@@ -3356,10 +3375,11 @@ sntp@1.x.x:
   dependencies:
     hoek "2.x.x"
 
-"sol-trace@github:nakajo2011/sol-trace#pre_release":
-  version "0.1.2-pre"
-  resolved "https://codeload.github.com/nakajo2011/sol-trace/tar.gz/c13f37e9be45d3746f0763cb8789dc240dce1281"
+sol-trace@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/sol-trace/-/sol-trace-0.1.3.tgz#586078025b98ec35e7caea332494521b3ac7f919"
   dependencies:
+    abi-decode-functions "^0.1.3"
     babel-runtime "^6.26.0"
     ethereumjs-util "^5.2.0"
     glob "^7.1.2"
@@ -3676,6 +3696,10 @@ tough-cookie@~2.4.3:
 trim@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/trim/-/trim-0.0.1.tgz#5858547f6b290757ee95cccc666fb50084c460dd"
+
+truffle-code-utils@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/truffle-code-utils/-/truffle-code-utils-1.1.1.tgz#0061be06fa014a28f1b43ab464d3433ca7d45bc3"
 
 truffle@^4.1.14:
   version "4.1.14"

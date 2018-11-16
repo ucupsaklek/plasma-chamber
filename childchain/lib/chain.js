@@ -64,7 +64,7 @@ class Chain {
         type: "deposit",
         payload: tx
       });
-      this.emit("BlockGenerated", { payload: newBlock })
+      // this.emit("BlockGenerated", { payload: newBlock })
     }
   }
   
@@ -163,6 +163,7 @@ class Chain {
   }
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
+    const b = Block.fromString(blockStr);
     return Block.fromString(blockStr).toJson();
   }
 

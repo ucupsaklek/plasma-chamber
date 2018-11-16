@@ -186,6 +186,11 @@
           "indexed": false,
           "name": "timestamp",
           "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "blkNum",
+          "type": "uint256"
         }
       ],
       "name": "BlockSubmitted",

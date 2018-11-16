@@ -34,7 +34,8 @@ contract RootChain {
 
     event BlockSubmitted(
         bytes32 root,
-        uint256 timestamp
+        uint256 timestamp,
+        uint256 blkNum
     );
 
     event TokenAdded(
@@ -185,7 +186,7 @@ contract RootChain {
       // Update block numbers.
       childChain.currentChildBlock = childChain.currentChildBlock.add(1);
 
-      emit BlockSubmitted(_root, block.timestamp);
+      emit BlockSubmitted(_root, block.timestamp, childChain.currentChildBlock - 1);
     }
 
     /**
@@ -354,8 +355,6 @@ contract RootChain {
       pure
     {
       for(uint c = 0; c < values.length; c++) {
-        uint a = values[c].start / CHUNK_SIZE;
-        require(values[c].start == 0 || values[c].start == 1000000000000000000);
         require(txHash.checkMembership(
           values[c].start / CHUNK_SIZE,
           values[c].end / CHUNK_SIZE,
@@ -563,7 +562,7 @@ contract RootChain {
       returns (uint256, uint256)
     {
       uint256 start = value.start / CHUNK_SIZE;
-      uint256 end = value.end / CHUNK_SIZE;
+      uint256 end = (value.end - 1) / CHUNK_SIZE;
       return (start, end);
     }
 
