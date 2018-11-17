@@ -21,6 +21,7 @@ class Chain {
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
     this.blockHeight = 0;
+    this.seenEvents = [];
   }
   setMetaDB(metaDB){
     this.metaDB = metaDB;
@@ -145,8 +146,10 @@ class Chain {
       this.id = (await this.metaDB.get("chainID")).toString()
       this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
       this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
-      this.snapshot.setRoot(this.block.stateRoot);
+      if(this.block.stateRoot)
+        this.snapshot.setRoot(this.block.stateRoot);
       this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
+      this.seenEvents = JSON.parse((await this.metaDB.get("seenEvents")).toString());
     } catch (err) {
       if(err.notFound) {
         this.blockHeight = 0;
@@ -167,6 +170,14 @@ class Chain {
   async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
+  async saveSeenEvents(seenEvents) {
+    this.seenEvents = seenEvents;
+    await this.metaDB.put("seenEvents", JSON.stringify(seenEvents));
+  }
+  getSeenEvents() {
+    return this.seenEvents;
+  }
+
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
     const b = Block.fromString(blockStr);

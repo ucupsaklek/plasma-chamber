@@ -14,8 +14,9 @@ web3.eth.accounts.wallet.add(utils.bufferToHex(privKey));
 
 class RootChainEventListener {
 
-  constructor() {
-    this.seenEvents = {};
+  constructor(childChain, seenEvents) {
+    this.childChain = childChain;
+    this.seenEvents = seenEvents || {};
   }
 
   async getEvents(event, confirmation, handler) {
@@ -29,6 +30,7 @@ class RootChainEventListener {
     }).forEach((e) => {
       handler(e);
       this.seenEvents[e.transactionHash] = true;
+      this.childChain.saveSeenEvents(this.seenEvents);
     });
     setTimeout(()=>{
       this.getEvents(event, confirmation, handler);
@@ -40,7 +42,8 @@ class RootChainEventListener {
 
 module.exports.run = childChain => {
 
-  const rootChainEventListener = new RootChainEventListener();
+  const seenEvents = childChain.getSeenEvents();
+  const rootChainEventListener = new RootChainEventListener(childChain, seenEvents);
   const RootChainConfirmationBlockNum = 1;
 
   childChain.events.Ready((e) => {
