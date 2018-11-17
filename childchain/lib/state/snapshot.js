@@ -4,9 +4,19 @@ class Snapshot {
   
   constructor() {
   }
+
   setDB(db){
     this.db = db;
     this.contTrie = new Trie(db); 
+    this.contTrie.revert();
+  }
+
+  getRoot() {
+    return this.contTrie.root.toString('hex');
+  }
+
+  setRoot(root) {
+    this.contTrie = new Trie(this.db, Buffer.from(root, 'hex'));
   }
 
   /**
@@ -36,6 +46,15 @@ class Snapshot {
     }).catch((e) => {
       console.error(e);
       return Promise.resolve(null);
+    })
+  }
+
+  commit() {
+    return new Promise((resolve, reject) => {
+      this.contTrie.checkpoint();
+      this.contTrie.commit(() => {
+        resolve();
+      });
     })
   }
 

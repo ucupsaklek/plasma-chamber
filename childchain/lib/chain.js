@@ -114,10 +114,15 @@ class Chain {
       this.snapshot,
       this.blockHeight
     );
-    passedTxs
+    const appendedTxs = passedTxs
       .filter(tx => !!tx)
-      .forEach((tx) => newBlock.appendTx(tx));
+      .map((tx) => newBlock.appendTx(tx));
+    
+    if(appendedTxs.length === 0) {
+      // TODO: revert
+    }
 
+    newBlock.setStateRoot(this.snapshot.getRoot());
     await this.saveBlock(newBlock); //async func
 
     this.emit("BlockGenerated", { payload: newBlock })
@@ -140,6 +145,7 @@ class Chain {
       this.id = (await this.metaDB.get("chainID")).toString()
       this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
       this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
+      this.snapshot.setRoot(this.block.stateRoot);
       this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
     } catch (err) {
       if(err.notFound) {
