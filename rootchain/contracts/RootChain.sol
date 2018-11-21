@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 import "./Array.sol";
 import "./Math.sol";
 import "./Merkle.sol";
-import "./Validate.sol";
 import "./TxVerification.sol";
 
 /**
