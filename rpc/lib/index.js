@@ -2,7 +2,9 @@ const jayson = require('jayson');
 const cors = require('cors');
 var connect = require('connect');
 const jsonParser = require('body-parser').json;
+const MQTTServer = require('./mqtt');
 const app = connect();
+
 module.exports.run = childChain => {
   // create a server
   var server = jayson.server({
@@ -42,4 +44,6 @@ module.exports.run = childChain => {
   app.use(server.middleware());
   
   app.listen(process.env.PORT || 3000);
+
+  MQTTServer();
 }
