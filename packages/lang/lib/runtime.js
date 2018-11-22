@@ -159,7 +159,7 @@ class Predefined {
     const txo = values[0];
     const state = values[1];
     if(txo.isExists() && state.isExists()) {
-     ctx.variable[txo.getName()].value = state.getValue();
+      ctx.variable[txo.getName()].value = state.getValue();
     }else if(txo.isExists()) {
       ctx.variable[state.getName()] = txo.getValue().state;
     }else if(state.isExists()) {
