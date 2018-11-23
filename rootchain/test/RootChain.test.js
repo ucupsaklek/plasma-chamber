@@ -162,7 +162,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(
         r2[0], utils.bufferToHex(rootHash2)
       )
-      const slot = tx11.outputs[0].value[0].start.div(CHUNK_SIZE);
+      const slot = tx11.outputs[0].value[0].start.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
       assert.equal(Merkle.verify(tx11.hash(), slot, new Buffer(r1[0].substr(2), 'hex'), proof1), true);
       assert.equal(Merkle.verify(tx21.hash(), slot, rootHash2, proof2), true);
       assert.equal(Merkle.verify(tx21.hash(), slot, new Buffer(r2[0].substr(2), 'hex'), proof2), true);

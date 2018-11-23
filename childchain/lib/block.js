@@ -47,8 +47,8 @@ class Block {
     this.txs.forEach(tx=>{
       tx.outputs.forEach((o) => {
         o.value.forEach(({start, end}) => {
-          const slot = start.div(CHUNK_SIZE);
-          const slotEnd = end.div(CHUNK_SIZE);
+          const slot = start.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
+          const slotEnd = end.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
           for(var i = slot;i < slotEnd;i++) {
             leaves[i] = tx.hash();
           }

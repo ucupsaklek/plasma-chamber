@@ -12,7 +12,7 @@ describe('Block', function() {
   describe('merkleHash()', function() {
 
     const CHUNK_SIZE = BigNumber('1000000000000000000');
-    const coinId = {start: 0, end: CHUNK_SIZE.minus(1)};
+    const coinId = {start: 0, end: CHUNK_SIZE};
     const ownState = 0;
     const blkNum = 54321;
     const nonce = 111111;
@@ -41,7 +41,7 @@ describe('Block', function() {
     it('should return hash', function() {
       const block = new Block();
       block.appendTx(tx);
-      assert.equal(block.merkleHash().toString('hex'), 'f931dfe86b29b2f5b5baca28d494907ed7f6c56fbf51e1204eafe43d57a35eb9');
+      assert.equal(block.merkleHash().toString('hex'), '44fdbc92cb225bc067321d0b898f1ee8de7cb7aa005acfe56bbb95baf03ac7ca');
     });
 
     it('should verify', function() {
