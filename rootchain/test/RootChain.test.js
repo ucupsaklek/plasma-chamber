@@ -30,10 +30,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const testAddress5 = utils.privateToAddress(privKey5);
   const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
   const CHUNK_SIZE = BigNumber('1000000000000000000');
-  const coin1Id = {start: 0, end: CHUNK_SIZE};
-  const coin2Id = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2)};
+  const segment1 = {start: 0, end: CHUNK_SIZE};
+  const segment2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2)};
   const gasLimit = 200000;
-  const startExitgasLimit = 800000;
+  const startExitGasLimit = 800000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
   // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
   // 0x0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
@@ -81,8 +81,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     const utxoPos4 = blockNumber4 * 1000000000;
 
 
-    const tx11 = createTx(testAddress2, testAddress1, coin1Id, 0);
-    const tx12 = createTx(testAddress2, testAddress1, coin2Id, 0);
+    const tx11 = createTx(testAddress2, testAddress1, segment1, 0);
+    const tx12 = createTx(testAddress2, testAddress1, segment2, 0);
     const sign1 = tx11.sign(privKey2);
     tx11.sigs.push(sign1);
     const sign2 = tx12.sign(privKey2);
@@ -91,8 +91,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block1.appendTx(tx11);
     block1.appendTx(tx12);
 
-    const tx21 = createTx(testAddress1, testAddress3, coin1Id, blockNumber);
-    const tx22 = createTx(testAddress1, testAddress4, coin2Id, blockNumber);
+    const tx21 = createTx(testAddress1, testAddress3, segment1, blockNumber);
+    const tx22 = createTx(testAddress1, testAddress4, segment2, blockNumber);
     const sign21 = tx21.sign(privKey1);
     tx21.sigs.push(sign21);
     const sign22 = tx22.sign(privKey1);
@@ -101,8 +101,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block2.appendTx(tx21);
     block2.appendTx(tx22);
 
-    const tx31 = createTx(testAddress3, testAddress1, coin1Id, blockNumber2);
-    const tx32 = createTx(testAddress1, testAddress4, coin2Id, blockNumber2);
+    const tx31 = createTx(testAddress3, testAddress1, segment1, blockNumber2);
+    const tx32 = createTx(testAddress1, testAddress4, segment2, blockNumber2);
     const sign31 = tx31.sign(privKey3);
     tx31.sigs.push(sign31);
     const sign32 = tx32.sign(privKey1);
@@ -111,8 +111,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block3.appendTx(tx31);
     block3.appendTx(tx32);
 
-    const tx41 = createTx(testAddress3, testAddress1, coin1Id, blockNumber3);
-    const tx42 = createTx(testAddress4, testAddress2, coin2Id, blockNumber3);
+    const tx41 = createTx(testAddress3, testAddress1, segment1, blockNumber3);
+    const tx42 = createTx(testAddress4, testAddress2, segment2, blockNumber3);
     const sign41 = tx41.sign(privKey3);
     tx41.sigs.push(sign41);
     const sign42 = tx42.sign(privKey4);
@@ -162,7 +162,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(
         r2[0], utils.bufferToHex(rootHash2)
       )
-      const slot = tx11.outputs[0].value[0].start.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
+      const slot = tx11.outputs[0].getStartSlot(0);
       assert.equal(Merkle.verify(tx11.hash(), slot, new Buffer(r1[0].substr(2), 'hex'), proof1), true);
       assert.equal(Merkle.verify(tx21.hash(), slot, rootHash2, proof2), true);
       assert.equal(Merkle.verify(tx21.hash(), slot, new Buffer(r2[0].substr(2), 'hex'), proof2), true);
@@ -188,14 +188,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: recipient, gas: startExitgasLimit});
+        {from: recipient, gas: startExitGasLimit});
       console.log('gas', gas);
       const result = await this.rootChain.startExit(
         owner,
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: recipient, gas: startExitgasLimit});
+        {from: recipient, gas: startExitGasLimit});
       assert(result.hasOwnProperty('receipt'));
 
     });
@@ -209,7 +209,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     });
 
     it('should startExit', async function () {
-      const slot = tx22.outputs[0].value[0].start.div(CHUNK_SIZE).toNumber();
+      const slot = tx22.outputs[0].getStartSlot(0);
       const proof = block1.createTXOProof(tx12.outputs[0]);
       const proof2 = block2.createTXOProof(tx22.outputs[0]);
 
@@ -232,7 +232,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber2,
         0,
         utils.bufferToHex(txList),
-        {from: user4, gas: startExitgasLimit});
+        {from: user4, gas: startExitGasLimit});
       assert(result.hasOwnProperty('receipt'));
       const getExitResult1 = await this.rootChain.getExit(
         owner,
@@ -240,7 +240,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         {from: user, gas: gasLimit});
 
       assert.equal(getExitResult1[0][0], user4);
-      assert.equal(getExitResult1[1][0].toString(), coin2Id.start.toString());
+      assert.equal(getExitResult1[1][0].toString(), segment2.start.toString());
     });
 
     it('should finalizeExits', async function () {
@@ -252,7 +252,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         {from: recipient, gas: gasLimit});
       
       assert.equal(getExitResult[0][0], recipient);
-      assert.equal(getExitResult[1][0].toString(), coin1Id.start.toString());
+      assert.equal(getExitResult[1][0].toString(), segment1.start.toString());
 
       increaseTime(15 * 24 * 60 * 60);
       await this.rootChain.finalizeExits(
@@ -291,7 +291,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         utxoPos2 + slot * 10000,
         utils.bufferToHex(tx31.getBytes()),
         utils.bufferToHex(txList),
-        {from: recipient, gas: startExitgasLimit});
+        {from: recipient, gas: startExitGasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
         utxoPos2 + slot * 10000,
@@ -339,7 +339,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber4,
         0,
         utils.bufferToHex(txList),
-        {from: owner, gas: startExitgasLimit});
+        {from: owner, gas: startExitGasLimit});
   
       const proof22 = block2.createTxProof(tx22);
       const slot = 1;
@@ -356,7 +356,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         utxoPos4 + slot * 10000,
         utils.bufferToHex(tx22.getBytes()),
         utils.bufferToHex(cTxList),
-        {from: recipient, gas: startExitgasLimit});
+        {from: recipient, gas: startExitGasLimit});
 
       const getExitResultAfter = await this.rootChain.getExit(
         owner,

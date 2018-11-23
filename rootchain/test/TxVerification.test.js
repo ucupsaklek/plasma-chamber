@@ -19,7 +19,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
   const testAddress1 = utils.privateToAddress(privKey1);
   const testAddress2 = utils.privateToAddress(privKey2);
   const CHUNK_SIZE = BigNumber('1000000000000000000');
-  const coin1Id = {start: 0, end: CHUNK_SIZE.minus(1)};
+  const segment1 = {start: 0, end: CHUNK_SIZE};
   const gasLimit = 200000;
 
   beforeEach(async function () {
@@ -31,13 +31,13 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
     it('should verify transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        [coin1Id],
+        [segment1],
         [0],
         0
       );
       const output = new TransactionOutput(
         [testAddress2],
-        [coin1Id],
+        [segment1],
         [0]
       );
       const tx = new Transaction(
@@ -95,13 +95,13 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
     it('should verify game transaction', async function () {
       const input = new TransactionOutput(
         [testAddress1],
-        [coin1Id],
+        [segment1],
         [testAddress1, testAddress2, BufferUtils.numToBuffer(3), BufferUtils.numToBuffer(0)],
         0,0,0
       );
       const output = new TransactionOutput(
         [testAddress2],
-        [coin1Id],
+        [segment1],
         [testAddress2, testAddress1, BufferUtils.numToBuffer(4), BufferUtils.numToBuffer(0)]
       );
       const tx = new Transaction(

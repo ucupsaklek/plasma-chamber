@@ -10,8 +10,8 @@ const BigNumber = require('bignumber.js');
 
 describe('Transaction', function() {
   const CHUNK_SIZE = BigNumber('1000000000000000000');
-  const coinId1 = {start: 0, end: CHUNK_SIZE.minus(1)};
-  const coinId2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2).minus(1)};
+  const segment1 = {start: 0, end: CHUNK_SIZE.minus(1)};
+  const segment2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2).minus(1)};
   const ownState = 0;
   const blkNum1 = 123;
   const blkNum2 = 1234567;
@@ -23,24 +23,24 @@ describe('Transaction', function() {
   const testAddress2 = utils.toChecksumAddress(utils.bufferToHex(testAddressBuf2));
   const input = new TransactionOutput(
     [testAddress1],
-    [coinId1],
+    [segment1],
     [ownState],
     blkNum1
   );
   const output = new TransactionOutput(
     [testAddress2],
-    [coinId1],
+    [segment1],
     [ownState]
   );
   const input2 = new TransactionOutput(
     [testAddress1],
-    [coinId2],
+    [segment2],
     [ownState],
     blkNum2
   );
   const output2 = new TransactionOutput(
     [testAddress2],
-    [coinId2],
+    [segment2],
     [ownState]
   );
   const tx = new Transaction(
@@ -59,13 +59,13 @@ describe('Transaction', function() {
   );
   const input3 = new TransactionOutput(
     [testAddress1],
-    [coinId2],
+    [segment2],
     [ownState, BufferUtils.numToBuffer(12345), new Buffer('12345678', 'hex')],
     blkNum2
   );
   const output3 = new TransactionOutput(
     [testAddress2],
-    [coinId2],
+    [segment2],
     [ownState, BufferUtils.numToBuffer(12346), new Buffer('23456789', 'hex')]
   );
   const tx3 = new Transaction(
@@ -108,8 +108,8 @@ describe('Transaction', function() {
       const encoded = tx.getBytes();
       const decoded = Transaction.fromBytes(encoded);
       assert.equal(decoded.label, 0);
-      assert.equal(decoded.inputs[0].value[0].start.toString(), coinId1.start.toString());
-      assert.equal(decoded.outputs[0].value[0].start.toString(), coinId1.start.toString());
+      assert.equal(decoded.inputs[0].value[0].start.toString(), segment1.start.toString());
+      assert.equal(decoded.outputs[0].value[0].start.toString(), segment1.start.toString());
       assert.equal(decoded.inputs[0].blkNum, blkNum1);
       assert.equal(decoded.inputs[0].owners[0], testAddress1);
       assert(typeof decoded.inputs[0].owners[0] == 'string');
@@ -123,8 +123,8 @@ describe('Transaction', function() {
       const encoded = tx2.getBytes();
       const decoded = Transaction.fromBytes(encoded);
       assert.equal(decoded.label, 0);
-      assert.equal(decoded.inputs[0].value[0].start.toString(), coinId2.start.toString());
-      assert.equal(decoded.outputs[0].value[0].end.toString(), coinId2.end.toString());
+      assert.equal(decoded.inputs[0].value[0].start.toString(), segment2.start.toString());
+      assert.equal(decoded.outputs[0].value[0].end.toString(), segment2.end.toString());
       assert.equal(decoded.inputs[0].blkNum, blkNum2);
       assert.equal(decoded.inputs[0].owners[0].toString(), testAddress1.toString());
       assert(typeof decoded.inputs[0].owners[0] == 'string');

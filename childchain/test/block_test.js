@@ -12,7 +12,7 @@ describe('Block', function() {
   describe('merkleHash()', function() {
 
     const CHUNK_SIZE = BigNumber('1000000000000000000');
-    const coinId = {start: 0, end: CHUNK_SIZE};
+    const segment = {start: 0, end: CHUNK_SIZE};
     const ownState = 0;
     const blkNum = 54321;
     const nonce = 111111;
@@ -21,13 +21,13 @@ describe('Block', function() {
   
     const input = new TransactionOutput(
       [testAddress],
-      [coinId],
+      [segment],
       [ownState],
       blkNum
     );
     const output = new TransactionOutput(
       [testAddress],
-      [coinId],
+      [segment],
       [ownState]
     );
     const tx = new Transaction(

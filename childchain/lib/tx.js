@@ -1,6 +1,9 @@
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
 const BigNumber = require('bignumber.js');
+const {
+  CHUNK_SIZE
+} = require('./constant');
 
 class BufferUtils {
   static bufferToNum(buf) {
@@ -158,6 +161,14 @@ class TransactionOutput {
       [],
       []
     )
+  }
+
+  getStartSlot(index) {
+    return TransactionOutput.amountToSlot(this.value[index].start);
+  }
+
+  static amountToSlot(index) {
+    return index.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
   }
 
 }
