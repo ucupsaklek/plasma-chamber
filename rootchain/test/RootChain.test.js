@@ -30,8 +30,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const testAddress5 = utils.privateToAddress(privKey5);
   const zeroAddress = new Buffer("0000000000000000000000000000000000000000", 'hex');
   const CHUNK_SIZE = BigNumber('1000000000000000000');
-  const coin1Id = {start: 0, end: CHUNK_SIZE.minus(1)};
-  const coin2Id = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2).minus(1)};
+  const coin1Id = {start: 0, end: CHUNK_SIZE};
+  const coin2Id = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2)};
   const gasLimit = 200000;
   const startExitgasLimit = 800000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
