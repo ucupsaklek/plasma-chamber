@@ -45,7 +45,8 @@ class TransactionOutput {
         throw new Error('invalid address');
       }
     })
-    // values are uid list
+    // values are segment list
+    // segment is [start, end) it is not include end itself.
     this.value = value.map(v => {
       return {
         start: (typeof v.start === 'number') ? new BigNumber(v.start) : v.start,
