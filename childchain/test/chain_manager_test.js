@@ -37,8 +37,7 @@ describe('ChainManager', function() {
         snapshotdb: memdownSnapshotDb
       }).then(async chain=>{
         assert(chain.id.length > 0);
-        assert(chain.blockHeight > 0);
-        assert(chain.block.number > 0);
+        assert(chain.blockHeight == 0);
         assert(chain.commitmentTxs.length >= 0);
         await chainManager.stop();
         done();
