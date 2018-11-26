@@ -1,17 +1,26 @@
 const RLP = require('rlp');
 const utils = require('ethereumjs-util');
 const BigNumber = require('bignumber.js');
+const {
+  CHUNK_SIZE
+} = require('./constant');
 
 class BufferUtils {
   static bufferToNum(buf) {
     if(buf.length == 0) return 0;
     return new BigNumber('0x' + buf.toString('hex')).toNumber();
   }
-  static hexToBuffer(hex) {
-    return new Buffer(hex.substr(2), 'hex');
+  static bufferToBignum(buf) {
+    if(buf.length == 0) return 0;
+    return new BigNumber('0x' + buf.toString('hex'));
   }
-  static numToBuffer() {
-    return new Buffer(new BigNumber().toString(16), 'hex');
+  static hexToBuffer(hex) {
+    return Buffer.from(hex.substr(2), 'hex');
+  }
+  static numToBuffer(n) {
+    let str = new BigNumber(n).toString(16);
+    if(str.length % 2 === 1) str = '0' + str;
+    return Buffer.from(str, 'hex');
   }
 }
 
@@ -36,8 +45,14 @@ class TransactionOutput {
         throw new Error('invalid address');
       }
     })
-    // values are uid list
-    this.value = value;
+    // values are segment list
+    // segment is [start, end) it is not include end itself.
+    this.value = value.map(v => {
+      return {
+        start: (typeof v.start === 'number') ? new BigNumber(v.start) : v.start,
+        end: (typeof v.end === 'number') ? new BigNumber(v.end) : v.end
+      }
+    })
     // contract address include verification function, 20byte
     // this.contract = 0;
     // state in bytes
@@ -54,17 +69,28 @@ class TransactionOutput {
     if(blkNum !== undefined) {
       return [
         this.owners.map(BufferUtils.hexToBuffer),
-        this.value,
+        this.value.map(mapValue),
         this.state,
         blkNum
       ]
     }else{
       return [
         this.owners.map(BufferUtils.hexToBuffer),
-        this.value,
+        this.value.map(mapValue),
         this.state
       ]
-
+    }
+    function mapValue(v) {
+      return [toBuf(v.start), toBuf(v.end)];
+    }
+    function toBuf(n) {
+      if(typeof n == 'number') {
+        return n;
+      }else{
+        let s = n.toString(16);
+        if(s.length % 2 == 1) s = '0' + s;
+        return Buffer.from(s, 'hex');
+      }
     }
   }
 
@@ -85,7 +111,10 @@ class TransactionOutput {
       decoded[0],
       // value
       decoded[1].map(v => {
-        return BufferUtils.bufferToNum(v);
+        return {
+          start: BufferUtils.bufferToBignum(v[0]),
+          end: BufferUtils.bufferToBignum(v[1])
+        }
       }),
       // state
       [BufferUtils.bufferToNum(decoded[2][0])].concat(decoded[2].slice(1)),
@@ -101,7 +130,12 @@ class TransactionOutput {
   toJson() {
     return {
       owners: this.owners,
-      value: this.value,
+      value: this.value.map(v => {
+        return {
+          start: v.start.toString(),
+          end: v.end.toString()
+        }
+      }),
       state: this.state,
       blkNum: this.blkNum
     }
@@ -128,6 +162,14 @@ class TransactionOutput {
       [],
       []
     )
+  }
+
+  getStartSlot(index) {
+    return TransactionOutput.amountToSlot(this.value[index].start);
+  }
+
+  static amountToSlot(index) {
+    return index.div(CHUNK_SIZE).integerValue(BigNumber.ROUND_FLOOR).toNumber();
   }
 
 }
@@ -204,7 +246,7 @@ class Transaction {
    * @param {Buffer} privKey
    */
   sign(privKey) {
-    const sign = utils.ecsign(new Buffer(this.hash(), 'hex'), privKey);
+    const sign = utils.ecsign(Buffer.from(this.hash(), 'hex'), privKey);
     const signBuffer = Buffer.concat([sign.r, sign.s, Buffer.from([sign.v])], 65);
     return signBuffer;
   }
@@ -232,7 +274,7 @@ class Transaction {
     }
     const unmatchSigs = this.sigs.filter((sig, i) => {
       var pubKey = utils.ecrecover(
-        new Buffer(this.hash(), 'hex'),
+        Buffer.from(this.hash(), 'hex'),
         sig.slice(64, 65).readUInt8(0),
         sig.slice(0, 32),
         sig.slice(32, 64)
@@ -251,7 +293,7 @@ class Transaction {
   merkleHash() {
     this.checkSigns();
     const txHash = this.hash();
-    const buf = Buffer.concat([new Buffer(txHash, 'hex')].concat(this.sigs));
+    const buf = Buffer.concat([Buffer.from(txHash, 'hex')].concat(this.sigs));
     return utils.sha3(buf);
   }
 

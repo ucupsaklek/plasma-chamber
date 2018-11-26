@@ -15,6 +15,7 @@ class Snapshot {
    */
   applyTx(tx, blkNum) {
     return Promise.all(tx.inputs.map((i) => {
+      console.log('check', i.toJson(), i.hash());
       const id = i.hash();
       return this.contains(id);
     })).then((isContains) => {
@@ -27,6 +28,7 @@ class Snapshot {
       }
     }).then(() => {
       return Promise.all(tx.outputs.map((o) => {
+        console.log('insert', o.toJson(), blkNum, o.hash(blkNum));
         return this.insertId(o.hash(blkNum));
       }));
     }).then(() => {

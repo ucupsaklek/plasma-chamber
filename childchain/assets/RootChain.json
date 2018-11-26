@@ -3,6 +3,45 @@
   "abi": [
     {
       "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "childChains",
+      "outputs": [
+        {
+          "name": "initialized",
+          "type": "bool"
+        },
+        {
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "name": "depositCount",
+          "type": "uint256"
+        },
+        {
+          "name": "currentChildBlock",
+          "type": "uint256"
+        },
+        {
+          "name": "currentDepositBlock",
+          "type": "uint256"
+        },
+        {
+          "name": "currentFeeExit",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
       "inputs": [],
       "name": "operator",
       "outputs": [
@@ -19,6 +58,20 @@
       "constant": true,
       "inputs": [],
       "name": "CHILD_BLOCK_INTERVAL",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "CHUNK_SIZE",
       "outputs": [
         {
           "name": "",
@@ -49,59 +102,17 @@
           "type": "address"
         },
         {
-          "indexed": true,
-          "name": "depositBlock",
+          "indexed": false,
+          "name": "start",
           "type": "uint256"
         },
         {
           "indexed": false,
-          "name": "token",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
+          "name": "end",
           "type": "uint256"
         }
       ],
       "name": "Deposit",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "chainIndex",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "name": "depositor",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "name": "depositBlock",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "token",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "cont",
-          "type": "bytes"
-        }
-      ],
-      "name": "DepositFromShelter",
       "type": "event"
     },
     {
@@ -113,11 +124,6 @@
           "type": "address"
         },
         {
-          "indexed": true,
-          "name": "utxoPos",
-          "type": "uint256"
-        },
-        {
           "components": [
             {
               "name": "owners",
@@ -126,16 +132,16 @@
             {
               "components": [
                 {
-                  "name": "assetId",
-                  "type": "address"
+                  "name": "start",
+                  "type": "uint256"
                 },
                 {
-                  "name": "amount",
+                  "name": "end",
                   "type": "uint256"
                 }
               ],
               "name": "value",
-              "type": "tuple"
+              "type": "tuple[]"
             },
             {
               "components": [
@@ -154,6 +160,10 @@
             {
               "name": "stateBytes",
               "type": "bytes"
+            },
+            {
+              "name": "blkNum",
+              "type": "uint256"
             }
           ],
           "indexed": false,
@@ -197,19 +207,9 @@
       "anonymous": false,
       "inputs": [
         {
-          "components": [
-            {
-              "name": "len",
-              "type": "uint256"
-            },
-            {
-              "name": "memPtr",
-              "type": "uint256"
-            }
-          ],
           "indexed": false,
-          "name": "no",
-          "type": "tuple"
+          "name": "n",
+          "type": "uint256"
         }
       ],
       "name": "Log",
@@ -269,15 +269,11 @@
           "type": "address"
         },
         {
-          "name": "_depositPos",
+          "name": "blknum",
           "type": "uint256"
         },
         {
-          "name": "_token",
-          "type": "address"
-        },
-        {
-          "name": "_amount",
+          "name": "uid",
           "type": "uint256"
         }
       ],
@@ -295,19 +291,15 @@
           "type": "address"
         },
         {
-          "name": "_utxoPos",
+          "name": "_blkNum",
           "type": "uint256"
         },
         {
-          "name": "_txBytes",
-          "type": "bytes"
+          "name": "_oIndex",
+          "type": "uint8"
         },
         {
-          "name": "_proof",
-          "type": "bytes"
-        },
-        {
-          "name": "_sigs",
+          "name": "_txListBytes",
           "type": "bytes"
         }
       ],
@@ -325,11 +317,15 @@
           "type": "address"
         },
         {
-          "name": "_cUtxoPos",
+          "name": "_cIndex",
           "type": "uint256"
         },
         {
-          "name": "_eUtxoIndex",
+          "name": "_cBlkNum",
+          "type": "uint256"
+        },
+        {
+          "name": "_eUtxoPos",
           "type": "uint256"
         },
         {
@@ -337,19 +333,79 @@
           "type": "bytes"
         },
         {
-          "name": "_proof",
-          "type": "bytes"
-        },
-        {
-          "name": "_sigs",
-          "type": "bytes"
-        },
-        {
-          "name": "_confirmationSig",
+          "name": "_txInfos",
           "type": "bytes"
         }
       ],
-      "name": "challengeExit",
+      "name": "challengeAfter",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_chain",
+          "type": "address"
+        },
+        {
+          "name": "_cIndex",
+          "type": "uint256"
+        },
+        {
+          "name": "_cBlkNum",
+          "type": "uint256"
+        },
+        {
+          "name": "_eUtxoPos",
+          "type": "uint256"
+        },
+        {
+          "name": "_txBytes",
+          "type": "bytes"
+        },
+        {
+          "name": "_txInfos",
+          "type": "bytes"
+        }
+      ],
+      "name": "challengeBetween",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_chain",
+          "type": "address"
+        },
+        {
+          "name": "_cIndex",
+          "type": "uint256"
+        },
+        {
+          "name": "_cBlkNum",
+          "type": "uint256"
+        },
+        {
+          "name": "_eUtxoPos",
+          "type": "uint256"
+        },
+        {
+          "name": "_txBytes",
+          "type": "bytes"
+        },
+        {
+          "name": "_txInfos",
+          "type": "bytes"
+        }
+      ],
+      "name": "challengeBefore",
       "outputs": [],
       "payable": false,
       "stateMutability": "nonpayable",
@@ -359,15 +415,21 @@
       "constant": true,
       "inputs": [
         {
-          "name": "_chain",
-          "type": "address"
-        },
-        {
-          "name": "_token",
-          "type": "address"
+          "components": [
+            {
+              "name": "start",
+              "type": "uint256"
+            },
+            {
+              "name": "end",
+              "type": "uint256"
+            }
+          ],
+          "name": "value",
+          "type": "tuple"
         }
       ],
-      "name": "getNextExit",
+      "name": "getIndex",
       "outputs": [
         {
           "name": "",
@@ -379,7 +441,7 @@
         }
       ],
       "payable": false,
-      "stateMutability": "view",
+      "stateMutability": "pure",
       "type": "function"
     },
     {
@@ -390,8 +452,42 @@
           "type": "address"
         },
         {
-          "name": "_token",
+          "name": "_cIndex",
+          "type": "uint256"
+        },
+        {
+          "name": "_cBlkNum",
+          "type": "uint256"
+        },
+        {
+          "name": "_eUtxoPos",
+          "type": "uint256"
+        },
+        {
+          "name": "_txBytes",
+          "type": "bytes"
+        },
+        {
+          "name": "_txInfos",
+          "type": "bytes"
+        }
+      ],
+      "name": "respondChallenge",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_chain",
           "type": "address"
+        },
+        {
+          "name": "_utxoPos",
+          "type": "uint256"
         }
       ],
       "name": "finalizeExits",
@@ -462,41 +558,23 @@
       "outputs": [
         {
           "name": "",
-          "type": "address"
-        },
-        {
-          "name": "",
           "type": "address[]"
         },
         {
           "name": "",
-          "type": "address"
+          "type": "uint256[]"
         },
         {
           "name": "",
-          "type": "uint256"
+          "type": "bytes"
+        },
+        {
+          "name": "",
+          "type": "bool"
         }
       ],
       "payable": false,
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "txBytes",
-          "type": "bytes"
-        },
-        {
-          "name": "sigs",
-          "type": "bytes"
-        }
-      ],
-      "name": "verifyTransaction",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "pure",
       "type": "function"
     }
   ]

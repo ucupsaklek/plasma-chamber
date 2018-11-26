@@ -30,7 +30,8 @@ describe('Chain', function() {
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
-            uid: uid
+            start: 0,
+            end: 2
           }
         })
   
@@ -53,7 +54,8 @@ describe('Chain', function() {
         chain.applyDeposit({
           returnValues: {
             depositor: depositor,
-            uid: uid
+            start: 0,
+            end: 2
           }
         }).then(() => {
           return chain.getBlock(chain.blockHeight);
@@ -71,7 +73,7 @@ describe('Chain', function() {
 
   describe('checkTx()', function() {
 
-    const coinId1 = 1;
+    const coinId1 = {start:0, end:1};
     const privKey1 = testData.privKey1;
     const privKey2 = testData.privKey2;
     const testAddress1 = utils.privateToAddress(privKey1);

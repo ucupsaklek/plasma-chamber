@@ -9,8 +9,8 @@ const memdown = require('memdown');
 const testData = require('./testdata');
 
 describe('snapshot', function() {
-  const coinId1 = 1;
-  const coinId2= 2;
+  const segment1 = {start:0, end:1};
+  const segment2 = {start:1, end:2};
   const privKey1 = testData.privKey1;
   const privKey2 = testData.privKey2;
   const testAddress1 = utils.privateToAddress(privKey1);
@@ -19,19 +19,19 @@ describe('snapshot', function() {
   describe('applyTx', function() {
     const input = new TransactionOutput(
       [testAddress1],
-      [coinId1],
+      [segment1],
       [0],
       1
     );
     const invalidInput = new TransactionOutput(
       [testAddress1],
-      [coinId2],
+      [segment2],
       [0],
       1
     );
     const output = new TransactionOutput(
       [testAddress2],
-      [coinId1],
+      [segment1],
       [0]
     );
     const depositTx = new Transaction(

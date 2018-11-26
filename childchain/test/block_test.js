@@ -6,12 +6,13 @@ const {
   TransactionOutput
 } = require('../lib/tx');
 const Merkle = require('../../childchain/lib/smt');
-const RLP = require('rlp');
+const BigNumber = require('bignumber.js');
 
 describe('Block', function() {
   describe('merkleHash()', function() {
 
-    const coinId = 12345;
+    const CHUNK_SIZE = BigNumber('1000000000000000000');
+    const segment = {start: 0, end: CHUNK_SIZE};
     const ownState = 0;
     const blkNum = 54321;
     const nonce = 111111;
@@ -20,13 +21,13 @@ describe('Block', function() {
   
     const input = new TransactionOutput(
       [testAddress],
-      [coinId],
+      [segment],
       [ownState],
       blkNum
     );
     const output = new TransactionOutput(
       [testAddress],
-      [coinId],
+      [segment],
       [ownState]
     );
     const tx = new Transaction(
@@ -40,7 +41,7 @@ describe('Block', function() {
     it('should return hash', function() {
       const block = new Block();
       block.appendTx(tx);
-      assert.equal(block.merkleHash().toString('hex'), '593cbbc2ce0a6e33dff5972ba4990eaec40df8a5842eec907abed336d53e3c5e');
+      assert.equal(block.merkleHash().toString('hex'), '44fdbc92cb225bc067321d0b898f1ee8de7cb7aa005acfe56bbb95baf03ac7ca');
     });
 
     it('should verify', function() {
@@ -50,7 +51,7 @@ describe('Block', function() {
       const proof = block.createTXOProof(tx.outputs[0]);
       assert(Merkle.verify(
         tx.hash(),
-        coinId,
+        0,
         root,
         proof
       ));

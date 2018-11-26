@@ -10,6 +10,7 @@ const Verifier = require('./verifier');
 const {
   OWN_STATE
 } = require('./verifier/std');
+const BigNumber = require('bignumber.js');
 
 class Chain {
   
@@ -19,6 +20,7 @@ class Chain {
     this.commitmentTxs = []; // TxVM idiom. Eq pendingTx
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
+    this.blockHeight = 0;
   }
   setMetaDB(metaDB){
     this.metaDB = metaDB;
@@ -45,29 +47,31 @@ class Chain {
     const returnValues = event.returnValues;
     const tx = this.createDepositTx(
       returnValues.depositor,
-      returnValues.uid,
-      returnValues.amount,
+      returnValues.start,
+      returnValues.end,
       returnValues.depositBlock
     );
     this.blockHeight++;
+    const blkNum = this.blockHeight;
     await this.saveBlockHeight();
-
-    const newBlock = new Block(this.blockHeight, true);
-    this.snapshot.applyTx(tx, this.blockHeight);
-    newBlock.appendTx(tx)
-    await this.saveBlock(newBlock); //async func
-
-    this.emit("Deposited", {
-      type: "deposit",
-      payload: tx
-    });
-    this.emit("BlockGenerated", { payload: newBlock })
+    const appliedTx = await this.snapshot.applyTx(tx, blkNum);
+    if(appliedTx) {
+      const newBlock = new Block(blkNum, true);
+      newBlock.appendTx(tx)
+      await this.saveBlock(newBlock);
+  
+      this.emit("Deposited", {
+        type: "deposit",
+        payload: tx
+      });
+      this.emit("BlockGenerated", { payload: newBlock })
+    }
   }
   
-  createDepositTx(depositor, uid, amount, depositBlock) {
+  createDepositTx(depositor, start, end, depositBlock) {
     const output = new TransactionOutput(
       [new Buffer(depositor.substr(2), 'hex')],
-      [parseInt(uid)],
+      [{start: BigNumber(start), end: BigNumber(end)}],
       [OWN_STATE]
     );
     const depositTx = new Transaction(
@@ -149,7 +153,7 @@ class Chain {
     }
   }
   async saveBlock(newBlock){
-    await this.blockDB.put(this.blockHeight, newBlock.toString());
+    await this.blockDB.put(newBlock.number, newBlock.toString());
   }
   async saveBlockHeight(){
     await this.metaDB.put("blockHeight", this.blockHeight);

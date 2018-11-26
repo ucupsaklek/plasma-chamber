@@ -1,9 +1,14 @@
 const SparseMerkleTree = require('./smt');
 const {
+  TransactionOutput,
   Transaction
 } = require('./tx');
+const BigNumber = require('bignumber.js');
 
-const SMT_DEPTH = 16;
+const {
+  SMT_DEPTH,
+  CHUNK_SIZE
+} = require('./constant');
 
 /*
 * Only concerns for latest raw Block
@@ -44,8 +49,12 @@ class Block {
     let leaves = Array.from(Array(Math.pow(2, SMT_DEPTH)), (item, index) => null);
     this.txs.forEach(tx=>{
       tx.outputs.forEach((o) => {
-        o.value.forEach((uid) => {
-          leaves[uid] = tx.hash();
+        o.value.forEach(({start, end}) => {
+          const slot = TransactionOutput.amountToSlot(start);
+          const slotEnd = TransactionOutput.amountToSlot(end);
+          for(var i = slot;i < slotEnd;i++) {
+            leaves[i] = tx.hash();
+          }
         })
       })
     })
@@ -60,17 +69,23 @@ class Block {
 
   createTXOProof(txo) {
     const tree = this.createTree();
-    return txo.value.map((uid) => tree.proof(uid)).reduce((acc, p) => {
-      return Buffer.concat(acc.concat([p]))
+    return txo.value.map(({start, end}) => {
+      const slot = TransactionOutput.amountToSlot(start);
+      return tree.proof(slot);
+    }).reduce((acc, p) => {
+      return Buffer.concat(acc.concat([p]));
     }, []);
   }
 
-  createTxProof(txo) {
-    const uids = txo.outputs.reduce((uids, o) => {
-      return uids.concat(o.value);
+  createTxProof(tx) {
+    const slots = tx.outputs.reduce((slots, o) => {
+      const slot = o.value.map(({start, end}) => {
+        return TransactionOutput.amountToSlot(start);
+      });
+      return slots.concat(slot);
     }, []);
     const tree = this.createTree();
-    return uids.map((uid) => tree.proof(uid)).reduce((acc, p) => {
+    return slots.map((slot) => tree.proof(slot)).reduce((acc, p) => {
       return Buffer.concat(acc.concat([p]))
     }, []);
   }
