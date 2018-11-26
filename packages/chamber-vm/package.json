@@ -1,0 +1,22 @@
+{
+  "name": "chamber-vm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "istanbul cover --print both _mocha && istanbul-coveralls"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ed25519": "^0.0.4",
+    "merkletree": "^1.5.0",
+    "mocha": "^5.2.0",
+    "rlp": "^2.1.0",
+    "secp256k1": "^3.5.2"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "istanbul-coveralls": "^1.0.3"
+  }
+}

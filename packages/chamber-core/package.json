@@ -1,0 +1,13 @@
+{
+  "name": "@cryptoeconomicslab/chamber-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "CryptoeconomicsLab",
+  "license": "MIT",
+  "dependencies": {
+  }
+}
