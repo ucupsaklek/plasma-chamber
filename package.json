@@ -1,5 +1,5 @@
 {
-  "name": "plasmavm-js",
+  "name": "plasma-chamber",
   "version": "1.0.0",
   "description": "",
   "private": true,
@@ -12,18 +12,18 @@
   "scripts": {
     "start": "node main",
     "run-all": "yarn run wsrun",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "yarn run-all test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cryptoeconomicslab/PlasmaVM-JS.git"
+    "url": "git+https://github.com/cryptoeconomicslab/plasma-chamber.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/cryptoeconomicslab/PlasmaVM-JS/issues"
+    "url": "https://github.com/cryptoeconomicslab/plasma-chamber/issues"
   },
-  "homepage": "https://github.com/cryptoeconomicslab/PlasmaVM-JS#readme",
+  "homepage": "https://github.com/cryptoeconomicslab/plasma-chamber",
   "dependencies": {
     "@cryptoeconomicslab/chamber-listener": "^1.0.0",
     "dotenv": "^6.0.0",
