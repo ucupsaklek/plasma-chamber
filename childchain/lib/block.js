@@ -22,6 +22,7 @@ class Block {
     this.hash = null;
     this.prevhash = null;
     this.txs_root = null;
+    this.stateRoot = null;
     this.isDepositBlock = isDepositBlock || false;
     this.txs = [];
     this.timestamp = Date.now();
@@ -33,6 +34,7 @@ class Block {
 
   appendTx(tx) {
     this.txs.push(tx);
+    return tx;
   }
 
   getTxIndex(tx) {
@@ -95,6 +97,10 @@ class Block {
     return tree.root();
   }
 
+  setStateRoot(stateRoot) {
+    this.stateRoot = stateRoot;
+  }
+
   /**
    * @dev serialize to string
    */
@@ -109,6 +115,7 @@ class Block {
       hash: this.hash,
       prevhash: this.prevhash,
       txs_root: this.txs_root,
+      stateRoot: this.stateRoot,
       txs: this.txs.map(tx => {
         return tx.getBytes(true).toString('hex')
       }),
@@ -129,6 +136,7 @@ class Block {
     empty.id = block.id;
     empty.number = block.number;
     empty.hash = block.hash;
+    empty.stateRoot = block.stateRoot;
     empty.txs = block.txs ? block.txs.map(tx => {
       return Transaction.fromBytes(new Buffer(tx, 'hex'))
     }) : [];

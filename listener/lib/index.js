@@ -2,13 +2,20 @@ require("dotenv").config();
 const Web3 = require('web3');
 const web3 = new Web3(process.env.ROOTCHAIN_ENDPOINT);
 const RootChainAbi = require('../assets/RootChain.json').abi;
+const utils = require('ethereumjs-util');
 
 const rootChain = new web3.eth.Contract(RootChainAbi, process.env.ROOTCHAIN_ADDRESS);
+const privateKeyHex = process.env.OPERATOR_PRIVATE_KEY || 'c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3';
+const privKey = new Buffer(privateKeyHex, 'hex');
+const operatorAddress = utils.bufferToHex(utils.privateToAddress(privKey));
+web3.eth.defaultAccount = operatorAddress;
+web3.eth.accounts.wallet.add(utils.bufferToHex(privKey));
 
 class RootChainEventListener {
 
-  constructor() {
-    this.seenEvents = {};
+  constructor(childChain, seenEvents) {
+    this.childChain = childChain;
+    this.seenEvents = seenEvents || {};
   }
 
   async getEvents(event, confirmation, handler) {
@@ -22,6 +29,7 @@ class RootChainEventListener {
     }).forEach((e) => {
       handler(e);
       this.seenEvents[e.transactionHash] = true;
+      this.childChain.saveSeenEvents(this.seenEvents);
     });
     setTimeout(()=>{
       this.getEvents(event, confirmation, handler);
@@ -33,7 +41,8 @@ class RootChainEventListener {
 
 module.exports.run = childChain => {
 
-  const rootChainEventListener = new RootChainEventListener();
+  const seenEvents = childChain.getSeenEvents();
+  const rootChainEventListener = new RootChainEventListener(childChain, seenEvents);
   const RootChainConfirmationBlockNum = 1;
 
   childChain.events.Ready((e) => {
@@ -58,7 +67,15 @@ module.exports.run = childChain => {
      * @param address _chain The index of child chain
      * @param bytes32 _root The merkle root of a child chain transactions.
      */
-    // rootchain.methods.submitBlock(childChain.id, newBlock.merkleHash());
+    rootChain.methods.submitBlock(
+      operatorAddress,
+      utils.bufferToHex(newBlock.merkleHash())
+    ).send({
+      from: operatorAddress,
+      gas: 200000
+    }).then(result => {
+      console.log(result.events.BlockSubmitted);
+    })
   })
   rootChainEventListener.getEvents('Deposit', RootChainConfirmationBlockNum, async (e) => {
     console.log('eventListener.Deposit', e.transactionHash);

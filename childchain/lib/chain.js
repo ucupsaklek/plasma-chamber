@@ -21,6 +21,7 @@ class Chain {
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
     this.blockHeight = 0;
+    this.seenEvents = [];
   }
   setMetaDB(metaDB){
     this.metaDB = metaDB;
@@ -64,7 +65,7 @@ class Chain {
         type: "deposit",
         payload: tx
       });
-      this.emit("BlockGenerated", { payload: newBlock })
+      // this.emit("BlockGenerated", { payload: newBlock })
     }
   }
   
@@ -114,10 +115,15 @@ class Chain {
       this.snapshot,
       this.blockHeight
     );
-    passedTxs
+    const appendedTxs = passedTxs
       .filter(tx => !!tx)
-      .forEach((tx) => newBlock.appendTx(tx));
+      .map((tx) => newBlock.appendTx(tx));
+    
+    if(appendedTxs.length === 0) {
+      // TODO: revert
+    }
 
+    newBlock.setStateRoot(this.snapshot.getRoot());
     await this.saveBlock(newBlock); //async func
 
     this.emit("BlockGenerated", { payload: newBlock })
@@ -140,7 +146,11 @@ class Chain {
       this.id = (await this.metaDB.get("chainID")).toString()
       this.blockHeight = parseInt((await this.metaDB.get("blockHeight")).toString())
       this.block = JSON.parse((await this.blockDB.get(this.blockHeight)).toString())
+      if(this.block.stateRoot) {
+        this.snapshot.setRoot(this.block.stateRoot);
+      }
       this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
+      this.seenEvents = JSON.parse((await this.metaDB.get("seenEvents")).toString());
     } catch (err) {
       if(err.notFound) {
         this.blockHeight = 0;
@@ -161,6 +171,14 @@ class Chain {
   async saveCommitmentTxs(){
     await this.metaDB.put("commitmentTxs", JSON.stringify(this.commitmentTxs));
   }
+  async saveSeenEvents(seenEvents) {
+    this.seenEvents = seenEvents;
+    await this.metaDB.put("seenEvents", JSON.stringify(seenEvents));
+  }
+  getSeenEvents() {
+    return this.seenEvents;
+  }
+
   async getBlock(blockHeight) {
     const blockStr = await this.blockDB.get(blockHeight);
     return Block.fromString(blockStr).toJson();
