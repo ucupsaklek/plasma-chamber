@@ -9,5 +9,8 @@
   "author": "CryptoeconomicsLab",
   "license": "MIT",
   "dependencies": {
+    "bignumber.js": "^8.0.1",
+    "ethereumjs-util": "^6.0.0",
+    "rlp": "^2.1.0"
   }
 }

@@ -2,8 +2,7 @@ const SparseMerkleTree = require('./smt');
 const {
   TransactionOutput,
   Transaction
-} = require('@cryptoeconomicslab/chamber-core');
-const BigNumber = require('bignumber.js');
+} = require('./tx');
 
 const {
   SMT_DEPTH,

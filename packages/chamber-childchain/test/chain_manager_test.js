@@ -1,8 +1,8 @@
 const assert = require('assert');
 const ChainManager = require('../lib/chain_manager');
 const chainManager = new ChainManager();
-const Block = require('../lib/block');
 const {
+  Block,
   Transaction
 } = require('@cryptoeconomicslab/chamber-core');
 const levelup = require('levelup');
