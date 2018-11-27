@@ -1,0 +1,20 @@
+{
+  "name": "@cryptoeconomicslab/chamber-rpc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cryptoeconomicslab/chamber-listener": "^1.0.0",
+    "body-parser": "^1.18.3",
+    "connect": "^3.6.6",
+    "cors": "^2.8.4",
+    "jayson": "^2.0.6",
+    "mosca": "^2.8.3"
+  }
+}

@@ -1,6 +1,6 @@
-const ChildChain = require('./childchain');
-const Listener = require('./listener/lib');
-const Rpc = require('./rpc/lib');
+const ChildChain = require('@cryptoeconomicslab/chamber-childchain');
+const Listener = require('@cryptoeconomicslab/chamber-listener');
+const Rpc = require('@cryptoeconomicslab/chamber-rpc');
 const MongoDown = ChildChain.MongoDown;
 const leveldown = require('leveldown');
 
