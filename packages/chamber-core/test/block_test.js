@@ -4,7 +4,7 @@ const Block = require('../lib/block');
 const {
   TransactionOutput,
   Transaction
-} = require('@cryptoeconomicslab/chamber-core');
+} = require('../lib/tx');
 const Merkle = require('../lib/smt');
 const BigNumber = require('bignumber.js');
 

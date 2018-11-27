@@ -1,3 +1,6 @@
+const {
+  BaseWallet
+} = require('./lib/wallet')
 const Block = require('./lib/block')
 const Merkle = require('./lib/smt')
 const {
@@ -8,6 +11,7 @@ const {
 const BufferUtils = require('./lib/BufferUtils')
 
 module.exports = {
+  BaseWallet,
   Block,
   BufferUtils,
   Merkle,
