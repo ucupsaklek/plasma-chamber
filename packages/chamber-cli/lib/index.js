@@ -4,7 +4,7 @@ const package = require('package')(module)
 const Web3 = require('web3');
 const {
   RootChain
-} = require('../../../childchain');
+} = require('@cryptoeconomicslab/chamber-childchain');
 const {
   getWallet
 } = require('./wallet');
