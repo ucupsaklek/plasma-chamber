@@ -1,66 +1,28 @@
 const utils = require('ethereumjs-util')
 const RLP = require('rlp')
 
-const Block = require('../lib/block')
+const {
+  MockStorage,
+  MockBigStorage
+} = require('./storage')
+const Block = require('../block')
 const {
   Transaction,
   TransactionOutput
-} = require('../lib/tx')
+} = require('../tx')
 
 const {
   CHUNK_SIZE
-} = require('./constant')
+} = require('../constant')
 
-class StorageInterface {
-
-  static store(key, item) {
-  }
-
-  static load(key) {
-  }
-
-}
-
-class BigStorageInterface {
-
-  constructor() {
-    this.data = {}
-  }
-
-  add(utxoKey, blkNum, proof, txBytes, index) {
-    if(!this.data[utxoKey]) {
-      this.data[utxoKey] = {};
-    }
-    this.data[utxoKey][blkNum] = {
-      utxoKey,
-      blkNum,
-      proof,
-      txBytes,
-      index
-    }
-  }
-
-  async get(utxoKey, blkNum) {
-    return this.data[utxoKey][blkNum]
-  }
-
-  async lastTransactions(utxoKey) {
-
-  }
-
-  async searchProof(utxoKey) {
-
-  }
-
-}
 
 class BaseWallet {
   constructor(_options) {
     this.address = null
     this.utxos = {}
     const options = _options || {}
-    this.storage = options.storage || StorageInterface
-    this.bigStorage = options.bigStorage || new BigStorageInterface()
+    this.storage = options.storage || MockStorage
+    this.bigStorage = options.bigStorage || new MockBigStorage()
   }
 
   setAddress(address) {
