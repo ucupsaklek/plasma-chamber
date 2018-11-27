@@ -56,6 +56,7 @@ describe('BaseWallet', function() {
       assert.equal(
         history.proof,
         block.createCoinProof(slot).toString('hex'))
+      assert.equal(wallet.getUTXOs().length, 1)
     });
 
   });

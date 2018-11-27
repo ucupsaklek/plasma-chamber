@@ -1,4 +1,5 @@
 const utils = require('ethereumjs-util')
+const RLP = require('rlp')
 
 const Block = require('../lib/block')
 const {
@@ -155,6 +156,12 @@ class BaseWallet {
       block.appendTx(tx)
     });
     return block.createCoinProof(chunk).toString('hex')
+  }
+
+  getUTXOs() {
+    return Object.keys(this.utxos).map(k => {
+      return TransactionOutput.fromTuple(RLP.decode(Buffer.from(this.utxos[k], 'hex')));
+    });
   }
 
 }
