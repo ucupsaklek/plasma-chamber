@@ -4,9 +4,7 @@ injectInTruffle(web3, artifacts);
 const RootChain = artifacts.require('RootChain');
 const {
   Block,
-  Merkle
-} = require('@cryptoeconomicslab/chamber-childchain');
-const {
+  Merkle,
   Transaction,
   TransactionOutput
 } = require('@cryptoeconomicslab/chamber-core');

@@ -1,5 +1,7 @@
 const Chain = require("./chain");
-const Block = require("./block");
+const {
+  Block
+} = require('@cryptoeconomicslab/chamber-core');
 const Snapshot = require("./state/snapshot")
 const levelup = require('levelup');
 

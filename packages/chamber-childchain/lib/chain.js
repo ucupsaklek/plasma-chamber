@@ -1,7 +1,6 @@
-const utils = require('ethereumjs-util');
-const Block = require('./block');
 const Snapshot = require('./state/snapshot');
 const {
+  Block,
   TransactionOutput,
   Transaction
 } = require('@cryptoeconomicslab/chamber-core');
