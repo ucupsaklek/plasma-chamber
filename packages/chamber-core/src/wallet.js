@@ -3,6 +3,7 @@ const RLP = require('rlp')
 
 const Block = require('../lib/block')
 const {
+  Transaction,
   TransactionOutput
 } = require('../lib/tx')
 
@@ -161,6 +162,46 @@ class BaseWallet {
       block.appendTx(tx)
     });
     return block.createCoinProof(chunk).toString('hex')
+  }
+
+  getIndexOfOutput(tx, utxo) {
+    let index = 0
+    tx.outputs.map((o, i) => {
+      if(Buffer.compare(o.hash(utxo.blkNum), utxo.hash()) == 0) {
+        index = i
+      }
+    });
+    return index
+  }
+
+  hexToTransaction(txBytes) {
+    return Transaction.fromBytes(Buffer.from(txBytes, 'hex'));
+  }
+
+  async getTransactions(utxo, num) {
+    const slots = utxo.value.map(({start, end}) => {
+      return TransactionOutput.amountToSlot(CHUNK_SIZE, start)
+    })
+    const history = await this.bigStorage.get(slots[0], utxo.blkNum)
+    const tx = this.hexToTransaction(history.txBytes)
+    const prevTxo = tx.inputs[0];
+    const prevHistory = await this.bigStorage.get(slots[0], prevTxo.blkNum)
+    const prevTx = this.hexToTransaction(prevHistory.txBytes)
+    const prevIndex = this.getIndexOfOutput(prevTx, prevTxo)
+    const index = this.getIndexOfOutput(tx, utxo)
+    return [[
+      prevHistory.blkNum,
+      prevTx.getBytes(),
+      Buffer.from(prevHistory.proof, 'hex'),
+      prevTx.sigs[0],
+      prevIndex
+    ], [
+      history.blkNum,
+      tx.getBytes(),
+      Buffer.from(history.proof, 'hex'),
+      tx.sigs[0],
+      index
+    ]]
   }
 
   getUTXOs() {
