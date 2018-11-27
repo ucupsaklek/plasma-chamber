@@ -17,7 +17,8 @@ describe('BaseWallet', function() {
     const privKey = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
     const testAddressBuf = utils.privateToAddress(privKey)
     const testAddress = utils.toChecksumAddress(utils.bufferToHex(testAddressBuf))
-    const wallet = new BaseWallet(testAddress)
+    const wallet = new BaseWallet()
+    wallet.setAddress(testAddress)
 
     const CHUNK_SIZE = BigNumber('1000000000000000000')
     const segment = {start: 0, end: CHUNK_SIZE}

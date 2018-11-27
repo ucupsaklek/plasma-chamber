@@ -54,12 +54,17 @@ class BigStorageInterface {
 }
 
 class BaseWallet {
-  constructor(address, _options) {
-    this.address = address
+  constructor(_options) {
+    this.address = null
     this.utxos = {}
     const options = _options || {}
     this.storage = options.storage || StorageInterface
     this.bigStorage = options.bigStorage || new BigStorageInterface()
+  }
+
+  setAddress(address) {
+    // address is hex string and checksum address
+    this.address = address
   }
 
   filterOwner(o) {
