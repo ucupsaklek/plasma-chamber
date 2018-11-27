@@ -7,6 +7,7 @@
     "test": "mocha",
     "build": "babel src -d lib"
   },
+  "prepublishOnly": "npm test && npm run build",
   "author": "CryptoeconomicsLab",
   "license": "MIT",
   "dependencies": {
