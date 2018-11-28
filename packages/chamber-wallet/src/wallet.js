@@ -1,10 +1,12 @@
 const utils = require('ethereumjs-util')
 const RLP = require('rlp')
+const BN = utils.BN
 
 const {
   MockStorage,
   MockBigStorage
 } = require('./storage')
+const ChildChainApi = require('./childchain')
 const {
   Block,
   Constants,
@@ -18,11 +20,16 @@ const {
 
 class BaseWallet {
   constructor(_options) {
+    const options = _options || {}
+    this.childChainApi = new ChildChainApi(options.childChainEndpoint || process.env.CHILDCHAIN_ENDPOINT || 'http://localhost:3000');
+    this.operatorAddress = options.operatorAddress || process.env.OPERATOR_ADDRESS || '0x627306090abab3a6e1400e9345bc60c78a8bef57';
+    this.rootChainContract = options.rootChainContract
     this.address = null
     this.utxos = {}
-    const options = _options || {}
     this.storage = options.storage || MockStorage
     this.bigStorage = options.bigStorage || new MockBigStorage()
+    this.latestBlockNumber = 0;
+    this.loadedBlockNumber = this.storage.load('loadedBlockNumber') || 0;
   }
 
   setAddress(address) {
@@ -30,14 +37,138 @@ class BaseWallet {
     this.address = address
   }
 
-  filterOwner(o) {
-    const r = o.owners.map(ownerAddress => {
-      return utils.toChecksumAddress(ownerAddress)
-    })
-    return r.indexOf(this.address) >= 0
+  setPrivateKey(privKey) {
+    this.privKey = privKey
   }
 
-  updateBlock(block) {
+  setWeb3(web3) {
+    this.web3 = web3
+  }
+
+  setWeb3Child(web3Child) {
+    this.web3Child = web3Child
+  }
+
+  getChildChainApi() {
+    return this.childChainApi
+  }
+
+  /**
+   * update
+   * @description Update history of UTXOs by using child chain API.
+   */
+  update() {
+    return this.childChainApi.getBlockNumber().then((blockNumber) => {
+      this.latestBlockNumber = blockNumber.result;
+      let tasks = [];
+      for(let i = this.loadedBlockNumber + 1;i <= this.latestBlockNumber;i++) {
+        tasks.push(this.childChainApi.getBlockByNumber(i));
+      }
+      return Promise.all(tasks);
+    }).then((responses) => {
+      responses.map(res => {
+        const block = res.result
+        this.updateHistoryWithBlock(Block.fromString(JSON.stringify(block)))
+      });
+      this.updateLoadedBlockNumber(this.latestBlockNumber);
+      return this.getUTXOs();
+    });
+  }
+
+  async deposit(eth) {
+    return await this.rootChainContract.methods.deposit(
+      this.operatorAddress
+    ).send({
+      from: this.address,
+      gas: 200000,
+      value: (new BN("1000000000000000000")).mul(new BN(eth))
+    })
+  }
+
+  async startExit(utxo) {
+    const txList = await this.getTransactions(utxo, 2)
+    const txListBytes = RLP.encode(txList);
+    const latestTx = txList[txList.length - 1];
+
+    return this.rootChainContract.methods.startExit(
+      this.operatorAddress,
+      latestTx[0],
+      latestTx[4],
+      utils.bufferToHex(txListBytes)
+    ).send({
+      from: this.address,
+      gas: 1000000,
+      // Exit Bond
+      // value: new BN("1000000000000000000")
+    })
+
+  }
+
+  getUTXOs() {
+    return Object.keys(this.utxos).map(k => {
+      return TransactionOutput.fromTuple(RLP.decode(Buffer.from(this.utxos[k], 'hex')));
+    });
+  }
+
+  getHistory(utxoKey) {
+    return this.bigStorage.searchProof(utxoKey);
+  }
+
+  // private methods
+
+  /**
+   * getTransactions
+   * @param {TransactionOutput} utxo 
+   * @param {Number} num 
+   * @description get transactions by the UTXO
+   */
+  async getTransactions(utxo, num) {
+    const slots = utxo.value.map(({start, end}) => {
+      return TransactionOutput.amountToSlot(CHUNK_SIZE, start)
+    })
+    const history = await this.bigStorage.get(slots[0], utxo.blkNum)
+    const tx = this.hexToTransaction(history.txBytes)
+    const prevTxo = tx.inputs[0];
+    const prevHistory = await this.bigStorage.get(slots[0], prevTxo.blkNum)
+    const prevTx = this.hexToTransaction(prevHistory.txBytes)
+    const prevIndex = this.getIndexOfOutput(prevTx, prevTxo)
+    const index = this.getIndexOfOutput(tx, utxo)
+    return [[
+      prevHistory.blkNum,
+      prevTx.getBytes(),
+      Buffer.from(prevHistory.proof, 'hex'),
+      prevTx.sigs[0],
+      prevIndex
+    ], [
+      history.blkNum,
+      tx.getBytes(),
+      Buffer.from(history.proof, 'hex'),
+      tx.sigs[0],
+      index
+    ]]
+  }
+
+  updateLoadedBlockNumber(n) {
+    this.loadedBlockNumber = n;
+    this.storage.store('loadedBlockNumber', this.loadedBlockNumber);
+  }
+
+  /**
+   * filterOwner
+   * @param {TransactionOutput} txo
+   * @description if txo has this.address as owners, this method return true
+   */
+  filterOwner(txo) {
+    return txo.owners.map(ownerAddress => {
+      return utils.toChecksumAddress(ownerAddress)
+    }).indexOf(this.address) >= 0
+  }
+
+  /**
+   * updateHistoryWithBlock
+   * @param {Block} block 
+   */
+  updateHistoryWithBlock(block) {
     const transactions = block.txs
     transactions.reduce((acc, tx) => {
       return acc.concat(tx.inputs)
@@ -138,38 +269,6 @@ class BaseWallet {
 
   hexToTransaction(txBytes) {
     return Transaction.fromBytes(Buffer.from(txBytes, 'hex'));
-  }
-
-  async getTransactions(utxo, num) {
-    const slots = utxo.value.map(({start, end}) => {
-      return TransactionOutput.amountToSlot(CHUNK_SIZE, start)
-    })
-    const history = await this.bigStorage.get(slots[0], utxo.blkNum)
-    const tx = this.hexToTransaction(history.txBytes)
-    const prevTxo = tx.inputs[0];
-    const prevHistory = await this.bigStorage.get(slots[0], prevTxo.blkNum)
-    const prevTx = this.hexToTransaction(prevHistory.txBytes)
-    const prevIndex = this.getIndexOfOutput(prevTx, prevTxo)
-    const index = this.getIndexOfOutput(tx, utxo)
-    return [[
-      prevHistory.blkNum,
-      prevTx.getBytes(),
-      Buffer.from(prevHistory.proof, 'hex'),
-      prevTx.sigs[0],
-      prevIndex
-    ], [
-      history.blkNum,
-      tx.getBytes(),
-      Buffer.from(history.proof, 'hex'),
-      tx.sigs[0],
-      index
-    ]]
-  }
-
-  getUTXOs() {
-    return Object.keys(this.utxos).map(k => {
-      return TransactionOutput.fromTuple(RLP.decode(Buffer.from(this.utxos[k], 'hex')));
-    });
   }
 
 }

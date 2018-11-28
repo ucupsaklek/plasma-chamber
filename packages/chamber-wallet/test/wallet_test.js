@@ -13,7 +13,7 @@ const utils = require('ethereumjs-util');
 
 describe('BaseWallet', function() {
 
-  describe('updateBlock', function() {
+  describe('updateHistoryWithBlock', function() {
 
     const privKey = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
     const testAddressBuf = utils.privateToAddress(privKey)
@@ -74,8 +74,8 @@ describe('BaseWallet', function() {
       wallet.setAddress(testAddress)
     })
 
-    it('should updateBlock', async function() {
-      wallet.updateBlock(block1);
+    it('should updateHistoryWithBlock', async function() {
+      wallet.updateHistoryWithBlock(block1);
       const key = output.hash(blkNum2).toString('hex');
       const utxo = TransactionOutput.fromBytes(Buffer.from(wallet.utxos[key], 'hex'))
       assert.equal(utxo.hash(blkNum2).toString('hex'), key)
@@ -87,11 +87,12 @@ describe('BaseWallet', function() {
     });
 
     it('should getTransactions', async function() {
-      wallet.updateBlock(block1);
-      wallet.updateBlock(block2);
+      wallet.updateHistoryWithBlock(block1);
+      wallet.updateHistoryWithBlock(block2);
       const key = output2.hash(blkNum3).toString('hex');
       const utxo = TransactionOutput.fromBytes(Buffer.from(wallet.utxos[key], 'hex'))
-      console.log(wallet.getTransactions(utxo))
+      const txList = await wallet.getTransactions(utxo)
+      assert.equal(txList.length, 2)
     });
 
   });
