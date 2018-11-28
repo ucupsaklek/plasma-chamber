@@ -12,7 +12,8 @@
   "scripts": {
     "start": "node main",
     "run-all": "yarn run wsrun",
-    "test": "yarn run-all test"
+    "build": "lerna run build",
+    "test": "lerna run test"
   },
   "repository": {
     "type": "git",

@@ -6,8 +6,8 @@ node_js:
 before_install:
   - npm install -g yarn
 script:
-  - cd packages/chamber-core;yarn build;cd ../../
-  - yarn run-all test
+  - yarn build
+  - yarn test
 
 dist: trusty
 sudo: false
