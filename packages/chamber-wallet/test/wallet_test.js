@@ -2,11 +2,12 @@ const assert = require('assert');
 const {
   BaseWallet
 } = require('../index');
-const Block = require('../lib/block');
 const {
+  Block,
+  Constants,
   TransactionOutput,
   Transaction
-} = require('../lib/tx');
+} = require('@cryptoeconomicslab/chamber-core')
 const BigNumber = require('bignumber.js');
 const utils = require('ethereumjs-util');
 

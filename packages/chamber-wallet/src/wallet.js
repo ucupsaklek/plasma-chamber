@@ -5,15 +5,15 @@ const {
   MockStorage,
   MockBigStorage
 } = require('./storage')
-const Block = require('../block')
 const {
-  Transaction,
-  TransactionOutput
-} = require('../tx')
-
+  Block,
+  Constants,
+  TransactionOutput,
+  Transaction
+} = require('@cryptoeconomicslab/chamber-core')
 const {
   CHUNK_SIZE
-} = require('../constant')
+} = Constants
 
 
 class BaseWallet {
