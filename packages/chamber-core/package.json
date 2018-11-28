@@ -1,16 +1,25 @@
 {
   "name": "@cryptoeconomicslab/chamber-core",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "build": "babel src -d lib"
   },
+  "prepublishOnly": "npm test && npm run build",
   "author": "CryptoeconomicsLab",
   "license": "MIT",
   "dependencies": {
+    "@babel/runtime-corejs2": "^7.1.5",
     "bignumber.js": "^8.0.1",
     "ethereumjs-util": "^5.2.0",
     "rlp": "^2.1.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.6"
   }
 }

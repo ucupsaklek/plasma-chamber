@@ -12,6 +12,7 @@
   "author": "CryptoEconomicsLab",
   "license": "MIT",
   "dependencies": {
+    "@cryptoeconomicslab/chamber-childchain": "^0.0.10",
     "@cryptoeconomicslab/chamber-core": "^1.0.0",
     "bip39": "^2.5.0",
     "commander": "^2.18.0",
