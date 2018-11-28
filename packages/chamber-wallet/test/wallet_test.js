@@ -1,7 +1,7 @@
 const assert = require('assert');
 const {
   BaseWallet
-} = require('../index');
+} = require('../lib');
 const {
   Block,
   Constants,
