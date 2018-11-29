@@ -13,7 +13,8 @@
     "start": "node main",
     "run-all": "yarn run wsrun",
     "build": "lerna run build",
-    "test": "lerna run test"
+    "test": "lerna run test",
+    "publish": "yarn build && lerna publish"
   },
   "repository": {
     "type": "git",

@@ -3,6 +3,9 @@
   "version": "0.0.10",
   "description": "",
   "main": "lib/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "mocha",
     "cover": "istanbul cover _mocha && istanbul-coveralls"

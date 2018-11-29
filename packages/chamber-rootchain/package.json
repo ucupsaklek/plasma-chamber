@@ -1,7 +1,8 @@
 {
-  "name": "chamber-rootchain",
+  "name": "@cryptoeconomicslab/chamber-rootchain",
   "version": "1.0.0",
   "description": "",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "test": "export MODULE_RELATIVE_PATH=../ && truffle test"

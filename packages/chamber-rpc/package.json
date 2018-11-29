@@ -2,6 +2,7 @@
   "name": "@cryptoeconomicslab/chamber-rpc",
   "version": "1.0.0",
   "description": "",
+  "private": true,
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",

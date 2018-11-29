@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Plasma Chamber CLI",
   "main": "lib/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "chamber-cli": "src/index.js"
   },

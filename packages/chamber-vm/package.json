@@ -1,7 +1,8 @@
 {
-  "name": "chamber-vm",
+  "name": "@cryptoeconomicslab/chamber-vm",
   "version": "1.0.0",
   "description": "",
+  "private": true,
   "main": "lib/index.js",
   "scripts": {
     "test": "istanbul cover --print both _mocha && istanbul-coveralls"
