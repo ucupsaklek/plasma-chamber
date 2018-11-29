@@ -53,6 +53,10 @@ class BaseWallet {
     return this.rootChainContract = rootChainContract
   }
 
+  getAddress() {
+    return this.address
+  }
+
   getChildChainApi() {
     return this.childChainApi
   }
