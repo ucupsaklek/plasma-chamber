@@ -1,7 +1,8 @@
 {
   "name": "@cryptoeconomicslab/chamber-rpc",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "",
+  "private": true,
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",
@@ -10,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@cryptoeconomicslab/chamber-listener": "^1.0.0",
+    "@cryptoeconomicslab/chamber-listener": "^1.0.6",
     "body-parser": "^1.18.3",
     "connect": "^3.6.6",
     "cors": "^2.8.4",

@@ -1,7 +1,8 @@
 {
-  "name": "chamber-rootchain",
-  "version": "1.0.0",
+  "name": "@cryptoeconomicslab/chamber-rootchain",
+  "version": "1.0.6",
   "description": "",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "test": "export MODULE_RELATIVE_PATH=../ && truffle test"
@@ -9,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@cryptoeconomicslab/chamber-childchain": "^0.0.10",
-    "@cryptoeconomicslab/chamber-core": "^1.0.0",
+    "@cryptoeconomicslab/chamber-childchain": "^1.0.6",
+    "@cryptoeconomicslab/chamber-core": "^1.0.6",
     "babel-runtime": "^6.26.0",
     "ethereumjs-tx": "^1.3.7",
     "ethereumjs-util": "^5.2.0",
