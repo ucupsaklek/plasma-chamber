@@ -1,17 +1,18 @@
 {
-  "name": "chamber-lang",
-  "version": "1.0.0",
+  "name": "@cryptoeconomicslab/chamber-lang",
+  "version": "1.0.6",
   "description": "",
   "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "mocha"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@cryptoeconomicslab/chamber-childchain": "^0.0.10",
-    "@cryptoeconomicslab/chamber-core": "^1.0.0",
-    "@cryptoeconomicslab/chamber-listener": "^1.0.0",
+    "@cryptoeconomicslab/chamber-childchain": "^1.0.6",
+    "@cryptoeconomicslab/chamber-core": "^1.0.6",
+    "@cryptoeconomicslab/chamber-listener": "^1.0.6",
     "ejs": "^2.6.1",
     "pegjs": "^0.10.0",
     "pegjs-prolog-parser": "^1.1.1"
