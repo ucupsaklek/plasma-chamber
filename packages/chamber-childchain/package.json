@@ -1,6 +1,6 @@
 {
   "name": "@cryptoeconomicslab/chamber-childchain",
-  "version": "0.0.10",
+  "version": "1.0.6",
   "description": "",
   "main": "lib/index.js",
   "publishConfig": {
@@ -13,10 +13,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cryptoeconomicslab/chamber-listener": "^1.0.0"
+    "@cryptoeconomicslab/chamber-listener": "^1.0.6"
   },
   "dependencies": {
-    "@cryptoeconomicslab/chamber-core": "^1.0.0",
+    "@cryptoeconomicslab/chamber-core": "^1.0.6",
     "bignumber.js": "^8.0.1",
     "ethereumjs-util": "^5.2.0",
     "istanbul-coveralls": "^1.0.3",
