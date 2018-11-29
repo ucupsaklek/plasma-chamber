@@ -1,8 +1,8 @@
 {
-  "name": "@cryptoeconomicslab/chamber-core",
-  "version": "1.0.7",
+  "name": "@cryptoeconomicslab/chamber-wallet",
+  "version": "1.0.8",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
   "publishConfig": {
     "access": "public"
   },
@@ -15,8 +15,10 @@
   "license": "MIT",
   "dependencies": {
     "@babel/runtime-corejs2": "^7.1.5",
+    "@cryptoeconomicslab/chamber-core": "^1.0.7",
     "bignumber.js": "^8.0.1",
     "ethereumjs-util": "^5.2.0",
+    "node-fetch": "^2.3.0",
     "rlp": "^2.1.0"
   },
   "devDependencies": {
