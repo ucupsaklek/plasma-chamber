@@ -13,6 +13,7 @@ const {
   TransactionOutput,
   Transaction
 } = require('@cryptoeconomicslab/chamber-core')
+const BigNumber = require('bignumber.js');
 const {
   CHUNK_SIZE
 } = Constants
@@ -64,6 +65,19 @@ class BaseWallet {
   async getBlockNumber() {
     const res = await this.childChainApi.getBlockNumber()
     return res.result
+  }
+
+  /**
+   * getBalance
+   * @description get balance of plasma chain
+   */
+  getBalance() {
+    const utxos = this.getUTXOs()
+    return utxos.filter(utxo => {
+      return utxo.state.length == 0 || utxo.state[0] === 0;
+    }).reduce((acc, utxo) => {
+      return acc.plus(utxo.value[0].end.div(CHUNK_SIZE).minus(utxo.value[0].start.div(CHUNK_SIZE)));
+    }, BigNumber(0))
   }
 
   /**
