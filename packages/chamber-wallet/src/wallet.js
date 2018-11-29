@@ -23,7 +23,7 @@ class BaseWallet {
     const options = _options || {}
     this.childChainApi = new ChildChainApi(options.childChainEndpoint || process.env.CHILDCHAIN_ENDPOINT || 'http://localhost:3000');
     this.operatorAddress = options.operatorAddress || process.env.OPERATOR_ADDRESS || '0x627306090abab3a6e1400e9345bc60c78a8bef57';
-    this.rootChainContract = options.rootChainContract
+    this.rootChainAddress = options.rootChainAddress
     this.address = null
     this.utxos = {}
     this.storage = options.storage || MockStorage
@@ -49,8 +49,17 @@ class BaseWallet {
     this.web3Child = web3Child
   }
 
+  setRootChainContract(rootChainContract) {
+    return this.rootChainContract = rootChainContract
+  }
+
   getChildChainApi() {
     return this.childChainApi
+  }
+
+  async getBlockNumber() {
+    const res = await this.childChainApi.getBlockNumber()
+    return res.result
   }
 
   /**
@@ -58,8 +67,8 @@ class BaseWallet {
    * @description Update history of UTXOs by using child chain API.
    */
   update() {
-    return this.childChainApi.getBlockNumber().then((blockNumber) => {
-      this.latestBlockNumber = blockNumber.result;
+    return this.getBlockNumber().then((latestBlockNumber) => {
+      this.latestBlockNumber = latestBlockNumber;
       let tasks = [];
       for(let i = this.loadedBlockNumber + 1;i <= this.latestBlockNumber;i++) {
         tasks.push(this.childChainApi.getBlockByNumber(i));
