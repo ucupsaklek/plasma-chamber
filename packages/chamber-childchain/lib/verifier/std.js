@@ -4,6 +4,7 @@
 
 const utils = require('ethereumjs-util');
 const {
+  BufferUtils,
   TransactionOutput,
   Transaction
 } = require('@cryptoeconomicslab/chamber-core');
