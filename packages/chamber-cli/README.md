@@ -18,5 +18,5 @@ truffle migrate --network live
 At chamber-cli
 
 ```
-node lib/index.js addchain
+yarn addchain
 ```
