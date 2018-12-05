@@ -10,6 +10,7 @@
     "chamber-cli": "src/index.js"
   },
   "scripts": {
+    "addchain": "node lib/index.js addchain",
     "test": "exit 0"
   },
   "author": "CryptoEconomicsLab",
