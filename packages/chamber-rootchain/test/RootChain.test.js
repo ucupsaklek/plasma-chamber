@@ -102,10 +102,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block2.appendTx(tx22);
 
     const tx31 = createTx(testAddress3, testAddress1, segment1, blockNumber2);
-    const tx32 = createTx(testAddress1, testAddress4, segment2, blockNumber2);
+    const tx32 = createTx(testAddress4, testAddress1, segment2, blockNumber2);
     const sign31 = tx31.sign(privKey3);
     tx31.sigs.push(sign31);
-    const sign32 = tx32.sign(privKey1);
+    const sign32 = tx32.sign(privKey4);
     tx32.sigs.push(sign32);
     const block3 = new Block(1);
     block3.appendTx(tx31);
@@ -342,8 +342,31 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         owner,
         utxoPos4 + slot,
         {from: user, gas: gasLimit});
-      assert.equal(getExitResultAfter[3], true);
-  
+      assert.equal(getExitResultAfter[3], 1);
+
+      const proof32 = block3.createTxProof(tx32);
+      const rTxList = RLP.encode([
+        proof32,
+        sign32,
+        Buffer.from('', 'hex')
+      ]);
+
+      await this.rootChain.respondChallenge(
+        owner,
+        0,
+        blockNumber3,
+        utxoPos4 + slot,
+        utxoPos2 + slot,
+        utils.bufferToHex(tx32.getBytes()),
+        utils.bufferToHex(rTxList),
+        {from: owner, gas: startExitGasLimit});
+
+      const getExitResultAfterRespond = await this.rootChain.getExit(
+        owner,
+        utxoPos4 + slot,
+        {from: user, gas: gasLimit});
+      assert.equal(getExitResultAfterRespond[3], 0);
+
     });
 
   });
@@ -370,5 +393,5 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       [output]
     );
   }
-
+  
 });

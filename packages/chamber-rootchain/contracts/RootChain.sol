@@ -281,7 +281,7 @@ contract RootChain {
       }
       return owners;
     }
-    
+
     function checkInclusion(
       bytes32 root,
       bytes32 txHash,
@@ -422,28 +422,33 @@ contract RootChain {
       bytes _txBytes,
       bytes _txInfos,
       TxVerification.Amount[] values,
-      TxVerification.Tx challengeTx
+      TxVerification.Tx transaction
     )
       private
       pure
     {
-      RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(_txInfos));
-      bytes32 txHash = keccak256(_txBytes);
-      checkInclusion(
-        root,
-        txHash,
-        RLP.toBytes(txList[0]),
-        values
-      );
-      TxVerification.verifyTransaction(challengeTx, txHash, RLP.toBytes(txList[1]));
-      if(challengeTx.inputs.length >= 2) {
-        require(
-          checkConfSigs(
-            getTxOwners(challengeTx),
-            RLP.toBytes(txList[2]),
-            keccak256(txHash, root)
-          ) == true
+      if(transaction.inputs.length == 0) {
+        // deposit transaction
+        require(root == keccak256(getSlot(values[0])));
+      } else {
+        RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(_txInfos));
+        bytes32 txHash = keccak256(_txBytes);
+        checkInclusion(
+          root,
+          txHash,
+          RLP.toBytes(txList[0]),
+          values
         );
+        TxVerification.verifyTransaction(transaction, txHash, RLP.toBytes(txList[1]));
+        if(transaction.inputs.length >= 2) {
+          require(
+            checkConfSigs(
+              getTxOwners(transaction),
+              RLP.toBytes(txList[2]),
+              keccak256(txHash, root)
+            ) == true
+          );
+        }
       }
     }
 
