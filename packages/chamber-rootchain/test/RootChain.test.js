@@ -32,7 +32,8 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const segment1 = {start: 0, end: CHUNK_SIZE};
   const segment2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2)};
   const gasLimit = 200000;
-  const startExitGasLimit = 800000;
+  const startExitGasLimit = 500000;
+  const finalizeExitGasLimit = 300000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
   // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
   // 0x0dbbe8e4ae425a6d2687f1a7e3ba17bc98c673636790f1b8ad91193c05875ef1
@@ -71,13 +72,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   describe('startExit', function () {
     const blockNumber = 1 * 2
-    const utxoPos = blockNumber * 1000000000;
+    const utxoPos = blockNumber * 1000000;
     const blockNumber2 = 1 * 3;
-    const utxoPos2 = blockNumber2 * 1000000000;
+    const utxoPos2 = blockNumber2 * 1000000;
     const blockNumber3 = 1 * 4;
-    const utxoPos3 = blockNumber3 * 1000000000;
+    const utxoPos3 = blockNumber3 * 1000000;
     const blockNumber4 = 1 * 5;
-    const utxoPos4 = blockNumber4 * 1000000000;
+    const utxoPos4 = blockNumber4 * 1000000;
 
 
     const tx11 = createTx(testAddress2, testAddress1, segment1, 0);
@@ -168,32 +169,26 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(Merkle.verify(tx12.hash(), 1, new Buffer(r1[0].substr(2), 'hex'), block1.createTXOProof(tx12.outputs[0])), true);
       assert.equal(Merkle.verify(tx22.hash(), 1, new Buffer(r2[0].substr(2), 'hex'), block2.createTXOProof(tx22.outputs[0])), true);
 
-      const txList = RLP.encode([[
-        blockNumber,
-        tx11.getBytes(),
-        proof1,
-        sign1,
-        0
-      ],[
-        blockNumber2,
-        tx21.getBytes(),
+      const txInfo = RLP.encode([
         proof2,
         sign21,
-        0
-      ]]);
+        ''
+      ]);
 
       const gas = await this.rootChain.startExit.estimateGas(
         owner,
         blockNumber2,
         0,
-        utils.bufferToHex(txList),
+        utils.bufferToHex(tx21.getBytes()),
+        utils.bufferToHex(txInfo),
         {from: recipient, gas: startExitGasLimit});
       console.log('gas', gas);
       const result = await this.rootChain.startExit(
         owner,
         blockNumber2,
         0,
-        utils.bufferToHex(txList),
+        utils.bufferToHex(tx21.getBytes()),
+        utils.bufferToHex(txInfo),
         {from: recipient, gas: startExitGasLimit});
       assert(result.hasOwnProperty('receipt'));
 
@@ -212,30 +207,23 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const proof = block1.createTXOProof(tx12.outputs[0]);
       const proof2 = block2.createTXOProof(tx22.outputs[0]);
 
-      const txList = RLP.encode([[
-        blockNumber,
-        tx12.getBytes(),
-        proof,
-        sign2,
-        0
-      ],[
-        blockNumber2,
-        tx22.getBytes(),
+      const txInfo = RLP.encode([
         proof2,
         sign22,
-        0
-      ]]);
+        ''
+      ]);
 
       const result = await this.rootChain.startExit(
         owner,
         blockNumber2,
         0,
-        utils.bufferToHex(txList),
+        utils.bufferToHex(tx22.getBytes()),
+        utils.bufferToHex(txInfo),
         {from: user4, gas: startExitGasLimit});
       assert(result.hasOwnProperty('receipt'));
       const getExitResult1 = await this.rootChain.getExit(
         owner,
-        utxoPos2 + slot * 10000 + 0,
+        utxoPos2 + slot,
         {from: user, gas: gasLimit});
 
       assert.equal(getExitResult1[0][0], user4);
@@ -244,7 +232,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
     it('should finalizeExits', async function () {
       const slot = 0;
-      const exitPos = utxoPos2 + slot * 10000 + 0;
+      const exitPos = utxoPos2 + slot;
       const getExitResult = await this.rootChain.getExit(
         owner,
         exitPos,
@@ -257,7 +245,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       await this.rootChain.finalizeExits(
         owner,
         exitPos,
-        {from: recipient, gas: gasLimit});
+        {from: recipient, gas: finalizeExitGasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
         exitPos,
@@ -287,13 +275,13 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         owner,
         0,
         blockNumber3,
-        utxoPos2 + slot * 10000,
+        utxoPos2 + slot,
         utils.bufferToHex(tx31.getBytes()),
         utils.bufferToHex(txList),
         {from: recipient, gas: startExitGasLimit});
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
-        utxoPos2 + slot * 10000,
+        utxoPos2 + slot,
         {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[0].length, 0);
 
@@ -319,25 +307,18 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         blockNumber4,
         {from: owner, gas: gasLimit});
 
-      const txList = RLP.encode([[
-        blockNumber3,
-        tx32.getBytes(),
-        block3.createTXOProof(tx32.outputs[0]),
-        sign32,
-        0
-      ],[
-        blockNumber4,
-        tx42.getBytes(),
+      const exitTxInfo = RLP.encode([
         block4.createTXOProof(tx42.outputs[0]),
         sign42,
-        0
-      ]]);
+        ''
+      ]);
       
       await this.rootChain.startExit(
         owner,
         blockNumber4,
         0,
-        utils.bufferToHex(txList),
+        utils.bufferToHex(tx42.getBytes()),
+        utils.bufferToHex(exitTxInfo),
         {from: owner, gas: startExitGasLimit});
   
       const proof22 = block2.createTxProof(tx22);
@@ -352,14 +333,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         owner,
         0,
         blockNumber2,
-        utxoPos4 + slot * 10000,
+        utxoPos4 + slot,
         utils.bufferToHex(tx22.getBytes()),
         utils.bufferToHex(cTxList),
         {from: recipient, gas: startExitGasLimit});
 
       const getExitResultAfter = await this.rootChain.getExit(
         owner,
-        utxoPos4 + slot * 10000,
+        utxoPos4 + slot,
         {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[3], true);
   
