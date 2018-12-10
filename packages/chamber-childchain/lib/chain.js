@@ -20,7 +20,7 @@ class Chain {
     this.snapshot = new Snapshot();
     this.events = new ChainEvent(); // EventEmitter
     this.blockHeight = 0;
-    this.seenEvents = [];
+    this.seenEvents = {};
   }
   setMetaDB(metaDB){
     this.metaDB = metaDB;
@@ -148,8 +148,8 @@ class Chain {
       if(this.block.stateRoot) {
         this.snapshot.setRoot(this.block.stateRoot);
       }
-      this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
       this.seenEvents = JSON.parse((await this.metaDB.get("seenEvents")).toString());
+      this.commitmentTxs = JSON.parse((await this.metaDB.get("commitmentTxs")).toString())
     } catch (err) {
       if(err.notFound) {
         this.blockHeight = 0;
