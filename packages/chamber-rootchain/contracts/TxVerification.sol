@@ -187,34 +187,9 @@ library TxVerification {
     }
   }
 
-  function getAppStateStdOrderBook(RLP.RLPItem[] appStateList)
-    internal
-    pure
-    returns (AppStateStdOrderBook)
-  {
-    return AppStateStdOrderBook({
-      assetId: RLP.toAddress(appStateList[0]),
-      amount: RLP.toUint(appStateList[1])
-    });
-  }
-
-  function getAppStateTictactoe(RLP.RLPItem[] appStateList)
-    internal
-    pure
-    returns (AppStateTictactoe)
-  {
-    return AppStateTictactoe({
-      currentPlayer: RLP.toAddress(appStateList[0]),
-      nextPlayer: RLP.toAddress(appStateList[1]),
-      map: RLP.toUint(appStateList[2]),
-      winner: RLP.toUint(appStateList[3])
-    });
-  }
-
   /*
    * application specific functions 
    */
-
   function verifyTransaction(Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
@@ -227,9 +202,9 @@ library TxVerification {
     }else if(transaction.label == 2) {
       exchange(transaction);
     }else if(transaction.label == 21) {
-      MultisigGame.multisig(transaction, txHash, sigs);
+      MultisigGame.call('verify', transaction, txHash, sigs);
     }else if(transaction.label == 22) {
-      MultisigGame.reveal(transaction, txHash, sigs);
+      MultisigGame.call('reveal', transaction, txHash, sigs);
     }else if(transaction.label == 100) {
       //updateReverseStatus(transaction);
     }
@@ -267,109 +242,6 @@ library TxVerification {
     require(amount0.start + amount == amount1.start);
     require(transaction.inputs[0].value[0].end == amount1.end);
   }
-
-   /*
-  function updateReverseStatus(Tx transaction)
-    internal
-    pure
-  {
-    TxState memory input = transaction.inputs[0];
-    TxState memory output = transaction.outputs[0];
-    var appState = getAppStateTictactoe(input.state);
-    var nextAppState = getAppStateTictactoe(output.state);
-    require(appState.currentPlayer == input.owners[0]);
-    require(appState.nextPlayer == output.owners[0]);
-    uint pos = RLP.toUint(transaction.args[0]);
-    uint spos = RLP.toUint(transaction.args[1]);
-    uint posState = gameGetPos(appState.map, pos);
-    require(posState == 0);
-    uint256 newMap = appState.map + ((3**pos)*spos);
-    uint winner = gameIsWin(newMap);
-    if(winner > 0) {
-      require(nextAppState.winner == winner);
-    }else{
-      require(nextAppState.map == newMap);
-    }
-  }
-
-
-  function gameIsWin(uint256 map)
-    internal
-    pure
-    returns (uint)
-  {
-    uint256[] memory tmpMap = new uint256[](9);
-    tmpMap[0] = map;
-    uint8 i = 1;
-    for(i = 1; i < 9; i++) {
-      tmpMap[i] = tmpMap[i - 1] / 3;
-    }
-    for(i = 0; i < 9; i++) {
-      for(uint8 j = i + 1; j < 9; j++) {
-        tmpMap[i] -= tmpMap[j] * (3**j);
-      }
-    }
-    if(tmpMap[0] != 0 && tmpMap[0] == tmpMap[1] && tmpMap[1] == tmpMap[2]) {
-      return tmpMap[0];
-    }
-    if(tmpMap[3] != 0 && tmpMap[3] == tmpMap[4] && tmpMap[4] == tmpMap[5]) {
-      return tmpMap[3];
-    }
-    if(tmpMap[6] != 0 && tmpMap[6] == tmpMap[7] && tmpMap[7] == tmpMap[8]) {
-      return tmpMap[6];
-    }
-    if(tmpMap[0] != 0 && tmpMap[0] == tmpMap[3] && tmpMap[3] == tmpMap[6]) {
-      return tmpMap[0];
-    }
-    if(tmpMap[1] != 0 && tmpMap[1] == tmpMap[4] && tmpMap[4] == tmpMap[7]) {
-      return tmpMap[1];
-    }
-    if(tmpMap[2] != 0 && tmpMap[2] == tmpMap[5] && tmpMap[5] == tmpMap[8]) {
-      return tmpMap[2];
-    }
-    if(tmpMap[0] != 0 && tmpMap[0] == tmpMap[4] && tmpMap[4] == tmpMap[8]) {
-      return tmpMap[0];
-    }
-    if(tmpMap[2] != 0 && tmpMap[2] == tmpMap[4] && tmpMap[4] == tmpMap[6]) {
-      return tmpMap[2];
-    }
-    return 0;
-  }
-
-  function gameGetPos(uint256 map, uint256 pos)
-    internal
-    pure
-    returns (uint)
-  {
-    uint256 map3 = map / 27 / 27;
-    uint256 map2 = map / 27 - map3 * 27 * 27;
-    uint256 map1 = map - map3 * 27 * 27 - map2 * 27;
-    if(pos >= 0 && pos < 3) {
-      return gameGetPos2(map1, pos);
-    } else if(pos < 6) {
-      return gameGetPos2(map2, pos - 3);
-    } else if(pos < 9) {
-      return gameGetPos2(map3, pos - 6);
-    }
-  }
-
-  function gameGetPos2(uint256 map, uint256 pos)
-    internal
-    pure
-    returns (uint)
-  {
-    uint256 map1 = map / 3 / 3;
-    uint256 map2 = map / 3 - map1 * 3 * 3;
-    uint256 map3 = map - map1 * 3 * 3 - map2 * 3;
-    if(pos == 0) {
-      return map1;
-    }else if(pos == 1) {
-      return map2;
-    }else if(pos == 2) {
-      return map3;
-    }
-  }
-  */
 
   function exchange(Tx transaction)
     internal
