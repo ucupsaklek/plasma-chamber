@@ -3,6 +3,7 @@ pragma solidity ^0.4.24;
 import "./ByteUtils.sol";
 import "./ECRecovery.sol";
 import "./RLP.sol";
+import "./MultisigGame.sol";
 
 /**
  * @title TxVerification
@@ -225,6 +226,10 @@ library TxVerification {
       split(transaction, txHash, sigs);
     }else if(transaction.label == 2) {
       exchange(transaction);
+    }else if(transaction.label == 21) {
+      MultisigGame.multisig(transaction, txHash, sigs);
+    }else if(transaction.label == 22) {
+      MultisigGame.reveal(transaction, txHash, sigs);
     }else if(transaction.label == 100) {
       //updateReverseStatus(transaction);
     }
