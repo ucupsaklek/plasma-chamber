@@ -15,6 +15,7 @@ describe('snapshot', function() {
   const privKey2 = testData.privKey2;
   const testAddress1 = utils.privateToAddress(privKey1);
   const testAddress2 = utils.privateToAddress(privKey2);
+  const standardVerificator = 0;
 
   describe('applyTx', function() {
     const input = new TransactionOutput(
@@ -35,6 +36,7 @@ describe('snapshot', function() {
       [0]
     );
     const depositTx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,
@@ -42,6 +44,7 @@ describe('snapshot', function() {
       [input]
     );
     const tx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,
@@ -49,6 +52,7 @@ describe('snapshot', function() {
       [output]
     );
     const invalidTx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,

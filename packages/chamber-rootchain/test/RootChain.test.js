@@ -369,6 +369,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   function createTx(sender, receiver, coinId, blockNumber) {
     const OwnState = 0;
+    const standardVerificator = 0;
     const TransferLabel = 0;
     const input = new TransactionOutput(
       [sender],
@@ -382,6 +383,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       [OwnState]
     );
     return new Transaction(
+      standardVerificator,
       TransferLabel,
       [receiver],
       Math.floor(Math.random() * 100000),

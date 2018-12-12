@@ -28,6 +28,7 @@ library TxVerification {
   }
 
   struct Tx {
+    address verifier;
     uint256 label;
     RLP.RLPItem[] args;
     TxState[] inputs;
@@ -37,21 +38,6 @@ library TxVerification {
   enum AppStateStd {
     AppStateStdOwn,
     AppStateStdMultiSig
-  }
-
-  struct AppStateStdOrderBook {
-    address assetId;
-    uint256 amount;
-  }
-
-  /*
-   * application specific structure
-   */
-  struct AppStateTictactoe {
-    address currentPlayer;
-    address nextPlayer;
-    uint256 map;
-    uint256 winner;
   }
 
   /*
@@ -167,6 +153,7 @@ library TxVerification {
       outputs[j] = getTxState(outputList[j]);
     }
     return Tx({
+      verifier: RLP.toAddress(txList[0]),
       label: RLP.toUint(txList[1]),
       args: RLP.toList(txList[2]),
       inputs: inputs,
@@ -190,23 +177,20 @@ library TxVerification {
   /*
    * application specific functions 
    */
-  function verifyTransaction(Tx transaction, bytes32 txHash, bytes sigs)
+  function verifyTransaction(Tx transaction, bytes txBytes, bytes32 txHash, bytes sigs)
     internal
-    pure
+    view
   {
-    // require(checkSigs(owners, sigs, txHash) == true);
-    if(transaction.label == 0) {
-      transfer(transaction, txHash, sigs);
-    }else if(transaction.label == 1) {
-      split(transaction, txHash, sigs);
-    }else if(transaction.label == 2) {
-      exchange(transaction);
-    }else if(transaction.label == 21) {
-      MultisigGame.call('verify', transaction, txHash, sigs);
-    }else if(transaction.label == 22) {
-      MultisigGame.call('reveal', transaction, txHash, sigs);
-    }else if(transaction.label == 100) {
-      //updateReverseStatus(transaction);
+    if(transaction.verifier == address(0)) {
+      if(transaction.label == 0) {
+        transfer(transaction, txHash, sigs);
+      }else if(transaction.label == 1) {
+        split(transaction, txHash, sigs);
+      }else if(transaction.label == 2) {
+        exchange(transaction);
+      }
+    } else {
+      transaction.verifier.call('verify', txBytes, txHash, sigs);
     }
   }
 

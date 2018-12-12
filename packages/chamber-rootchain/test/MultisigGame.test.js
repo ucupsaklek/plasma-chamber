@@ -1,6 +1,7 @@
 const { injectInTruffle } = require('sol-trace');
 injectInTruffle(web3, artifacts);
 
+const MultisigGame = artifacts.require('MultisigGame');
 const TxVerificationTest = artifacts.require('TxVerificationTest');
 
 const {
@@ -24,6 +25,7 @@ contract('MultisigGame', function ([user, owner, recipient, user4, user5]) {
   const StoneScissorPaperRevealLabel = 22;
 
   beforeEach(async function () {
+    this.multisigGame = await MultisigGame.new();
     this.txVerificationTest = await TxVerificationTest.new();
   });
 
@@ -55,6 +57,7 @@ contract('MultisigGame', function ([user, owner, recipient, user4, user5]) {
         [StoneScissorPaperLabel, h1, h2]
       );
       const tx = new Transaction(
+        this.multisigGame.address,
         StoneScissorPaperLabel,
         [h1, h2],
         new Date().getTime(),
@@ -93,6 +96,7 @@ contract('MultisigGame', function ([user, owner, recipient, user4, user5]) {
         0
       );
       const tx = new Transaction(
+        this.multisigGame.address,
         StoneScissorPaperRevealLabel,
         [p1, p2],
         new Date().getTime(),

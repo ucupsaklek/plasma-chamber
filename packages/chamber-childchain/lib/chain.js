@@ -10,6 +10,7 @@ const {
   OWN_STATE
 } = require('./verifier/std');
 const BigNumber = require('bignumber.js');
+const StandardVerificator = 0;
 
 class Chain {
   
@@ -75,6 +76,7 @@ class Chain {
       [OWN_STATE]
     );
     const depositTx = new Transaction(
+      StandardVerificator,
       0,        // label
       [],       // args
       0,        // nonce,

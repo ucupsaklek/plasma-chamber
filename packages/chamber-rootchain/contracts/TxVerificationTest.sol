@@ -6,9 +6,9 @@ contract TxVerificationTest {
 
   function verifyTransaction(bytes txBytes, bytes sigs)
     public
-    pure
+    view
   {
-    TxVerification.verifyTransaction(TxVerification.getTx(txBytes), keccak256(txBytes), sigs);
+    TxVerification.verifyTransaction(TxVerification.getTx(txBytes), txBytes, keccak256(txBytes), sigs);
   }
 
 }

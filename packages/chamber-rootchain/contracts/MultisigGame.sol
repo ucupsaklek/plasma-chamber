@@ -11,14 +11,27 @@ import "./TxVerification.sol";
  */
 contract MultisigGame {
 
-  function verify(Tx transaction, bytes32 txHash, bytes sigs)
+  /*
+   * application specific structure
+   */
+  struct AppStateTictactoe {
+    address currentPlayer;
+    address nextPlayer;
+    uint256 map;
+    uint256 winner;
+  }
+
+  function verify(bytes txBytes, bytes32 txHash, bytes sigs)
     internal
     pure
   {
+    TxVerification.Tx memory transaction = TxVerification.getTx(txBytes);
     if(transaction.label == 21) {
       multisig(transaction, txHash, sigs);
     }else if(transaction.label == 22) {
       reveal(transaction, txHash, sigs);
+    }else{
+      revert("unknown label");
     }
   }
 
@@ -61,12 +74,12 @@ contract MultisigGame {
     }
   }
 
-  function updateReverseStatus(Tx transaction)
+  function updateReverseStatus(TxVerification.Tx transaction)
     internal
     pure
   {
-    TxState memory input = transaction.inputs[0];
-    TxState memory output = transaction.outputs[0];
+    TxVerification.TxState memory input = transaction.inputs[0];
+    TxVerification.TxState memory output = transaction.outputs[0];
     var appState = getAppStateTictactoe(input.state);
     var nextAppState = getAppStateTictactoe(output.state);
     require(appState.currentPlayer == input.owners[0]);
