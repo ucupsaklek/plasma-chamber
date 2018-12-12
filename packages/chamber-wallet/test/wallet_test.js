@@ -91,8 +91,8 @@ describe('BaseWallet', function() {
       wallet.updateHistoryWithBlock(block2);
       const key = output2.hash(blkNum3).toString('hex');
       const utxo = TransactionOutput.fromBytes(Buffer.from(wallet.utxos[key], 'hex'))
-      const txList = await wallet.getTransactions(utxo)
-      assert.equal(txList.length, 2)
+      const txInfos = await wallet.getTransactions(utxo)
+      assert.equal(txInfos.blkNum, blkNum3)
     });
 
   });

@@ -113,18 +113,18 @@ class BaseWallet {
   }
 
   async startExit(utxo) {
-    const txList = await this.getTransactions(utxo, 2)
-    const txListBytes = RLP.encode(txList);
-    const latestTx = txList[txList.length - 1];
+    const tx = await this.getTransactions(utxo, 2)
+    const txInfo = RLP.encode([tx.proof, tx.sigs, tx.confsig]);
 
     return this.rootChainContract.methods.startExit(
       this.operatorAddress,
-      latestTx[0],
-      latestTx[4],
-      utils.bufferToHex(txListBytes)
+      tx.blkNum,
+      tx.index,
+      utils.bufferToHex(tx.txBytes),
+      utils.bufferToHex(txInfo)
     ).send({
       from: this.address,
-      gas: 1000000,
+      gas: 600000,
       // Exit Bond
       // value: new BN("1000000000000000000")
     })
@@ -155,24 +155,15 @@ class BaseWallet {
     })
     const history = await this.bigStorage.get(slots[0], utxo.blkNum)
     const tx = this.hexToTransaction(history.txBytes)
-    const prevTxo = tx.inputs[0];
-    const prevHistory = await this.bigStorage.get(slots[0], prevTxo.blkNum)
-    const prevTx = this.hexToTransaction(prevHistory.txBytes)
-    const prevIndex = this.getIndexOfOutput(prevTx, prevTxo)
     const index = this.getIndexOfOutput(tx, utxo)
-    return [[
-      prevHistory.blkNum,
-      prevTx.getBytes(),
-      Buffer.from(prevHistory.proof, 'hex'),
-      prevTx.sigs[0],
-      prevIndex
-    ], [
-      history.blkNum,
-      tx.getBytes(),
-      Buffer.from(history.proof, 'hex'),
-      tx.sigs[0],
-      index
-    ]]
+    return {
+      blkNum: history.blkNum,
+      txBytes: tx.getBytes(),
+      proof: Buffer.from(history.proof, 'hex'),
+      sigs: tx.sigs[0],
+      confsig: '',
+      index: index
+    }
   }
 
   updateLoadedBlockNumber(n) {
