@@ -136,13 +136,20 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         utils.bufferToHex(rootHash2),
         {from: owner, gas: gasLimit});
       console.log('submitBlockGas', submitBlockGas);
-      const submitBlockResult2 = await this.rootChain.submitBlock(
+      await this.rootChain.submitBlock(
         owner,
         utils.bufferToHex(rootHash2),
         {from: owner, gas: gasLimit});
+      await this.rootChain.submitBlock(
+        owner,
+        utils.bufferToHex(block3.merkleHash()),
+        {from: owner, gas: gasLimit});
+      await this.rootChain.submitBlock(
+        owner,
+        utils.bufferToHex(block4.merkleHash()),
+        {from: owner, gas: gasLimit});
 
       assert.equal(submitBlockResult1.logs[0].event, 'BlockSubmitted');
-      assert.equal(submitBlockResult2.logs[0].event, 'BlockSubmitted');
 
       const r1 = await this.rootChain.getChildChain(
         owner,
@@ -255,14 +262,6 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     });
 
     it('should challengeExit', async function () {
-
-      const submitBlockResult = await this.rootChain.submitBlock(
-        owner,
-        utils.bufferToHex(block3.merkleHash()),
-        {from: owner, gas: gasLimit});
-
-      assert.equal(submitBlockResult.logs[0].event, 'BlockSubmitted');
-
       const proof31 = block3.createTxProof(tx31);
       const slot = 0;
       const txList = RLP.encode([
@@ -287,111 +286,113 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
     });
 
-    it('should challengeBefore', async function () {
-      
-      await this.rootChain.submitBlock(
-        owner,
-        utils.bufferToHex(block3.merkleHash()),
-        {from: owner, gas: gasLimit});
-      await this.rootChain.submitBlock(
-        owner,
-        utils.bufferToHex(block4.merkleHash()),
-        {from: owner, gas: gasLimit});
-
-      const r3 = await this.rootChain.getChildChain(
-        owner,
-        blockNumber3,
-        {from: owner, gas: gasLimit});
-      const r4  = await this.rootChain.getChildChain(
-        owner,
-        blockNumber4,
-        {from: owner, gas: gasLimit});
-
+    describe('challenge game', function() {
       const exitTxInfo = RLP.encode([
         block4.createTXOProof(tx42.outputs[0]),
         sign42,
         ''
       ]);
-      
-      await this.rootChain.startExit(
-        owner,
-        blockNumber4,
-        0,
-        utils.bufferToHex(tx42.getBytes()),
-        utils.bufferToHex(exitTxInfo),
-        {from: owner, gas: startExitGasLimit});
-  
-      const proof22 = block2.createTxProof(tx22);
-      const slot = 1;
       const cTxList = RLP.encode([
-        proof22,
+        block2.createTxProof(tx22),
         sign22,
         Buffer.from('', 'hex')
       ]);
+      const slot = 1;
 
-      await this.rootChain.challengeBefore(
-        owner,
-        0,
-        blockNumber2,
-        utxoPos4 + slot,
-        utxoPos2 + slot,
-        utils.bufferToHex(tx22.getBytes()),
-        utils.bufferToHex(cTxList),
-        {from: recipient, gas: startExitGasLimit});
+      beforeEach(async function() {
+        await this.rootChain.startExit(
+          owner,
+          blockNumber4,
+          0,
+          utils.bufferToHex(tx42.getBytes()),
+          utils.bufferToHex(exitTxInfo),
+          {from: owner, gas: startExitGasLimit});
+      });
 
-      const getExitResultAfter = await this.rootChain.getExit(
-        owner,
-        utxoPos4 + slot,
-        {from: user, gas: gasLimit});
-      assert.equal(getExitResultAfter[3], 1);
+      it('should challengeBefore', async function () {
+        await this.rootChain.challengeBefore(
+          owner,
+          0,
+          blockNumber2,
+          utxoPos4 + slot,
+          utxoPos2 + slot,
+          utils.bufferToHex(tx22.getBytes()),
+          utils.bufferToHex(cTxList),
+          {from: recipient, gas: startExitGasLimit});
 
-      const proof32 = block3.createTxProof(tx32);
-      const rTxList = RLP.encode([
-        proof32,
-        sign32,
-        Buffer.from('', 'hex')
-      ]);
+        const getExitResultAfter = await this.rootChain.getExit(
+          owner,
+          utxoPos4 + slot,
+          {from: user, gas: gasLimit});
+        assert.equal(getExitResultAfter[3], 1);
+      })
 
-      await this.rootChain.respondChallenge(
-        owner,
-        0,
-        blockNumber3,
-        utxoPos4 + slot,
-        utxoPos2 + slot,
-        utils.bufferToHex(tx32.getBytes()),
-        utils.bufferToHex(rTxList),
-        {from: owner, gas: startExitGasLimit});
+      it('should respondChallenge', async function () {
+        await this.rootChain.challengeBefore(
+          owner,
+          0,
+          blockNumber2,
+          utxoPos4 + slot,
+          utxoPos2 + slot,
+          utils.bufferToHex(tx22.getBytes()),
+          utils.bufferToHex(cTxList),
+          {from: recipient, gas: startExitGasLimit});
 
-      const getExitResultAfterRespond = await this.rootChain.getExit(
-        owner,
-        utxoPos4 + slot,
-        {from: user, gas: gasLimit});
-      assert.equal(getExitResultAfterRespond[3].toNumber(), 0);
+        const getExitResultAfter = await this.rootChain.getExit(
+          owner,
+          utxoPos4 + slot,
+          {from: user, gas: gasLimit});
+        assert.equal(getExitResultAfter[3], 1);
 
-      await this.rootChain.challengeBefore(
-        owner,
-        0,
-        blockNumber3,
-        utxoPos4 + slot,
-        utxoPos2 + slot,
-        utils.bufferToHex(tx32.getBytes()),
-        utils.bufferToHex(rTxList),
-        {from: recipient, gas: startExitGasLimit});
-      await this.rootChain.respondChallenge(
-        owner,
-        0,
-        blockNumber4,
-        utxoPos4 + slot,
-        utxoPos2 + slot,
-        utils.bufferToHex(tx42.getBytes()),
-        utils.bufferToHex(exitTxInfo),
-        {from: owner, gas: startExitGasLimit});
+        const proof32 = block3.createTxProof(tx32);
+        const rTxList = RLP.encode([
+          proof32,
+          sign32,
+          Buffer.from('', 'hex')
+        ]);
 
-      const getExitResultAfterSecondChallenge = await this.rootChain.getExit(
-        owner,
-        utxoPos4 + slot,
-        {from: user, gas: gasLimit});
-      assert.equal(getExitResultAfterSecondChallenge[3].toNumber(), 0);
+        await this.rootChain.respondChallenge(
+          owner,
+          0,
+          blockNumber3,
+          utxoPos4 + slot,
+          utxoPos2 + slot,
+          utils.bufferToHex(tx32.getBytes()),
+          utils.bufferToHex(rTxList),
+          {from: owner, gas: startExitGasLimit});
+
+        const getExitResultAfterRespond = await this.rootChain.getExit(
+          owner,
+          utxoPos4 + slot,
+          {from: user, gas: gasLimit});
+        assert.equal(getExitResultAfterRespond[3].toNumber(), 0);
+
+        await this.rootChain.challengeBefore(
+          owner,
+          0,
+          blockNumber3,
+          utxoPos4 + slot,
+          utxoPos2 + slot,
+          utils.bufferToHex(tx32.getBytes()),
+          utils.bufferToHex(rTxList),
+          {from: recipient, gas: startExitGasLimit});
+        await this.rootChain.respondChallenge(
+          owner,
+          0,
+          blockNumber4,
+          utxoPos4 + slot,
+          utxoPos2 + slot,
+          utils.bufferToHex(tx42.getBytes()),
+          utils.bufferToHex(exitTxInfo),
+          {from: owner, gas: startExitGasLimit});
+
+        const getExitResultAfterSecondChallenge = await this.rootChain.getExit(
+          owner,
+          utxoPos4 + slot,
+          {from: user, gas: gasLimit});
+        assert.equal(getExitResultAfterSecondChallenge[3].toNumber(), 0);
+
+      });
 
     });
 
