@@ -81,11 +81,16 @@ contract RootChain {
       uint8 challengeCount;
     }
 
+    uint8 public constant CHALLENGE_STATE_FIRST = 1;
+    uint8 public constant CHALLENGE_STATE_RESPONDED = 2;
+    uint8 public constant CHALLENGE_STATE_SECOND = 3;
+
     struct Challenge {
       bytes txBytes;
       uint256 blkNum;
       uint256 index;
       uint256 exitPos;
+      uint8 status;
     }
 
 
@@ -384,6 +389,7 @@ contract RootChain {
       uint256 _cIndex,
       uint256 _cBlkNum,
       uint256 _eUtxoPos,
+      uint256 _cPos,
       bytes _txBytes,
       bytes _txInfos
     )
@@ -407,14 +413,24 @@ contract RootChain {
         exit.output
       ), 'challenge transaction should has same coin');
       // _cBlkNum is challenge position
-      uint challengePos = _cBlkNum * 1000000 + getSlot(challengeTx.outputs[_cIndex].value[0]);
-      childChain.challenges[challengePos] = Challenge({
-        txBytes: _txBytes,
-        blkNum: _cBlkNum,
-        index: _cIndex,
-        exitPos: _eUtxoPos
-      });
-      exit.challengeCount++;
+      var challenge = childChain.challenges[_cPos];
+      if(challenge.status == CHALLENGE_STATE_RESPONDED) {
+        challenge.txBytes = _txBytes;
+        challenge.blkNum = _cBlkNum;
+        challenge.index = _cIndex;
+        challenge.status = CHALLENGE_STATE_SECOND;
+        exit.challengeCount++;
+      }else if(challenge.status == 0) {
+        require(_cPos == _cBlkNum * 1000000 + getSlot(challengeTx.outputs[_cIndex].value[0]));
+        childChain.challenges[_cPos] = Challenge({
+          txBytes: _txBytes,
+          blkNum: _cBlkNum,
+          index: _cIndex,
+          exitPos: _eUtxoPos,
+          status: CHALLENGE_STATE_FIRST
+        });
+        exit.challengeCount++;
+      }
     }
 
     function checkTx(
@@ -561,7 +577,12 @@ contract RootChain {
         respondTx
       );
       require(keccak256TxOutput(respondTx.inputs[_rIndex]) == keccak256TxOutput(challengeTx.outputs[challenge.index]));
-      delete childChain.challenges[_challengePos];
+      if(challenge.status == CHALLENGE_STATE_SECOND) {
+        delete childChain.challenges[_challengePos];
+      }else{
+        challenge.status = CHALLENGE_STATE_RESPONDED;
+        exit.exitableAt = block.timestamp + 1 weeks;
+      }
       exit.challengeCount--;
     }
 

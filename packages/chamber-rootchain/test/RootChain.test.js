@@ -112,10 +112,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block3.appendTx(tx32);
 
     const tx41 = createTx(testAddress3, testAddress1, segment1, blockNumber3);
-    const tx42 = createTx(testAddress4, testAddress2, segment2, blockNumber3);
+    const tx42 = createTx(testAddress1, testAddress2, segment2, blockNumber3);
     const sign41 = tx41.sign(privKey3);
     tx41.sigs.push(sign41);
-    const sign42 = tx42.sign(privKey4);
+    const sign42 = tx42.sign(privKey1);
     tx42.sigs.push(sign42);
     const block4 = new Block(1);
     block4.appendTx(tx41);
@@ -334,6 +334,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         0,
         blockNumber2,
         utxoPos4 + slot,
+        utxoPos2 + slot,
         utils.bufferToHex(tx22.getBytes()),
         utils.bufferToHex(cTxList),
         {from: recipient, gas: startExitGasLimit});
@@ -365,7 +366,32 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         owner,
         utxoPos4 + slot,
         {from: user, gas: gasLimit});
-      assert.equal(getExitResultAfterRespond[3], 0);
+      assert.equal(getExitResultAfterRespond[3].toNumber(), 0);
+
+      await this.rootChain.challengeBefore(
+        owner,
+        0,
+        blockNumber3,
+        utxoPos4 + slot,
+        utxoPos2 + slot,
+        utils.bufferToHex(tx32.getBytes()),
+        utils.bufferToHex(rTxList),
+        {from: recipient, gas: startExitGasLimit});
+      await this.rootChain.respondChallenge(
+        owner,
+        0,
+        blockNumber4,
+        utxoPos4 + slot,
+        utxoPos2 + slot,
+        utils.bufferToHex(tx42.getBytes()),
+        utils.bufferToHex(exitTxInfo),
+        {from: owner, gas: startExitGasLimit});
+
+      const getExitResultAfterSecondChallenge = await this.rootChain.getExit(
+        owner,
+        utxoPos4 + slot,
+        {from: user, gas: gasLimit});
+      assert.equal(getExitResultAfterSecondChallenge[3].toNumber(), 0);
 
     });
 
