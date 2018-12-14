@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./TxVerification.sol";
+import "./TxDecoder.sol";
 
 contract TxVerificationTest {
 
@@ -9,7 +10,7 @@ contract TxVerificationTest {
     view
   {
     TxVerification.verifyTransaction(
-      TxVerification.getTx(txBytes),
+      TxDecoder.getTx(txBytes),
       txBytes,
       keccak256(txBytes),
       keccak256(txBytes),

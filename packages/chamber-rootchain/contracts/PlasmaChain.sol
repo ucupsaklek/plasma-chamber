@@ -1,10 +1,11 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-import "./Array.sol";
-import "./Math.sol";
-import "./Merkle.sol";
+import "./lib/Array.sol";
+import "./lib/Math.sol";
+import "./lib/Merkle.sol";
 import "./TxVerification.sol";
+import "./TxDecoder.sol";
 
 /**
  * @title PlasmaChain
@@ -29,7 +30,7 @@ contract PlasmaChain {
 
     event ExitStarted(
       address indexed exitor,
-      TxVerification.TxState state
+      TxDecoder.TxState state
     );
 
     event BlockSubmitted(
@@ -211,7 +212,7 @@ contract PlasmaChain {
       bytes32 root,
       bytes32 txHash,
       bytes _proofs,
-      TxVerification.Amount[] values
+      TxDecoder.Amount[] values
     )
       private
       pure
@@ -242,7 +243,7 @@ contract PlasmaChain {
       public
     {
       var childBlock = blocks[_blkNum];
-      var exitTx = TxVerification.getTx(_exitTxBytes);
+      var exitTx = TxDecoder.getTx(_exitTxBytes);
       // if there are 2 inputs this exit don't need prev tx because it has confsig.
       var input = exitTx.inputs[0];
       var output = exitTx.outputs[_oIndex];
@@ -283,7 +284,7 @@ contract PlasmaChain {
     {
       Exit exit = exits[_eUtxoPos];
       require(_cBlkNum > exit.blkNum);
-      var challengeTx = TxVerification.getTx(_txBytes);
+      var challengeTx = TxDecoder.getTx(_txBytes);
       checkTx(
         blocks[_cBlkNum].root,
         _txBytes,
@@ -312,7 +313,7 @@ contract PlasmaChain {
       Exit exit = exits[_eUtxoPos];
       // check challenge tx is before exiting tx
       require(_cBlkNum < exit.blkNum);
-      var challengeTx = TxVerification.getTx(_txBytes);
+      var challengeTx = TxDecoder.getTx(_txBytes);
       checkTx(
         blocks[_cBlkNum].root,
         _txBytes,
@@ -350,8 +351,8 @@ contract PlasmaChain {
       bytes32 root,
       bytes _txBytes,
       bytes _txInfos,
-      TxVerification.Amount[] values,
-      TxVerification.Tx transaction
+      TxDecoder.Amount[] values,
+      TxDecoder.Tx transaction
     )
       private
       view
@@ -382,7 +383,7 @@ contract PlasmaChain {
      * @dev tx include in exit
      */
     function withinRange(
-      TxVerification.Amount[] values,
+      TxDecoder.Amount[] values,
       ExitTxo memory exitTxo
     )
       private
@@ -400,7 +401,7 @@ contract PlasmaChain {
     }
 
     function getSlot(
-      TxVerification.Amount value
+      TxDecoder.Amount value
     )
       pure
       returns (uint256)
@@ -410,7 +411,7 @@ contract PlasmaChain {
     }
 
     function getIndex(
-      TxVerification.Amount value
+      TxDecoder.Amount value
     )
       pure
       returns (uint256, uint256)
@@ -437,7 +438,7 @@ contract PlasmaChain {
     {
       Exit exit = exits[_eUtxoPos];
       var challenge = challenges[_challengePos];
-      var respondTx = TxVerification.getTx(_txBytes);
+      var respondTx = TxDecoder.getTx(_txBytes);
       checkTx(
         blocks[_rBlkNum].root,
         _txBytes,
@@ -482,7 +483,7 @@ contract PlasmaChain {
       Exit exit = exits[_eUtxoPos];
       var challenge = challenges[_challengePos];
       require(_rBlkNum > challenge.cBlkNum);
-      var respondTx = TxVerification.getTx(_txBytes);
+      var respondTx = TxDecoder.getTx(_txBytes);
       checkTx(
         blocks[_rBlkNum].root,
         _txBytes,
@@ -613,8 +614,8 @@ contract PlasmaChain {
      */
     function addToExitList(
       address _exitor,
-      TxVerification.TxState _input,
-      TxVerification.TxState _utxo,
+      TxDecoder.TxState _input,
+      TxDecoder.TxState _utxo,
       uint256 _blkNum,
       uint256 _created_at
     )
@@ -647,7 +648,7 @@ contract PlasmaChain {
     }
 
     function getExitTxo(
-      TxVerification.TxState _txo,
+      TxDecoder.TxState _txo,
       uint256 blkNum
     )
       pure
@@ -661,7 +662,7 @@ contract PlasmaChain {
       });
     }
 
-  function flatten(TxVerification.Amount[] amounts)
+  function flatten(TxDecoder.Amount[] amounts)
     private
     pure
     returns (uint256[])
@@ -683,7 +684,7 @@ contract PlasmaChain {
     return keccak256(txo.owners, txo.values, txo.state);
   }
 
-  function keccak256TxOutput(TxVerification.TxState output)
+  function keccak256TxOutput(TxDecoder.TxState output)
     private
     pure
     returns (bytes32)

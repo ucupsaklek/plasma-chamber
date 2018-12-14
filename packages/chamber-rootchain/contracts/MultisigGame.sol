@@ -1,9 +1,9 @@
 pragma solidity ^0.4.24;
 
-import "./ByteUtils.sol";
-import "./ECRecovery.sol";
-import "./RLP.sol";
-import "./TxVerification.sol";
+import "./lib/ByteUtils.sol";
+import "./lib/ECRecovery.sol";
+import "./lib/RLP.sol";
+import "./TxDecoder.sol";
 
 /**
  * @title MultisigGame
@@ -25,7 +25,7 @@ contract MultisigGame {
     internal
     pure
   {
-    TxVerification.Tx memory transaction = TxVerification.getTx(txBytes);
+    TxDecoder.Tx memory transaction = TxDecoder.getTx(txBytes);
     if(transaction.label == 21) {
       multisig(transaction, txHash, sigs);
     }else if(transaction.label == 22) {
@@ -35,7 +35,7 @@ contract MultisigGame {
     }
   }
 
-   function multisig(TxVerification.Tx transaction, bytes32 txHash, bytes sigs)
+   function multisig(TxDecoder.Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
@@ -48,7 +48,7 @@ contract MultisigGame {
     // TODO: check owner and value
   }
 
-  function reveal(TxVerification.Tx transaction, bytes32 txHash, bytes sigs)
+  function reveal(TxDecoder.Tx transaction, bytes32 txHash, bytes sigs)
     internal
     pure
   {
@@ -74,12 +74,12 @@ contract MultisigGame {
     }
   }
 
-  function updateReverseStatus(TxVerification.Tx transaction)
+  function updateReverseStatus(TxDecoder.Tx transaction)
     internal
     pure
   {
-    TxVerification.TxState memory input = transaction.inputs[0];
-    TxVerification.TxState memory output = transaction.outputs[0];
+    TxDecoder.TxState memory input = transaction.inputs[0];
+    TxDecoder.TxState memory output = transaction.outputs[0];
     var appState = getAppStateTictactoe(input.state);
     var nextAppState = getAppStateTictactoe(output.state);
     require(appState.currentPlayer == input.owners[0]);
