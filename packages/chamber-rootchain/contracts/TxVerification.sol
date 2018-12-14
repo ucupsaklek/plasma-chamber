@@ -214,7 +214,13 @@ library TxVerification {
    * application specific functions 
    */
 
-  function verifyTransaction(Tx transaction, bytes32 txHash, bytes sigs)
+  function verifyTransaction(
+    Tx transaction,
+    bytes32 txHash,
+    bytes32 merkleHash,
+    bytes sigs,
+    bytes confsigs
+  )
     internal
     pure
   {

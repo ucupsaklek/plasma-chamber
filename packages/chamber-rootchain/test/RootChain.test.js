@@ -2,6 +2,7 @@ const { injectInTruffle } = require('sol-trace');
 injectInTruffle(web3, artifacts);
 
 const RootChain = artifacts.require('RootChain');
+const PlasmaChain = artifacts.require('PlasmaChain');
 const {
   Block,
   Merkle,
@@ -42,7 +43,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   beforeEach(async function () {
     this.rootChain = await RootChain.new();
-    this.chain = await this.rootChain.addChain({from: owner});
+    this.plasmaChain = await PlasmaChain.new();
+    this.chain = await this.rootChain.addChain(
+      this.plasmaChain.address,
+      {from: owner, gas: gasLimit});
   });
 
   describe('check', function () {
