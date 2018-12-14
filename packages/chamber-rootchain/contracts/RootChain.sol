@@ -86,9 +86,14 @@ contract RootChain {
     uint8 public constant CHALLENGE_STATE_SECOND = 3;
 
     struct Challenge {
-      bytes txBytes;
-      uint256 blkNum;
-      uint256 index;
+      // ch1 output
+      ExitTxo output1;
+      // ch1 blkNum
+      uint256 blkNum1;
+      // current(ch2) output
+      ExitTxo cOutput;
+      // current(ch2) blkNum
+      uint256 cBlkNum;
       uint256 exitPos;
       uint8 status;
     }
@@ -105,7 +110,6 @@ contract RootChain {
       uint256 depositCount;
       mapping (uint256 => ChildBlock) blocks;
       uint256 currentChildBlock;
-      uint256 currentDepositBlock;
       uint256 currentFeeExit;
       mapping (uint256 => Coin) coins;
       mapping (uint256 => Exit) exits;
@@ -117,6 +121,7 @@ contract RootChain {
       address[] owners;
       uint256[] values;
       bytes state;
+      uint256 blkNum;
     }
 
     struct ExitTx {
@@ -180,7 +185,6 @@ contract RootChain {
       childChain.initialized = true;
       childChain.operator = _chain;
       childChain.currentChildBlock = 1;
-      childChain.currentDepositBlock = 1;
       childChain.currentFeeExit = 1;
       return _chain;
     }
@@ -400,9 +404,8 @@ contract RootChain {
       // check challenge tx is before exiting tx
       require(_cBlkNum < exit.blkNum);
       var challengeTx = TxVerification.getTx(_txBytes);
-      ChildBlock childBlock = childChain.blocks[_cBlkNum];
       checkTx(
-        childBlock.root,
+        childChain.blocks[_cBlkNum].root,
         _txBytes,
         _txInfos,
         challengeTx.outputs[_cIndex].value,
@@ -414,18 +417,19 @@ contract RootChain {
       ), 'challenge transaction should has same coin');
       // _cBlkNum is challenge position
       var challenge = childChain.challenges[_cPos];
+      var output = getExitTxo(challengeTx.outputs[_cIndex], _cBlkNum);
       if(challenge.status == CHALLENGE_STATE_RESPONDED) {
-        challenge.txBytes = _txBytes;
-        challenge.blkNum = _cBlkNum;
-        challenge.index = _cIndex;
+        challenge.cOutput = output;
+        challenge.cBlkNum = _cBlkNum;
         challenge.status = CHALLENGE_STATE_SECOND;
         exit.challengeCount++;
       }else if(challenge.status == 0) {
         require(_cPos == _cBlkNum * 1000000 + getSlot(challengeTx.outputs[_cIndex].value[0]));
         childChain.challenges[_cPos] = Challenge({
-          txBytes: _txBytes,
-          blkNum: _cBlkNum,
-          index: _cIndex,
+          output1: output,
+          blkNum1: _cBlkNum,
+          cOutput: output,
+          cBlkNum: _cBlkNum,
           exitPos: _eUtxoPos,
           status: CHALLENGE_STATE_FIRST
         });
@@ -512,10 +516,12 @@ contract RootChain {
 
     /**
      * @dev respond parent tx of exiting tx
+     * @param _rInputIndex is the index of inputs
      */
     function respondParent(
       address _chain,
-      uint256 _rIndex,
+      uint256 _rInputIndex,
+      uint256 _rOutputIndex,
       uint256 _rBlkNum,
       uint256 _eUtxoPos,
       uint256 _challengePos,
@@ -527,25 +533,32 @@ contract RootChain {
       ChildChain childChain = childChains[_chain];
       Exit exit = childChain.exits[_eUtxoPos];
       var challenge = childChain.challenges[_challengePos];
-      var challengeTx = TxVerification.getTx(challenge.txBytes);
       var respondTx = TxVerification.getTx(_txBytes);
       checkTx(
         childChain.blocks[_rBlkNum].root,
         _txBytes,
         _txInfos,
-        respondTx.inputs[_rIndex].value,
+        respondTx.inputs[_rInputIndex].value,
         respondTx
       );
-      require(keccak256TxOutput(respondTx.outputs[_rIndex]) == keccak256ExitTxo(exit.input));
-      if(_rBlkNum < challenge.blkNum) {
+      // respond tx should not be child of challenge1 tx
+      require(withinRange(
+        respondTx.inputs[_rInputIndex].value,
+        exit.output), '_rInputIndex is not correct');
+      require(withinRange(
+        respondTx.outputs[_rOutputIndex].value,
+        exit.output), '_rOutputIndex is not correct');
+      require(
+        keccak256TxOutput(respondTx.inputs[_rInputIndex]) != keccak256ExitTxo(challenge.output1),
+        'respondTx is double spent');
+      require(keccak256TxOutput(respondTx.outputs[_rOutputIndex]) == keccak256ExitTxo(exit.input));
+      if(_rBlkNum < challenge.blkNum1) {
         delete childChain.challenges[_challengePos];
         exit.challengeCount--;
       }
-      exit.input = ExitTxo({
-        owners: respondTx.inputs[0].owners,
-        values: flatten(respondTx.inputs[0].value),
-        state: respondTx.inputs[0].stateBytes
-      });
+      exit.input = getExitTxo(
+        respondTx.inputs[_rInputIndex],
+        respondTx.inputs[_rInputIndex].blkNum);
     }
 
     /**
@@ -566,8 +579,7 @@ contract RootChain {
       ChildChain childChain = childChains[_chain];
       Exit exit = childChain.exits[_eUtxoPos];
       var challenge = childChain.challenges[_challengePos];
-      var challengeTx = TxVerification.getTx(challenge.txBytes);
-      require(_rBlkNum > challenge.blkNum);
+      require(_rBlkNum > challenge.cBlkNum);
       var respondTx = TxVerification.getTx(_txBytes);
       checkTx(
         childChain.blocks[_rBlkNum].root,
@@ -576,7 +588,7 @@ contract RootChain {
         respondTx.inputs[_rIndex].value,
         respondTx
       );
-      require(keccak256TxOutput(respondTx.inputs[_rIndex]) == keccak256TxOutput(challengeTx.outputs[challenge.index]));
+      require(keccak256TxOutput(respondTx.inputs[_rIndex]) == keccak256ExitTxo(challenge.cOutput));
       if(challenge.status == CHALLENGE_STATE_SECOND) {
         delete childChain.challenges[_challengePos];
       }else{
@@ -673,21 +685,6 @@ contract RootChain {
     }
 
     /**
-     * @dev Determines the next deposit block number.
-     * @return Block number to be given to the next deposit block.
-     */
-    function getDepositBlock(address _chain)
-        public
-        view
-        returns (uint256)
-    {
-      ChildChain childChain = childChains[_chain];
-      return childChain.currentChildBlock
-              .sub(CHILD_BLOCK_INTERVAL)
-              .add(childChain.currentDepositBlock);
-    }
-
-    /**
      * @dev Returns information about an exit.
      * @param _utxoPos Position of the UTXO in the chain.
      * @return A tuple representing the active exit for the given UTXO.
@@ -741,19 +738,31 @@ contract RootChain {
       childChains[_chain].exits[_utxoPos] = Exit({
         blkNum: _blkNum,
         exitableAt: exitableAt,
-        input: ExitTxo({
-          owners: _input.owners,
-          values: flatten(_input.value),
-          state: _input.stateBytes
-        }),
+        input: getExitTxo(_input, _input.blkNum),
         output: ExitTxo({
           owners: _utxo.owners,
           values: values,
-          state: _utxo.stateBytes
+          state: _utxo.stateBytes,
+          blkNum: _blkNum
         }),
         challengeCount: 0
       });
       emit ExitStarted(msg.sender, _utxo);
+    }
+
+    function getExitTxo(
+      TxVerification.TxState _txo,
+      uint256 blkNum
+    )
+      pure
+      returns (ExitTxo)
+    {
+      return ExitTxo({
+        owners: _txo.owners,
+        values: flatten(_txo.value),
+        state: _txo.stateBytes,
+        blkNum: blkNum
+      });
     }
 
   function flatten(TxVerification.Amount[] amounts)
