@@ -34,6 +34,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
   const segment2 = {start: CHUNK_SIZE, end: CHUNK_SIZE.times(2)};
   const gasLimit = 200000;
   const startExitGasLimit = 500000;
+  const challengeGasLimit = 800000;
   const finalizeExitGasLimit = 300000;
   // 0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3
   // 0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f
@@ -43,7 +44,9 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   beforeEach(async function () {
     this.rootChain = await RootChain.new();
-    this.plasmaChain = await PlasmaChain.new();
+    this.plasmaChain = await PlasmaChain.new({
+      from: owner
+    });
     this.chain = await this.rootChain.addChain(
       this.plasmaChain.address,
       {from: owner, gas: gasLimit});
@@ -62,14 +65,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
 
   describe('addChain', function () {
     it('should add chain', async function () {
-      const result = await this.rootChain.addChain.call({from: user});
-      assert.equal(result, user);
+      const result = await this.rootChain.addChain.call(this.plasmaChain.address, {from: user});
+      assert.equal(result, this.plasmaChain.address);
     });
   });
 
   describe('deposit', function () {
     it('should deposit', async function () {
-      const result = await this.rootChain.deposit(owner, {value: CHUNK_SIZE.toString()});
+      const result = await this.plasmaChain.deposit({value: CHUNK_SIZE.toString()});
       assert.equal(result.logs[0].event, 'Deposit');
     });
   });
@@ -126,41 +129,34 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     block4.appendTx(tx42);
 
     beforeEach(async function () {
-      await this.rootChain.deposit(owner, {value: CHUNK_SIZE.toString()});
+      await this.plasmaChain.deposit({value: CHUNK_SIZE.toString()});
 
       const rootHash1 = block1.merkleHash();
       const rootHash2 = block2.merkleHash();
 
-      const submitBlockResult1 = await this.rootChain.submitBlock(
-        owner,
+      const submitBlockResult1 = await this.plasmaChain.submitBlock(
         utils.bufferToHex(rootHash1),
         {from: owner, gas: gasLimit});
-      const submitBlockGas = await this.rootChain.submitBlock.estimateGas(
-        owner,
+      const submitBlockGas = await this.plasmaChain.submitBlock.estimateGas(
         utils.bufferToHex(rootHash2),
         {from: owner, gas: gasLimit});
       console.log('submitBlockGas', submitBlockGas);
-      await this.rootChain.submitBlock(
-        owner,
+      await this.plasmaChain.submitBlock(
         utils.bufferToHex(rootHash2),
         {from: owner, gas: gasLimit});
-      await this.rootChain.submitBlock(
-        owner,
+      await this.plasmaChain.submitBlock(
         utils.bufferToHex(block3.merkleHash()),
         {from: owner, gas: gasLimit});
-      await this.rootChain.submitBlock(
-        owner,
+      await this.plasmaChain.submitBlock(
         utils.bufferToHex(block4.merkleHash()),
         {from: owner, gas: gasLimit});
 
       assert.equal(submitBlockResult1.logs[0].event, 'BlockSubmitted');
 
-      const r1 = await this.rootChain.getChildChain(
-        owner,
+      const r1 = await this.plasmaChain.getChildChain(
         blockNumber,
         {from: owner, gas: gasLimit});
-      const r2  = await this.rootChain.getChildChain(
-        owner,
+      const r2  = await this.plasmaChain.getChildChain(
         blockNumber2,
         {from: owner, gas: gasLimit});
 
@@ -186,16 +182,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         ''
       ]);
 
-      const gas = await this.rootChain.startExit.estimateGas(
-        owner,
+      const gas = await this.plasmaChain.startExit.estimateGas(
         blockNumber2,
         0,
         utils.bufferToHex(tx21.getBytes()),
         utils.bufferToHex(txInfo),
         {from: recipient, gas: startExitGasLimit});
       console.log('gas', gas);
-      const result = await this.rootChain.startExit(
-        owner,
+      const result = await this.plasmaChain.startExit(
         blockNumber2,
         0,
         utils.bufferToHex(tx21.getBytes()),
@@ -206,8 +200,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     });
 
     it('should getChildChain', async function () {
-      const getChildChainResult = await this.rootChain.getChildChain(
-        owner,
+      const getChildChainResult = await this.plasmaChain.getChildChain(
         blockNumber,
         {from: owner, gas: gasLimit});
       assert.equal(getChildChainResult[0], utils.bufferToHex(block1.merkleHash()));
@@ -224,16 +217,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         ''
       ]);
 
-      const result = await this.rootChain.startExit(
-        owner,
+      const result = await this.plasmaChain.startExit(
         blockNumber2,
         0,
         utils.bufferToHex(tx22.getBytes()),
         utils.bufferToHex(txInfo),
         {from: user4, gas: startExitGasLimit});
       assert(result.hasOwnProperty('receipt'));
-      const getExitResult1 = await this.rootChain.getExit(
-        owner,
+      const getExitResult1 = await this.plasmaChain.getExit(
         utxoPos2 + slot,
         {from: user, gas: gasLimit});
 
@@ -244,8 +235,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
     it('should finalizeExits', async function () {
       const slot = 0;
       const exitPos = utxoPos2 + slot;
-      const getExitResult = await this.rootChain.getExit(
-        owner,
+      const getExitResult = await this.plasmaChain.getExit(
         exitPos,
         {from: recipient, gas: gasLimit});
       
@@ -253,12 +243,10 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       assert.equal(getExitResult[1][0].toString(), segment1.start.toString());
 
       increaseTime(15 * 24 * 60 * 60);
-      await this.rootChain.finalizeExits(
-        owner,
+      await this.plasmaChain.finalizeExits(
         exitPos,
         {from: recipient, gas: finalizeExitGasLimit});
-      const getExitResultAfter = await this.rootChain.getExit(
-        owner,
+      const getExitResultAfter = await this.plasmaChain.getExit(
         exitPos,
         {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[0].length, 0);
@@ -274,16 +262,14 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
         Buffer.from('', 'hex')
       ]);
 
-      await this.rootChain.challengeAfter(
-        owner,
+      await this.plasmaChain.challengeAfter(
         0,
         blockNumber3,
         utxoPos2 + slot,
         utils.bufferToHex(tx31.getBytes()),
         utils.bufferToHex(txList),
         {from: recipient, gas: startExitGasLimit});
-      const getExitResultAfter = await this.rootChain.getExit(
-        owner,
+      const getExitResultAfter = await this.plasmaChain.getExit(
         utxoPos2 + slot,
         {from: user, gas: gasLimit});
       assert.equal(getExitResultAfter[0].length, 0);
@@ -304,8 +290,7 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       const slot = 1;
 
       beforeEach(async function() {
-        await this.rootChain.startExit(
-          owner,
+        await this.plasmaChain.startExit(
           blockNumber4,
           0,
           utils.bufferToHex(tx42.getBytes()),
@@ -314,36 +299,32 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
       });
 
       it('should challengeBefore', async function () {
-        await this.rootChain.challengeBefore(
-          owner,
+        await this.plasmaChain.challengeBefore(
           0,
           blockNumber2,
           utxoPos4 + slot,
           utxoPos2 + slot,
           utils.bufferToHex(tx22.getBytes()),
           utils.bufferToHex(cTxList),
-          {from: recipient, gas: startExitGasLimit});
+          {from: recipient, gas: challengeGasLimit});
 
-        const getExitResultAfter = await this.rootChain.getExit(
-          owner,
+        const getExitResultAfter = await this.plasmaChain.getExit(
           utxoPos4 + slot,
           {from: user, gas: gasLimit});
         assert.equal(getExitResultAfter[3], 1);
       })
 
       it('should respondChallenge', async function () {
-        await this.rootChain.challengeBefore(
-          owner,
+        await this.plasmaChain.challengeBefore(
           0,
           blockNumber2,
           utxoPos4 + slot,
           utxoPos2 + slot,
           utils.bufferToHex(tx22.getBytes()),
           utils.bufferToHex(cTxList),
-          {from: recipient, gas: startExitGasLimit});
+          {from: recipient, gas: challengeGasLimit});
 
-        const getExitResultAfter = await this.rootChain.getExit(
-          owner,
+        const getExitResultAfter = await this.plasmaChain.getExit(
           utxoPos4 + slot,
           {from: user, gas: gasLimit});
         assert.equal(getExitResultAfter[3], 1);
@@ -355,43 +336,38 @@ contract('RootChain', function ([user, owner, recipient, user4, user5]) {
           Buffer.from('', 'hex')
         ]);
 
-        await this.rootChain.respondChallenge(
-          owner,
+        await this.plasmaChain.respondChallenge(
           0,
           blockNumber3,
           utxoPos4 + slot,
           utxoPos2 + slot,
           utils.bufferToHex(tx32.getBytes()),
           utils.bufferToHex(rTxList),
-          {from: owner, gas: startExitGasLimit});
+          {from: owner, gas: challengeGasLimit});
 
-        const getExitResultAfterRespond = await this.rootChain.getExit(
-          owner,
+        const getExitResultAfterRespond = await this.plasmaChain.getExit(
           utxoPos4 + slot,
           {from: user, gas: gasLimit});
         assert.equal(getExitResultAfterRespond[3].toNumber(), 0);
 
-        await this.rootChain.challengeBefore(
-          owner,
+        await this.plasmaChain.challengeBefore(
           0,
           blockNumber3,
           utxoPos4 + slot,
           utxoPos2 + slot,
           utils.bufferToHex(tx32.getBytes()),
           utils.bufferToHex(rTxList),
-          {from: recipient, gas: startExitGasLimit});
-        await this.rootChain.respondChallenge(
-          owner,
+          {from: recipient, gas: challengeGasLimit});
+        await this.plasmaChain.respondChallenge(
           0,
           blockNumber4,
           utxoPos4 + slot,
           utxoPos2 + slot,
           utils.bufferToHex(tx42.getBytes()),
           utils.bufferToHex(exitTxInfo),
-          {from: owner, gas: startExitGasLimit});
+          {from: owner, gas: challengeGasLimit});
 
-        const getExitResultAfterSecondChallenge = await this.rootChain.getExit(
-          owner,
+        const getExitResultAfterSecondChallenge = await this.plasmaChain.getExit(
           utxoPos4 + slot,
           {from: user, gas: gasLimit});
         assert.equal(getExitResultAfterSecondChallenge[3].toNumber(), 0);

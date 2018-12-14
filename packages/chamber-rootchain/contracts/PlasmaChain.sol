@@ -22,7 +22,6 @@ contract PlasmaChain {
      */
 
     event Deposit(
-      address chainIndex,
       address indexed depositor,
       uint256 start,
       uint256 end
@@ -53,15 +52,8 @@ contract PlasmaChain {
     uint256 public constant CHILD_BLOCK_INTERVAL = 1000;
     uint256 public constant CHUNK_SIZE = 1000000000000000000;
 
-    struct Segment {
-      uint256 start;
-      uint256 end;
-    }
-
     struct Coin {
       address token;
-      mapping (uint256 => Segment) withdrawals;
-      uint nWithdrawals;
       uint exit;
       bool hasValue;
     }
@@ -107,6 +99,7 @@ contract PlasmaChain {
     mapping (uint256 => Coin) coins;
     mapping (uint256 => Exit) exits;
     mapping (uint256 => Challenge) challenges;
+    mapping (uint256 => TxDecoder.Amount) withdrawals;
     // mapping (address => uint256) weights;
 
     struct ExitTxo {
@@ -168,7 +161,7 @@ contract PlasmaChain {
     /**
      * @dev Allows anyone to deposit funds into the Plasma chain.
      */
-    function deposit(address _chain)
+    function deposit()
         public
         payable
     {
@@ -182,7 +175,6 @@ contract PlasmaChain {
         require(!coins[i].hasValue);
         coins[i] = Coin({
           token: address(0),
-          nWithdrawals: 0,
           exit: 0,
           hasValue: true
         });
@@ -193,7 +185,7 @@ contract PlasmaChain {
       });
       currentChildBlock = currentChildBlock.add(1);
       depositCount = end;
-      emit Deposit(_chain, msg.sender, start, end);
+      emit Deposit(msg.sender, start, end);
     }
 
     /**
@@ -296,6 +288,20 @@ contract PlasmaChain {
       delete exits[_eUtxoPos];
     }
 
+    function challengeWithdrawal(
+      uint256 _withdrawal,
+      uint256 _eUtxoPos
+    )
+      public
+    {
+      Exit exit = exits[_eUtxoPos];
+      require(withinRangeSingle(
+        withdrawals[_withdrawal],
+        exit.output
+      ), 'withdrawal should has same segment');
+      delete exits[_eUtxoPos];
+    }
+
     /**
      * @dev start challenge game
      * @param _txInfos txBytes, proof, sigs, confsigs
@@ -391,10 +397,24 @@ contract PlasmaChain {
       returns (bool)
     {
       for(uint j = 0;j < values.length;j++) {
-        for(uint k = 0;k < exitTxo.values.length;k += 2) {
-          if(!(values[j].end < exitTxo.values[k] || exitTxo.values[k + 1] < values[j].start)) {
-            return true;
-          }
+        if(withinRangeSingle(values[j], exitTxo)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function withinRangeSingle(
+      TxDecoder.Amount value,
+      ExitTxo memory exitTxo
+    )
+      private
+      view
+      returns (bool)
+    {
+      for(uint k = 0;k < exitTxo.values.length;k += 2) {
+        if(!(value.end < exitTxo.values[k] || exitTxo.values[k + 1] < value.start)) {
+          return true;
         }
       }
       return false;
@@ -408,17 +428,6 @@ contract PlasmaChain {
     {
       uint256 start = value.start / CHUNK_SIZE;
       return start;
-    }
-
-    function getIndex(
-      TxDecoder.Amount value
-    )
-      pure
-      returns (uint256, uint256)
-    {
-      uint256 start = value.start / CHUNK_SIZE;
-      uint256 end = value.end / CHUNK_SIZE;
-      return (start, end);
     }
 
     /**
@@ -532,38 +541,11 @@ contract PlasmaChain {
     )
       private
     {
-      uint slot = start / CHUNK_SIZE;
-      uint slotEnd = end / CHUNK_SIZE;
-
-      for(uint j = slot;j <= slotEnd;j++) {
-        Coin coin = coins[j];
-        for(uint k = 0;k < coins[j].nWithdrawals;k++) {
-          require(
-            !(end < coins[j].withdrawals[k].start
-            || coins[j].withdrawals[k].end < start));
-        }
-        if(start <= j * CHUNK_SIZE && (j+1) * CHUNK_SIZE <= end) {
-          delete coins[j];
-          // coin.token
-          currentExit.output.owners[0].transfer(CHUNK_SIZE);
-        }else{
-          uint lstart = start;
-          uint lend = end;
-          if(start <= j * CHUNK_SIZE) {
-            lstart = j * CHUNK_SIZE;
-            lend = end;
-          }else if((j+1) * CHUNK_SIZE <= end) {
-            lstart = start;
-            lend = (j+1) * CHUNK_SIZE;
-          }
-          coin.withdrawals[coin.nWithdrawals] = Segment({
-            start: lstart,
-            end: lend
-          });
-          currentExit.output.owners[0].transfer(lend - lstart);
-          coin.nWithdrawals++;
-        }
-      }
+      currentExit.output.owners[0].transfer(end - start);
+      withdrawals[start] = TxDecoder.Amount({
+        start: start,
+        end: end
+      });
     }
 
     /* 
@@ -623,25 +605,11 @@ contract PlasmaChain {
     {
       uint256 _utxoPos = _blkNum * 1000000 + (_utxo.value[0].start / CHUNK_SIZE);
       uint256 exitableAt = Math.max(_created_at + 1 weeks, block.timestamp + 1 weeks);
-      uint256[] memory values = new uint256[](_utxo.value.length * 2);
-      for(uint c = 0; c < _utxo.value.length; c++) {
-        var (start, end) = getIndex(_utxo.value[c]);
-        values[c*2] = _utxo.value[c].start;
-        values[c*2 + 1] = _utxo.value[c].end;
-        for(uint j = start; j <= end; j++) {
-          coins[j].exit = _utxoPos;
-        }
-      }
       exits[_utxoPos] = Exit({
         blkNum: _blkNum,
         exitableAt: exitableAt,
         input: getExitTxo(_input, _input.blkNum),
-        output: ExitTxo({
-          owners: _utxo.owners,
-          values: values,
-          state: _utxo.stateBytes,
-          blkNum: _blkNum
-        }),
+        output: getExitTxo(_utxo, _blkNum),
         challengeCount: 0
       });
       emit ExitStarted(msg.sender, _utxo);
