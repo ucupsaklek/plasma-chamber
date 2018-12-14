@@ -2,7 +2,7 @@ const assert = require('assert');
 const SparseMerkleTree = require('../lib/smt');
 const utils = require('ethereumjs-util');
 
-describe('SparceMerkleTree', function() {
+describe('SparseMerkleTree', function() {
 
   describe('verify', function() {
 

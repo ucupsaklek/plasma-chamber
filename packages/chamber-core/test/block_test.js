@@ -18,6 +18,7 @@ describe('Block', function() {
     const nonce = 111111;
     const privKey = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
     const testAddress = utils.privateToAddress(privKey);
+    const standardVerificator = 0;
   
     const input = new TransactionOutput(
       [testAddress],
@@ -31,6 +32,7 @@ describe('Block', function() {
       [ownState]
     );
     const tx = new Transaction(
+      standardVerificator,
       0,
       [testAddress],
       nonce,
@@ -41,7 +43,7 @@ describe('Block', function() {
     it('should return hash', function() {
       const block = new Block();
       block.appendTx(tx);
-      assert.equal(block.merkleHash().toString('hex'), '44fdbc92cb225bc067321d0b898f1ee8de7cb7aa005acfe56bbb95baf03ac7ca');
+      assert.equal(block.merkleHash().toString('hex'), 'ae8410a67718ef62f51bcd94ea45d049f5536b6e5cb4787079a47534f4eab02f');
     });
 
     it('should verify', function() {

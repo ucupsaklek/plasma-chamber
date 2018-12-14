@@ -354,7 +354,7 @@ contract PlasmaChain {
       TxVerification.Tx transaction
     )
       private
-      pure
+      view
     {
       if(transaction.inputs.length == 0) {
         // deposit transaction
@@ -370,6 +370,7 @@ contract PlasmaChain {
         );
         TxVerification.verifyTransaction(
           transaction,
+          _txBytes,
           txHash,
           keccak256(txHash, root),
           RLP.toBytes(txList[1]),

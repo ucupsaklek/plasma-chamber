@@ -20,6 +20,7 @@ describe('Transaction', function() {
   const testAddressBuf2 = utils.privateToAddress(privKey2);
   const testAddress1 = utils.toChecksumAddress(utils.bufferToHex(testAddressBuf1));
   const testAddress2 = utils.toChecksumAddress(utils.bufferToHex(testAddressBuf2));
+  const standardVerificator = 0;
   const input = new TransactionOutput(
     [testAddress1],
     [segment1],
@@ -43,6 +44,7 @@ describe('Transaction', function() {
     [ownState]
   );
   const tx = new Transaction(
+    standardVerificator,
     0,    // label
     [testAddressBuf2],  // args
     1,     // nonce,
@@ -50,6 +52,7 @@ describe('Transaction', function() {
     [output]
   );
   const tx2 = new Transaction(
+    standardVerificator,
     0,    // label
     [testAddressBuf2],  // args
     2,     // nonce,
@@ -68,6 +71,7 @@ describe('Transaction', function() {
     [ownState, BufferUtils.numToBuffer(12346), new Buffer('23456789', 'hex')]
   );
   const tx3 = new Transaction(
+    standardVerificator,
     1,    // label
     [BufferUtils.numToBuffer(12345)],  // args
     3,     // nonce,
@@ -82,19 +86,19 @@ describe('Transaction', function() {
     tx.sigs[0] = sign1;
 
     it('should return bytes', function() {
-      assert.equal(tx.getBytes().toString('hex'), 'f8668080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001');
+      assert.equal(tx.getBytes().toString('hex'), 'f8660080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001');
     });
 
     it('should return bytes include sigs', function() {
-      assert.equal(tx.getBytes(true).toString('hex'), 'f8ab8080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001f843b841ea3141c70a3a6bbbf2cdce0987891a19ca6dbae78a127b7c767918d3dc65031123bab438ee67e5f1dcff05198475074ad2d1ab4be7f9782d46550fedcb34406c1b');
+      assert.equal(tx.getBytes(true).toString('hex'), 'f8ab0080d59434fdeadc2b69fd24f3043a89f9231f10f1284a4ae6e5d594953b8fb338ef870eda6d74c1dd4769b6c977b8cfcbca00880de0b6b3a763ffffc1807be5e4d59434fdeadc2b69fd24f3043a89f9231f10f1284a4acbca00880de0b6b3a763ffffc18001f843b84170c9d50f16973eda1cd667079c4299824e95b000b5895dc03200dfb4d02965a71c26fa933cf74e118c009d71647d8edaa9bc126dddb5f19aa8a86978b7532eab1b');
     });
 
     it('should return hash', function() {
-      assert.equal(tx.hash().toString('hex'), '227f149fc16214d048589523190a17e478e4a39af6d7635275e420ec42420ff7');
+      assert.equal(tx.hash().toString('hex'), 'b54b7385ada9a10e5494162bab0049cbba4b4b739654a579d6c1cc332cb6fb12');
     });
 
     it('should return merkleHash', function() {
-      assert.equal(tx.merkleHash().toString('hex'), '0106fccd0ac906cf4bc21442c7e932645e302b759f4d75beb1618723c6c01ce6');
+      assert.equal(tx.merkleHash().toString('hex'), 'f3b34b22fa421043b2333b72a607a48a9cd3cc0b875eecd9c63bb4ca05d84f33');
     });
 
   });
@@ -161,6 +165,7 @@ describe('Transaction', function() {
   describe('Transaction.toJson', function() {
 
     const testTx = new Transaction(
+      standardVerificator,
       0,    // label
       [Buffer.from('00', 'hex')],  // args
       1,     // nonce,

@@ -25,6 +25,7 @@ describe('BaseWallet', function() {
     const blkNum = 54321
     const blkNum2 = 54322
     const blkNum3 = 54323
+    const standardVerificator = 0;
     const input = new TransactionOutput(
       [testAddress],
       [segment],
@@ -38,6 +39,7 @@ describe('BaseWallet', function() {
       [ownState]
     )
     const tx = new Transaction(
+      standardVerificator,
       0,
       [testAddressBuf],
       111,
@@ -56,6 +58,7 @@ describe('BaseWallet', function() {
       [ownState]
     )
     const tx2 = new Transaction(
+      standardVerificator,
       0,
       [testAddressBuf],
       112,

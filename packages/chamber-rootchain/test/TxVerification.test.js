@@ -1,6 +1,7 @@
 const { injectInTruffle } = require('sol-trace');
 injectInTruffle(web3, artifacts);
 
+const MultisigGame = artifacts.require('MultisigGame');
 const TxVerificationTest = artifacts.require('TxVerificationTest');
 
 const {
@@ -21,8 +22,10 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
   const CHUNK_SIZE = BigNumber('1000000000000000000');
   const segment1 = {start: 0, end: CHUNK_SIZE};
   const gasLimit = 200000;
+  const standardVerifier = 0;
 
   beforeEach(async function () {
+    this.multisigGame = await MultisigGame.new();
     this.txVerificationTest = await TxVerificationTest.new();
   });
 
@@ -41,6 +44,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
         [0]
       );
       const tx = new Transaction(
+        standardVerifier,
         0,
         [testAddress2],
         new Date().getTime(),
@@ -78,6 +82,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
         [0]
       );
       const tx = new Transaction(
+        standardVerifier,
         1,
         [testAddress2, BufferUtils.numToBuffer(100000)],
         new Date().getTime(),
@@ -107,6 +112,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
         [testAddress2, testAddress1, BufferUtils.numToBuffer(4), BufferUtils.numToBuffer(0)]
       );
       const tx = new Transaction(
+        this.multisigGame.address,
         100,
         [BufferUtils.numToBuffer(0), BufferUtils.numToBuffer(1)],
         new Date().getTime(),
