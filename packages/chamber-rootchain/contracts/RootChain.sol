@@ -308,7 +308,7 @@ contract RootChain {
 
     function parseExitTx(ChildBlock childBlock, RLP.RLPItem txItem)
       internal
-      pure
+      view
       returns (ExitTx)
     {
       var txList = RLP.toList(txItem);
@@ -331,7 +331,7 @@ contract RootChain {
         transaction.outputs[index].value
       );
       TxVerification.verifyTransaction(
-        transaction, txHash, sigs);
+        transaction, txBytes, txHash, sigs);
 
       return ExitTx({
         blkNum: blkNum,
@@ -512,7 +512,7 @@ contract RootChain {
       TxVerification.Tx challengeTx
     )
       private
-      pure
+      view
     {
       RLP.RLPItem[] memory txList = RLP.toList(RLP.toRlpItem(_txInfos));
       bytes32 txHash = keccak256(_txBytes);
@@ -522,7 +522,7 @@ contract RootChain {
         RLP.toBytes(txList[0]),
         values
       );
-      TxVerification.verifyTransaction(challengeTx, txHash, RLP.toBytes(txList[1]));
+      TxVerification.verifyTransaction(challengeTx, _txBytes, txHash, RLP.toBytes(txList[1]));
       if(challengeTx.inputs.length >= 2) {
         require(
           checkConfSigs(
