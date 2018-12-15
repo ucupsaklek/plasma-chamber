@@ -1,5 +1,5 @@
 {
-  "contractName": "PlasmaChain",
+  "contractName": "RootChain",
   "abi": [
     {
       "constant": true,
