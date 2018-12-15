@@ -23,7 +23,6 @@ class BaseWallet {
   constructor(_options) {
     const options = _options || {}
     this.childChainApi = new ChildChainApi(options.childChainEndpoint || process.env.CHILDCHAIN_ENDPOINT || 'http://localhost:3000');
-    this.operatorAddress = options.operatorAddress || process.env.OPERATOR_ADDRESS || '0x627306090abab3a6e1400e9345bc60c78a8bef57';
     this.rootChainAddress = options.rootChainAddress
     this.address = null
     this.utxos = {}
@@ -103,9 +102,7 @@ class BaseWallet {
   }
 
   async deposit(eth) {
-    return await this.rootChainContract.methods.deposit(
-      this.operatorAddress
-    ).send({
+    return await this.rootChainContract.methods.deposit().send({
       from: this.address,
       gas: 200000,
       value: (new BN("1000000000000000000")).mul(new BN(eth))
@@ -118,7 +115,6 @@ class BaseWallet {
     const latestTx = txList[txList.length - 1];
 
     return this.rootChainContract.methods.startExit(
-      this.operatorAddress,
       latestTx[0],
       latestTx[4],
       utils.bufferToHex(txListBytes)
