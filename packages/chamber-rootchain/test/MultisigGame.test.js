@@ -70,6 +70,7 @@ contract('MultisigGame', function ([user, owner, recipient, user4, user5]) {
       const result = await this.txVerificationTest.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(Buffer.concat([sign1, sign2])),
+        '0x',
         {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
@@ -109,6 +110,7 @@ contract('MultisigGame', function ([user, owner, recipient, user4, user5]) {
       const result = await this.txVerificationTest.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(Buffer.concat([sign1, sign2])),
+        '0x',
         {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });

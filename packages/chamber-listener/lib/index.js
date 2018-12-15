@@ -68,7 +68,6 @@ module.exports.run = childChain => {
      * @param bytes32 _root The merkle root of a child chain transactions.
      */
     rootChain.methods.submitBlock(
-      operatorAddress,
       utils.bufferToHex(newBlock.merkleHash())
     ).send({
       from: operatorAddress,

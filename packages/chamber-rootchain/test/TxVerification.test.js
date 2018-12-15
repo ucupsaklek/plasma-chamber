@@ -56,6 +56,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
       const result = await this.txVerificationTest.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(sign),
+        '0x',
         {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
@@ -93,6 +94,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
       const result = await this.txVerificationTest.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(sign),
+        '0x',
         {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
@@ -122,6 +124,7 @@ contract('TxVerificationTest', function ([user, owner, recipient, user4, user5])
       const result = await this.txVerificationTest.verifyTransaction(
         utils.bufferToHex(txBytes),
         utils.bufferToHex(sign),
+        '0x',
         {from: user, gas: gasLimit});
       assert.equal(result, 0);
     });
