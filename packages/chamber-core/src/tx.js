@@ -157,13 +157,23 @@ class Transaction {
 
   /**
    * 
+   * @param {Address} verifier 
    * @param {number} label 
    * @param {Array[Buffer]} args 
    * @param {number} nonce 
    * @param {Array[TransactionOutput]} inputs 
    * @param {Array[TransactionOutput]} outputs 
    */
-  constructor(label, args, nonce, inputs, outputs) {
+  constructor(verifier, label, args, nonce, inputs, outputs) {
+    // verifier should be address
+    if(verifier instanceof Buffer) {
+      this.verifier = utils.toChecksumAddress(utils.bufferToHex(verifier));
+    }else if(utils.isValidAddress(verifier)) {
+      this.verifier = verifier;
+    }else{
+      this.verifier = utils.toChecksumAddress('0x00');
+    }
+
     // label must be number
     if(typeof label != 'number') throw new Error('invalid label at Transaction.constructor');
     this.label = label;
@@ -190,7 +200,7 @@ class Transaction {
    */
   getBytes(includeSigs) {
     let data = [
-      0,
+      BufferUtils.hexToBuffer(this.verifier),
       this.label,
       this.args,
       this.inputs.map(i => i.getTuple()),
@@ -210,6 +220,7 @@ class Transaction {
   static fromBytes(data) {
     const decoded = RLP.decode(data);
     const tx = new Transaction(
+      decoded[0],
       BufferUtils.bufferToNum(decoded[1]),
       decoded[2],
       BufferUtils.bufferToNum(decoded[5]),
@@ -282,6 +293,7 @@ class Transaction {
 
   toJson() {
     return {
+      verifier: this.verifier,
       label: this.label,
       args: this.args.map(buf => buf.toString('hex')),
       inputs: this.inputs.map(i => i.toJson()),

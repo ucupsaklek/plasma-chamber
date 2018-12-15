@@ -78,6 +78,7 @@ describe('Chain', function() {
     const privKey2 = testData.privKey2;
     const testAddress1 = utils.privateToAddress(privKey1);
     const testAddress2 = utils.privateToAddress(privKey2);
+    const standardVerificator = 0;
     const input = new TransactionOutput(
       [testAddress1],
       [coinId1],
@@ -96,6 +97,7 @@ describe('Chain', function() {
       [0]
     );
     const depositTx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,
@@ -103,6 +105,7 @@ describe('Chain', function() {
       [input]
     );
     const tx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,
@@ -110,6 +113,7 @@ describe('Chain', function() {
       [output]
     );
     const invalidTx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,

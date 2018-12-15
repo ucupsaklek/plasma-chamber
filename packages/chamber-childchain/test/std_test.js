@@ -5,15 +5,17 @@ const {
   TransactionOutput
 } = require('@cryptoeconomicslab/chamber-core');
 const std = require('../lib/verifier/std');
+const testData = require('./testdata');
 
 describe('verifier.std', function() {
 
   const segment1 = {start:2, end:3};
   const segment2 = {start:4, end:5};
-  const privKey1 = new Buffer('e88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257', 'hex')
-  const privKey2 = new Buffer('855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff', 'hex')
+  const privKey1 = testData.privKey1;
+  const privKey2 = testData.privKey2;
   const testAddress1 = utils.privateToAddress(privKey1);
   const testAddress2 = utils.privateToAddress(privKey2);
+  const standardVerificator = 0;
 
   describe('transfer', function() {
     const input = new TransactionOutput(
@@ -25,6 +27,7 @@ describe('verifier.std', function() {
       [segment1]
     );
     const tx = new Transaction(
+      standardVerificator,
       0,    // label
       [testAddress2],  // args
       1,     // nonce,

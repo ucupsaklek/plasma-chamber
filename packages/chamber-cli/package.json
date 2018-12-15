@@ -1,6 +1,6 @@
 {
   "name": "@cryptoeconomicslab/plasma-chamber-cli",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Plasma Chamber CLI",
   "main": "lib/index.js",
   "publishConfig": {
@@ -16,8 +16,8 @@
   "author": "CryptoEconomicsLab",
   "license": "MIT",
   "dependencies": {
-    "@cryptoeconomicslab/chamber-childchain": "^1.0.7",
-    "@cryptoeconomicslab/chamber-core": "^1.0.7",
+    "@cryptoeconomicslab/chamber-childchain": "^1.1.0",
+    "@cryptoeconomicslab/chamber-core": "^1.1.0",
     "bip39": "^2.5.0",
     "commander": "^2.18.0",
     "ethereumjs-wallet": "^0.6.2",
