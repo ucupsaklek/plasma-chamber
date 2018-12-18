@@ -30,6 +30,7 @@ class BaseWallet {
     this.bigStorage = options.bigStorage || new MockBigStorage()
     this.latestBlockNumber = 0;
     this.loadedBlockNumber = this.storage.load('loadedBlockNumber') || 0;
+    this.exitList = this.storage.load('exitList') || [];
   }
 
   setAddress(address) {
@@ -113,7 +114,7 @@ class BaseWallet {
     const tx = await this.getTransactions(utxo, 2)
     const txInfo = RLP.encode([tx.proof, tx.sigs, tx.confsig]);
 
-    return this.rootChainContract.methods.startExit(
+    const result = await this.rootChainContract.methods.startExit(
       tx.blkNum,
       tx.index,
       utils.bufferToHex(tx.txBytes),
@@ -123,8 +124,32 @@ class BaseWallet {
       gas: 600000,
       // Exit Bond
       // value: new BN("1000000000000000000")
-    })
+    });
+    const exitPos = tx.blkNum * 1000000 + utxo.getStartSlot(CHUNK_SIZE, 0);
+    this.exitList.push({
+      exitPos: exitPos,
+      utxo: utxo.toJson()
+    });
+    this.storage.store('exitList', this.exitList);
+    return result;
+  }
 
+  async getExit(exitPos) {
+    return await this.rootChainContract.methods.getExit(
+      exitPos
+    ).call({
+      from: this.address,
+      gas: 200000
+    });
+  }
+
+  async finalizeExit(exitPos) {
+    return await this.rootChainContract.methods.finalizeExits(
+      exitPos
+    ).send({
+      from: this.address,
+      gas: 500000
+    });
   }
 
   getUTXOs() {
@@ -135,6 +160,10 @@ class BaseWallet {
 
   getHistory(utxoKey) {
     return this.bigStorage.searchProof(utxoKey);
+  }
+
+  getExits() {
+    return this.exitList;
   }
 
   // private methods
