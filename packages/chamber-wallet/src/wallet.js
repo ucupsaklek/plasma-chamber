@@ -111,12 +111,12 @@ class BaseWallet {
   }
 
   async startExit(utxo) {
-    const tx = await this.getTransactions(utxo, 2)
+    const tx = await this.getTransactions(utxo)
     const txInfo = RLP.encode([tx.proof, tx.sigs, tx.confsig]);
 
     const result = await this.rootChainContract.methods.startExit(
       tx.blkNum,
-      tx.index,
+      tx.outputIndex,
       utils.bufferToHex(tx.txBytes),
       utils.bufferToHex(txInfo)
     ).send({
@@ -152,6 +152,22 @@ class BaseWallet {
     });
   }
 
+  async challengeAfter(exitPos, utxo) {
+    const tx = await this.getTransactions(utxo)
+    const txInfo = RLP.encode([tx.proof, tx.sigs, tx.confsig]);
+
+    return await this.rootChainContract.methods.challengeAfter(
+      tx.inputIndex,
+      tx.blkNum,
+      exitPos,
+      utils.bufferToHex(tx.txBytes),
+      utils.bufferToHex(txInfo)
+    ).send({
+      from: this.address,
+      gas: 800000
+    });
+  }
+
   getUTXOs() {
     return Object.keys(this.utxos).map(k => {
       return TransactionOutput.fromTuple(RLP.decode(Buffer.from(this.utxos[k], 'hex')));
@@ -170,24 +186,23 @@ class BaseWallet {
 
   /**
    * getTransactions
-   * @param {TransactionOutput} utxo 
-   * @param {Number} num 
+   * @param {TransactionOutput} utxo
    * @description get transactions by the UTXO
    */
-  async getTransactions(utxo, num) {
+  async getTransactions(utxo) {
     const slots = utxo.value.map(({start, end}) => {
       return TransactionOutput.amountToSlot(CHUNK_SIZE, start)
     })
     const history = await this.bigStorage.get(slots[0], utxo.blkNum)
     const tx = this.hexToTransaction(history.txBytes)
-    const index = this.getIndexOfOutput(tx, utxo)
     return {
       blkNum: history.blkNum,
       txBytes: tx.getBytes(),
       proof: Buffer.from(history.proof, 'hex'),
       sigs: tx.sigs[0],
       confsig: '',
-      index: index
+      inputIndex: this.getIndexOfInput(tx, utxo),
+      outputIndex: this.getIndexOfOutput(tx, utxo)
     }
   }
 
@@ -298,6 +313,16 @@ class BaseWallet {
       block.appendTx(tx)
     });
     return block.createCoinProof(chunk).toString('hex')
+  }
+
+  getIndexOfInput(tx, utxo) {
+    let index = 0
+    tx.inputs.map((input, i) => {
+      if(Buffer.compare(input.hash(), utxo.hash()) == 0) {
+        index = i
+      }
+    });
+    return index
   }
 
   getIndexOfOutput(tx, utxo) {
