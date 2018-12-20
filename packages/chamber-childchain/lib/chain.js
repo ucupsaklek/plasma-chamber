@@ -1,9 +1,11 @@
 const Snapshot = require('./state/snapshot');
 const {
+  BufferUtils,
   Block,
   TransactionOutput,
   Transaction
 } = require('@cryptoeconomicslab/chamber-core');
+const RLP = require('rlp');
 const ChainEvent = require('./chainevent');
 const Verifier = require('./verifier');
 const {
@@ -84,6 +86,31 @@ class Chain {
       [output]  // outputs
     );
     return depositTx;
+  }
+
+  /**
+   * exitStarted
+   * @param {*} event event object of web3
+   */
+  async exitStarted(event) {
+    const returnValues = event.returnValues;
+    const valueArr = returnValues.output[1];
+    const values = [];
+    for(var i = 0;i < valueArr.length;i += 2) {
+      values.push({
+        start: BigNumber(valueArr[i]),
+        end: BigNumber(valueArr[i + 1])
+      });
+    }
+    const state = RLP.decode(BufferUtils.hexToBuffer(returnValues.output[2]));
+    const txo = new TransactionOutput(
+      returnValues.output[0],
+      values,
+      state.length == 0 ? [BufferUtils.bufferToNum(state)] : [BufferUtils.bufferToNum(state[0])].concat(state.slice(1)),
+      parseInt(returnValues.output[3]),
+    )
+    console.log(txo.toJson(), txo.getBytes().toString('hex'))
+    await this.snapshot.deleteId(txo.hash());
   }
 
   createTx(txData) {
