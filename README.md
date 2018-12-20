@@ -29,7 +29,7 @@ Plasma is a 2nd layer scaling solution focusing on transaction's throughput per 
 ### Install
 
 ```
-git clone git@github.com:cryptoeconomicslab/plasma-chamber.git
+git clone https://github.com/cryptoeconomicslab/plasma-chamber.git
 cd plasma-chamber
 mkdir .db
 yarn
