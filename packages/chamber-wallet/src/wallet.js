@@ -7,6 +7,7 @@ const {
   MockBigStorage
 } = require('./storage')
 const ChildChainApi = require('./childchain')
+const Web3EventListener = require('event')
 const {
   Block,
   Constants,
@@ -337,6 +338,15 @@ class BaseWallet {
 
   hexToTransaction(txBytes) {
     return Transaction.fromBytes(Buffer.from(txBytes, 'hex'));
+  }
+
+  getEventListener(confirmation) {
+    return new Web3EventListener(
+      this.web3,
+      this.rootChainContract,
+      this.storage,
+      confirmation
+    );
   }
 
 }
