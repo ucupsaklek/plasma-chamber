@@ -93,6 +93,12 @@ class Chain {
    * @param {*} event event object of web3
    */
   async exitStarted(event) {
+    const txo = eventToTransactionOutput(event);
+    console.log(txo.toJson(), txo.getBytes().toString('hex'));
+    await this.snapshot.deleteId(txo.hash());
+  }
+
+  static eventToTransactionOutput(event) {
     const returnValues = event.returnValues;
     const valueArr = returnValues.output[1];
     const values = [];
@@ -103,14 +109,12 @@ class Chain {
       });
     }
     const state = RLP.decode(BufferUtils.hexToBuffer(returnValues.output[2]));
-    const txo = new TransactionOutput(
+    return new TransactionOutput(
       returnValues.output[0],
       values,
       state.length == 0 ? [BufferUtils.bufferToNum(state)] : [BufferUtils.bufferToNum(state[0])].concat(state.slice(1)),
       parseInt(returnValues.output[3]),
-    )
-    console.log(txo.toJson(), txo.getBytes().toString('hex'))
-    await this.snapshot.deleteId(txo.hash());
+    );
   }
 
   createTx(txData) {
