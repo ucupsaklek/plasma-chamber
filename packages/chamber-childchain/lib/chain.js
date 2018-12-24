@@ -90,17 +90,23 @@ class Chain {
 
   /**
    * exitStarted
-   * @param {*} event event object of web3
+   * @param {*} event ExitStarted event object of web3
+   * Please see https://github.com/cryptoeconomicslab/plasma-chamber/blob/aa97f2ae1a99e919a10e25fe821ee55e40d29bfb/packages/chamber-rootchain/contracts/RootChain.sol#L30
    */
   async exitStarted(event) {
-    const txo = eventToTransactionOutput(event);
+    const txo = exitTxoToTransactionOutput(event.returnValues);
     console.log(txo.toJson(), txo.getBytes().toString('hex'));
     await this.snapshot.deleteId(txo.hash());
   }
 
-  static eventToTransactionOutput(event) {
-    const returnValues = event.returnValues;
-    const valueArr = returnValues.output[1];
+  /**
+   * 
+   * @param {ExitTxo} exitTxo JSON array style of exitTxo structure see https://github.com/cryptoeconomicslab/plasma-chamber/blob/aa97f2ae1a99e919a10e25fe821ee55e40d29bfb/packages/chamber-rootchain/contracts/RootChain.sol#L105
+   * @return {TransactionOutput} see https://github.com/cryptoeconomicslab/plasma-chamber/blob/master/packages/chamber-core/src/tx.js#L6
+   */
+  static exitTxoToTransactionOutput(exitTxo) {
+    // returnValues
+    const valueArr = exitTxo.output[1];
     const values = [];
     for(var i = 0;i < valueArr.length;i += 2) {
       values.push({
@@ -108,12 +114,12 @@ class Chain {
         end: BigNumber(valueArr[i + 1])
       });
     }
-    const state = RLP.decode(BufferUtils.hexToBuffer(returnValues.output[2]));
+    const state = RLP.decode(BufferUtils.hexToBuffer(exitTxo.output[2]));
     return new TransactionOutput(
-      returnValues.output[0],
+      exitTxo.output[0],
       values,
       state.length == 0 ? [BufferUtils.bufferToNum(state)] : [BufferUtils.bufferToNum(state[0])].concat(state.slice(1)),
-      parseInt(returnValues.output[3]),
+      parseInt(exitTxo.output[3]),
     );
   }
 
