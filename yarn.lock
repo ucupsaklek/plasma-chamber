@@ -1389,10 +1389,6 @@ assign-symbols@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/assign-symbols/-/assign-symbols-1.0.0.tgz#59667f41fadd4f20ccbc2bb96b8d4f7f78ec0367"
 
-asty@^1.7.12:
-  version "1.7.16"
-  resolved "https://registry.yarnpkg.com/asty/-/asty-1.7.16.tgz#5ad3d91ee70735bd1b2a7ffd4eeeed63a62bea89"
-
 async-cache@~1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/async-cache/-/async-cache-1.1.0.tgz#4a9a5a89d065ec5d8e5254bd9ee96ba76c532b5a"
@@ -3302,10 +3298,6 @@ ed25519@^0.0.4:
 ee-first@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
-
-ejs@^2.6.1:
-  version "2.6.1"
-  resolved "https://registry.yarnpkg.com/ejs/-/ejs-2.6.1.tgz#498ec0d495655abc6f23cd61868d926464071aa0"
 
 electron-to-chromium@^1.3.47:
   version "1.3.86"
@@ -7395,24 +7387,6 @@ pbkdf2@^3.0.9:
     ripemd160 "^2.0.1"
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
-
-pegjs-prolog-parser@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/pegjs-prolog-parser/-/pegjs-prolog-parser-1.1.1.tgz#12911f2039ca6a2f046f8f2fa15a6f5dc4a54294"
-  dependencies:
-    asty "^1.7.12"
-    pegjs "^0.10.0"
-    pegjs-util "^1.4.11"
-
-pegjs-util@^1.4.11:
-  version "1.4.14"
-  resolved "https://registry.yarnpkg.com/pegjs-util/-/pegjs-util-1.4.14.tgz#71db4b134eb98a738a129aaec12aafef1178817e"
-  dependencies:
-    pegjs ">=0.10.0"
-
-pegjs@>=0.10.0, pegjs@^0.10.0:
-  version "0.10.0"
-  resolved "http://registry.npmjs.org/pegjs/-/pegjs-0.10.0.tgz#cf8bafae6eddff4b5a7efb185269eaaf4610ddbd"
 
 pend@~1.2.0:
   version "1.2.0"
