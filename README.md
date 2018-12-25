@@ -48,6 +48,7 @@ yarn build
 Run all tests.
 
 ```
+yarn build //if you've been back from long vacation, because test runs for built sources :)
 yarn test
 ```
 
