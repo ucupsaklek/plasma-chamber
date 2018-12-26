@@ -2,12 +2,15 @@ const EventEmitter = require('events');
 
 class Web3EventListener extends EventEmitter {
 
-  constructor(web3, contract, storage, confirmation) {
+  constructor(web3, contract, storage, options) {
     super();
     this.web3 = web3;
     this.contract = contract;
+    this.storage = storage;
     this.seenEvents = storage.load('seenEvents') || {};
-    this.confirmation = confirmation;
+    this.options = options || {};
+    this.confirmation = this.options.confirmation || 2;
+    this.interval = this.options.interval || 50000;
   }
 
   async getEvents(event, handler) {
@@ -24,9 +27,13 @@ class Web3EventListener extends EventEmitter {
       this.seenEvents[e.transactionHash] = true;
       this.storage.store('seenEvents', this.seenEvents);
     });
-    setTimeout(()=>{
+    this.currentTimer = setTimeout(()=>{
       this.getEvents(event, handler);
-    }, 10000);
+    }, this.interval);
+  }
+
+  cancel() {
+    cancelTimeout(this.currentTimer)
   }
 
 }

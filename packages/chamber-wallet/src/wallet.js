@@ -7,7 +7,7 @@ const {
   MockBigStorage
 } = require('./storage')
 const ChildChainApi = require('./childchain')
-const Web3EventListener = require('event')
+const Web3EventListener = require('./event')
 const {
   Block,
   Constants,
@@ -340,12 +340,17 @@ class BaseWallet {
     return Transaction.fromBytes(Buffer.from(txBytes, 'hex'));
   }
 
-  getEventListener(confirmation) {
+  /**
+   * @name getEventListener
+   * @param {Object} options options.confirmation is number of blocks to confirm.
+   *     options.interval is interval for fetching events
+   */
+  getEventListener(options) {
     return new Web3EventListener(
       this.web3,
       this.rootChainContract,
       this.storage,
-      confirmation
+      options
     );
   }
 
