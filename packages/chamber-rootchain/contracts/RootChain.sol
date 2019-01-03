@@ -664,4 +664,24 @@ contract RootChain {
     return keccak256(output.owners, values, output.stateBytes);
   }
 
+  function checkTxPublic(
+    uint256 index,
+    uint256 blkNum,
+    bytes txBytes,
+    bytes txInfos
+  )
+    public
+    returns (bool)
+  {
+    var transaction = TxDecoder.getTx(txBytes);
+    checkTx(
+      blocks[blkNum].root,
+      txBytes,
+      txInfos,
+      transaction.inputs[index].value,
+      transaction
+    );
+    return true;
+  }
+
 }

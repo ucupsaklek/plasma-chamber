@@ -2,6 +2,7 @@ const { injectInTruffle } = require('sol-trace');
 injectInTruffle(web3, artifacts);
 
 const FastFinality = artifacts.require('FastFinality');
+const RootChain = artifacts.require('RootChain');
 
 const {
   Constants,
@@ -22,7 +23,8 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
   const gasLimit = 300000;
 
   beforeEach(async function () {
-    this.fastFinality = await FastFinality.new();
+    this.rootChain = await RootChain.new();
+    this.fastFinality = await FastFinality.new(this.rootChain.address);
   });
 
   describe('deposit', function () {
