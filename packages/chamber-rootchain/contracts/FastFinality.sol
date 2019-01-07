@@ -99,6 +99,13 @@ contract FastFinality {
 
   /**
     * @dev 
+    * @param txInfos txInfos include proof, signatures and confsig
+    *     and confsig can be empty.
+    *     [
+    *      <merkle_proof_of_transactions>,
+    *      <signature>,
+    *      <confsig>
+    *     ]
     */
   function challenge(
     uint disputePos,
