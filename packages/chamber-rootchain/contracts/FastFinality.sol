@@ -17,9 +17,14 @@ contract FastFinality {
     address recipient;
     uint256 withdrawableAt;
     uint256 amount;
-    bool isUsed;
+    uint8 status;
   }
 
+  uint8 public constant STATE_FIRST_DISPUTED = 1;
+  uint8 public constant STATE_CHALLENGED = 2;
+  uint8 public constant STATE_SECOND_DISPUTED = 3;
+  uint8 public constant STATE_FINALIZED = 4;
+  
   uint256 totalAmount = 0;
   mapping (address => uint256) deposits;
   address operatorAddress;
@@ -80,7 +85,7 @@ contract FastFinality {
   {
     // check operator's signatures
     bytes32 txHash = keccak256(txBytes);
-    require(!disputes[txHash].isUsed && disputes[txHash].withdrawableAt == 0);
+    require(disputes[txHash].status == 0 && disputes[txHash].withdrawableAt == 0);
     require(operatorAddress == ECRecovery.recover(txHash, operatorSigs));
     var transaction = TxDecoder.getTx(txBytes);
     require(transaction.outputs[index].owners[0] == msg.sender);
@@ -90,9 +95,9 @@ contract FastFinality {
     }
     disputes[txHash] = Dispute({
       recipient: msg.sender,
-      withdrawableAt: block.timestamp,
+      withdrawableAt: block.timestamp + 1 weeks,
       amount: amount,
-      isUsed: false
+      status: STATE_FIRST_DISPUTED
     });
     return true;
   }
@@ -108,7 +113,6 @@ contract FastFinality {
     *     ]
     */
   function challenge(
-    uint disputePos,
     uint256 index,
     uint256 blkNum,
     bytes txBytes,
@@ -125,7 +129,43 @@ contract FastFinality {
       txBytes,
       txInfos);
     bytes32 txHash = keccak256(txBytes);
-    disputes[txHash].isUsed = true;
+    disputes[txHash].status = STATE_CHALLENGED;
+    return true;
+  }
+
+  /**
+    * @dev secondDispute
+    * @param txInfos txInfos include proof, signatures and confsig
+    *     and confsig can be empty.
+    *     [
+    *      <merkle_proof_of_transactions>,
+    *      <signature>,
+    *      <confsig>
+    *     ]
+    */
+  function secondDispute(
+    bytes disputeTxBytes,
+    uint256 index,
+    uint256 blkNum,
+    bytes txBytes,
+    bytes txInfos
+  )
+    public
+    returns (bool)
+  {
+    bytes32 txHash = keccak256(disputeTxBytes);
+    var disputeTransaction = TxDecoder.getTx(disputeTxBytes);
+    var transaction = TxDecoder.getTx(txBytes);
+    // check challenge
+    rootchain.call(
+      'checkTxPublic',
+      index,
+      blkNum,
+      txBytes,
+      txInfos);
+    require(
+      TxDecoder.keccak256TxOutput(disputeTransaction.inputs[0]) == TxDecoder.keccak256TxOutput(transaction.inputs[0]));
+    disputes[txHash].status = STATE_SECOND_DISPUTED;
     return true;
   }
 
@@ -139,10 +179,14 @@ contract FastFinality {
     returns (bool)
   {
     // finalize dispute after 7 days
-    disputes[txHash].recipient.transfer(disputes[txHash].amount);
-    disputes[txHash].isUsed = true;
-    return true;
+    var dispute = disputes[txHash];
+    require(dispute.withdrawableAt < block.timestamp);
+    if(dispute.status == STATE_FIRST_DISPUTED || dispute.status == STATE_SECOND_DISPUTED) {
+      dispute.recipient.transfer(dispute.amount);
+      dispute.status = STATE_FINALIZED;
+      return true;
+    }
+    return false;
   }
-
 
 }
