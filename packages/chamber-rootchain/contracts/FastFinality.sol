@@ -2,6 +2,7 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
+import "./IRootChain.sol";
 import "./lib/ECRecovery.sol";
 import "./TxDecoder.sol";
 
@@ -29,7 +30,7 @@ contract FastFinality {
   mapping (address => uint256) deposits;
   address operatorAddress;
   mapping (bytes32 => Dispute) disputes;
-  address rootchain;
+  IRootChain rootchain;
 
   /*
     * Constructor
@@ -39,12 +40,12 @@ contract FastFinality {
     public
   {
     operatorAddress = msg.sender;
-    rootchain = _rootchain;
+    rootchain = IRootChain(_rootchain);
   }
 
   /*
-    * Public Functions
-    */
+   * Public Functions
+   */
 
   /**
     * @dev deposit by operator
@@ -122,13 +123,13 @@ contract FastFinality {
     returns (bool)
   {
     // check inclusion
-    rootchain.call(
-      'checkTxPublic',
+    bytes32 txHash = keccak256(txBytes);
+    require(disputes[txHash].status == STATE_FIRST_DISPUTED);
+    require(rootchain.checkTxPublic(
       index,
       blkNum,
       txBytes,
-      txInfos);
-    bytes32 txHash = keccak256(txBytes);
+      txInfos));
     disputes[txHash].status = STATE_CHALLENGED;
     return true;
   }
@@ -157,12 +158,11 @@ contract FastFinality {
     var disputeTransaction = TxDecoder.getTx(disputeTxBytes);
     var transaction = TxDecoder.getTx(txBytes);
     // check challenge
-    rootchain.call(
-      'checkTxPublic',
+    require(rootchain.checkTxPublic(
       index,
       blkNum,
       txBytes,
-      txInfos);
+      txInfos));
     require(
       TxDecoder.keccak256TxOutput(disputeTransaction.inputs[0]) == TxDecoder.keccak256TxOutput(transaction.inputs[0]));
     disputes[txHash].status = STATE_SECOND_DISPUTED;
@@ -187,6 +187,24 @@ contract FastFinality {
       return true;
     }
     return false;
+  }
+
+  /**
+    * @dev get dispute
+    */
+  function getDispute(
+    bytes32 txHash
+  )
+    public
+    view
+    returns (address, uint256, uint256, uint8)
+  {
+    return (
+      disputes[txHash].recipient,
+      disputes[txHash].withdrawableAt,
+      disputes[txHash].amount,
+      disputes[txHash].status
+      );
   }
 
 }

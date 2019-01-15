@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
+import "./IRootChain.sol";
 import "./lib/Array.sol";
 import "./lib/Math.sol";
 import "./lib/Merkle.sol";
@@ -12,7 +13,7 @@ import "./TxDecoder.sol";
  * @dev This contract secures a utxo payments plasma child chain to ethereum.
  * based on https://github.com/omisego/plasma-mvp/blob/master/plasma/root_chain/contracts/RootChain.sol
  */
-contract RootChain {
+contract RootChain is IRootChain {
     using Math for uint256;
     using Array for address[];
     using Merkle for bytes32;
@@ -648,6 +649,7 @@ contract RootChain {
     bytes txInfos
   )
     public
+    view
     returns (bool)
   {
     var transaction = TxDecoder.getTx(txBytes);
