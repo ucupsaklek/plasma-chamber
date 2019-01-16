@@ -70,6 +70,7 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
     [input],
     [invalidOutput]
   );
+  const BOND = web3.toWei(10, 'milliether')
 
   beforeEach(async function () {
     this.rootChain = await RootChain.new({from: owner});
@@ -80,7 +81,7 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
 
     it('should success to deposit', async function () {
       const result = await this.fastFinality.deposit({
-        value: '1000000',
+        value: web3.toWei(2, 'ether'),
         from: owner,
         gas: gasLimit});
       assert.equal(!!result, true);
@@ -91,8 +92,12 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
   describe('buyBandwidth', function () {
 
     it('should success to buy bandwidth', async function () {
-      const result = await this.fastFinality.deposit({
-        value: '200000',
+      await this.fastFinality.deposit({
+        value: web3.toWei(2, 'ether'),
+        from: owner,
+        gas: gasLimit});
+      const result = await this.fastFinality.buyBandwidth({
+        value: web3.toWei(1, 'ether'),
         from: user,
         gas: gasLimit});
       assert.equal(!!result, true);
@@ -116,6 +121,7 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
         utils.bufferToHex(operatorSig),
         0,
         {
+          value: BOND,
           from: user,
           gas: gasLimit});
       assert.equal(!!result, true);
@@ -145,6 +151,7 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
         utils.bufferToHex(operatorSig),
         0,
         {
+          value: BOND,
           from: user,
           gas: gasLimit});
       assert.equal(!!result, true);
@@ -207,6 +214,7 @@ contract('FastFinality', function ([user, owner, recipient, user4, user5]) {
         utils.bufferToHex(operatorSig),
         0,
         {
+          value: BOND,
           from: user,
           gas: gasLimit});
     });

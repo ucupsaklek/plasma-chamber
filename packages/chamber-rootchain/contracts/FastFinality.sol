@@ -21,6 +21,7 @@ contract FastFinality {
     uint8 status;
   }
 
+  uint public constant BOND = 10 finney;
   uint8 public constant STATE_FIRST_DISPUTED = 1;
   uint8 public constant STATE_CHALLENGED = 2;
   uint8 public constant STATE_SECOND_DISPUTED = 3;
@@ -64,6 +65,7 @@ contract FastFinality {
     */
   function buyBandwidth()
     public
+    payable
     returns (bool)
   {
     require(totalAmount >= msg.value);
@@ -82,9 +84,11 @@ contract FastFinality {
     uint index
   )
     public
+    payable
     returns (bool)
   {
     // check operator's signatures
+    require(msg.value == BOND);
     bytes32 txHash = keccak256(txBytes);
     require(disputes[txHash].status == 0 && disputes[txHash].withdrawableAt == 0);
     require(operatorAddress == ECRecovery.recover(txHash, operatorSigs));
@@ -182,7 +186,7 @@ contract FastFinality {
     var dispute = disputes[txHash];
     require(dispute.withdrawableAt < block.timestamp);
     if(dispute.status == STATE_FIRST_DISPUTED || dispute.status == STATE_SECOND_DISPUTED) {
-      dispute.recipient.transfer(dispute.amount);
+      dispute.recipient.transfer(dispute.amount + BOND);
       dispute.status = STATE_FINALIZED;
       return true;
     }
