@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
+import "./IRootChain.sol";
 import "./lib/Array.sol";
 import "./lib/Math.sol";
 import "./lib/Merkle.sol";
@@ -12,7 +13,7 @@ import "./TxDecoder.sol";
  * @dev This contract secures a utxo payments plasma child chain to ethereum.
  * based on https://github.com/omisego/plasma-mvp/blob/master/plasma/root_chain/contracts/RootChain.sol
  */
-contract RootChain {
+contract RootChain is IRootChain {
     using Math for uint256;
     using Array for address[];
     using Merkle for bytes32;
@@ -284,7 +285,7 @@ contract RootChain {
         challengeTx.inputs[_cIndex].value,
         challengeTx
       );
-      require(keccak256TxOutput(challengeTx.inputs[_cIndex]) == keccak256ExitTxo(exit.output));
+      require(TxDecoder.keccak256TxOutput(challengeTx.inputs[_cIndex]) == keccak256ExitTxo(exit.output));
       delete exits[_eUtxoPos];
     }
 
@@ -463,9 +464,9 @@ contract RootChain {
         respondTx.outputs[_rOutputIndex].value,
         exit.output), '_rOutputIndex is not correct');
       require(
-        keccak256TxOutput(respondTx.inputs[_rInputIndex]) != keccak256ExitTxo(challenge.output1),
+        TxDecoder.keccak256TxOutput(respondTx.inputs[_rInputIndex]) != keccak256ExitTxo(challenge.output1),
         'respondTx is double spent');
-      require(keccak256TxOutput(respondTx.outputs[_rOutputIndex]) == keccak256ExitTxo(exit.input));
+      require(TxDecoder.keccak256TxOutput(respondTx.outputs[_rOutputIndex]) == keccak256ExitTxo(exit.input));
       if(_rBlkNum < challenge.blkNum1) {
         delete challenges[_challengePos];
         exit.challengeCount--;
@@ -500,7 +501,7 @@ contract RootChain {
         respondTx.inputs[_rIndex].value,
         respondTx
       );
-      require(keccak256TxOutput(respondTx.inputs[_rIndex]) == keccak256ExitTxo(challenge.cOutput));
+      require(TxDecoder.keccak256TxOutput(respondTx.inputs[_rIndex]) == keccak256ExitTxo(challenge.cOutput));
       if(challenge.status == CHALLENGE_STATE_SECOND) {
         delete challenges[_challengePos];
       }else{
@@ -627,25 +628,11 @@ contract RootChain {
     {
       return ExitTxo({
         owners: _txo.owners,
-        values: flatten(_txo.value),
+        values: TxDecoder.flatten(_txo.value),
         state: _txo.stateBytes,
         blkNum: blkNum
       });
     }
-
-  function flatten(TxDecoder.Amount[] amounts)
-    private
-    pure
-    returns (uint256[])
-  {
-    uint256[] memory values = new uint256[](amounts.length * 2);
-    for(uint c = 0; c < amounts.length; c++) {
-      values[c*2] = amounts[c].start;
-      values[c*2 + 1] = amounts[c].end;
-    }
-    return values;
-  }
-
 
   function keccak256ExitTxo(ExitTxo txo)
     private
@@ -655,13 +642,25 @@ contract RootChain {
     return keccak256(txo.owners, txo.values, txo.state);
   }
 
-  function keccak256TxOutput(TxDecoder.TxState output)
-    private
-    pure
-    returns (bytes32)
+  function checkTxPublic(
+    uint256 index,
+    uint256 blkNum,
+    bytes txBytes,
+    bytes txInfos
+  )
+    public
+    view
+    returns (bool)
   {
-    uint256[] memory values = flatten(output.value);
-    return keccak256(output.owners, values, output.stateBytes);
+    var transaction = TxDecoder.getTx(txBytes);
+    checkTx(
+      blocks[blkNum].root,
+      txBytes,
+      txInfos,
+      transaction.inputs[index].value,
+      transaction
+    );
+    return true;
   }
 
 }

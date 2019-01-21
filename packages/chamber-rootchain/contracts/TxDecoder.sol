@@ -127,4 +127,26 @@ library TxDecoder {
     });
   }
 
+  function flatten(TxDecoder.Amount[] amounts)
+    internal
+    pure
+    returns (uint256[])
+  {
+    uint256[] memory values = new uint256[](amounts.length * 2);
+    for(uint c = 0; c < amounts.length; c++) {
+      values[c*2] = amounts[c].start;
+      values[c*2 + 1] = amounts[c].end;
+    }
+    return values;
+  }
+
+  function keccak256TxOutput(TxDecoder.TxState output)
+    internal
+    pure
+    returns (bytes32)
+  {
+    uint256[] memory values = flatten(output.value);
+    return keccak256(output.owners, values, output.stateBytes);
+  }
+
 }
