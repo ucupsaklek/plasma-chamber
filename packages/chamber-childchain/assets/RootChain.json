@@ -1,660 +1,696 @@
 {
-  "contractName": "PlasmaChain",
+  "contractName": "RootChain",
   "abi": [
     {
-      "constant": true,
-      "inputs": [],
-      "name": "CHALLENGE_STATE_RESPONDED",
-      "outputs": [
+      "name": "BlockSubmitted",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint8"
+          "type": "bytes32",
+          "name": "_root",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_timestamp",
+          "indexed": false,
+          "unit": "sec"
+        },
+        {
+          "type": "uint256",
+          "name": "_blkNum",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "depositCount",
-      "outputs": [
+      "name": "Deposited",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "type": "address",
+          "name": "_depositer",
+          "indexed": true
+        },
+        {
+          "type": "uint256",
+          "name": "_start",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_end",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_blkNum",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "operator",
-      "outputs": [
+      "name": "ExitStarted",
+      "inputs": [
         {
-          "name": "",
-          "type": "address"
+          "type": "address",
+          "name": "_exitor",
+          "indexed": true
+        },
+        {
+          "type": "bytes32",
+          "name": "_txHash",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "exitableAt",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_start",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_end",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "currentChildBlock",
-      "outputs": [
+      "name": "ChallengeStarted",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_eTxHash",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_cTxHash",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "CHALLENGE_STATE_FIRST",
-      "outputs": [
+      "name": "Responded",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint8"
+          "type": "bytes32",
+          "name": "_eTxHash",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_cTxHash",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "CHILD_BLOCK_INTERVAL",
-      "outputs": [
+      "name": "ForceIncluded",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_cTxHash",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "CHALLENGE_STATE_SECOND",
-      "outputs": [
+      "name": "FinalizedExit",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint8"
+          "type": "bytes32",
+          "name": "_eTxHash",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_start",
+          "indexed": false
+        },
+        {
+          "type": "uint256",
+          "name": "_end",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "currentFeeExit",
-      "outputs": [
+      "name": "Log",
+      "inputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_a",
+          "indexed": false
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "anonymous": false,
+      "type": "event"
     },
     {
-      "constant": true,
-      "inputs": [],
-      "name": "CHUNK_SIZE",
+      "name": "checkTransaction",
       "outputs": [
         {
-          "name": "",
-          "type": "uint256"
+          "type": "bool",
+          "name": "out"
         }
       ],
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes32",
+          "name": "_txHash"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "uint256",
+          "name": "_blkNum"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sigs"
+        },
+        {
+          "type": "uint256",
+          "name": "_outputIndex"
+        }
+      ],
+      "constant": true,
       "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "gas": 82742
     },
     {
-      "inputs": [],
+      "name": "__init__",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "address",
+          "name": "_txverifierAddress"
+        }
+      ],
+      "constant": false,
       "payable": false,
-      "stateMutability": "nonpayable",
       "type": "constructor"
     },
     {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "depositor",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "name": "start",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "name": "end",
-          "type": "uint256"
-        }
-      ],
-      "name": "Deposit",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "name": "exitor",
-          "type": "address"
-        },
-        {
-          "components": [
-            {
-              "name": "owners",
-              "type": "address[]"
-            },
-            {
-              "components": [
-                {
-                  "name": "start",
-                  "type": "uint256"
-                },
-                {
-                  "name": "end",
-                  "type": "uint256"
-                }
-              ],
-              "name": "value",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                {
-                  "name": "len",
-                  "type": "uint256"
-                },
-                {
-                  "name": "memPtr",
-                  "type": "uint256"
-                }
-              ],
-              "name": "state",
-              "type": "tuple[]"
-            },
-            {
-              "name": "stateBytes",
-              "type": "bytes"
-            },
-            {
-              "name": "blkNum",
-              "type": "uint256"
-            }
-          ],
-          "indexed": false,
-          "name": "state",
-          "type": "tuple"
-        }
-      ],
-      "name": "ExitStarted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "root",
-          "type": "bytes32"
-        },
-        {
-          "indexed": false,
-          "name": "timestamp",
-          "type": "uint256"
-        }
-      ],
-      "name": "BlockSubmitted",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "token",
-          "type": "address"
-        }
-      ],
-      "name": "TokenAdded",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "name": "n",
-          "type": "uint256"
-        }
-      ],
-      "name": "Log",
-      "type": "event"
-    },
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_root",
-          "type": "bytes32"
-        }
-      ],
-      "name": "submitBlock",
+      "name": "submit",
       "outputs": [],
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "_root"
+        }
+      ],
+      "constant": false,
       "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "type": "function",
+      "gas": 111155
     },
     {
-      "constant": false,
-      "inputs": [],
       "name": "deposit",
       "outputs": [],
+      "inputs": [],
+      "constant": false,
       "payable": true,
-      "stateMutability": "payable",
-      "type": "function"
+      "type": "function",
+      "gas": 147903
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "blknum",
-          "type": "uint256"
-        },
-        {
-          "name": "uid",
-          "type": "uint256"
-        }
-      ],
-      "name": "startDepositExit",
+      "name": "exit",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
-          "name": "_blkNum",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_utxoPos"
         },
         {
-          "name": "_oIndex",
-          "type": "uint8"
+          "type": "uint256",
+          "name": "_start"
         },
         {
-          "name": "_exitTxBytes",
-          "type": "bytes"
+          "type": "uint256",
+          "name": "_end"
         },
         {
-          "name": "_txInfoBytes",
-          "type": "bytes"
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
         }
       ],
-      "name": "startExit",
+      "constant": false,
+      "payable": true,
+      "type": "function",
+      "gas": 286069
+    },
+    {
+      "name": "sendParentOfExit",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
-          "name": "_cIndex",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_challengeId"
         },
         {
-          "name": "_cBlkNum",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_exitHash"
         },
         {
-          "name": "_eUtxoPos",
-          "type": "uint256"
+          "type": "bytes",
+          "name": "_exitTxBytes"
         },
         {
-          "name": "_txBytes",
-          "type": "bytes"
+          "type": "uint256",
+          "name": "_inputIndex"
         },
         {
-          "name": "_txInfos",
-          "type": "bytes"
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
         }
       ],
-      "name": "challengeAfter",
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 124285
+    },
+    {
+      "name": "challengeByWithdrawal",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
-          "name": "_withdrawal",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_exitHash"
         },
         {
-          "name": "_eUtxoPos",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_segment"
         }
       ],
-      "name": "challengeWithdrawal",
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 59341
+    },
+    {
+      "name": "challenge",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
-          "name": "_cIndex",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_exitHash"
         },
         {
-          "name": "_cBlkNum",
-          "type": "uint256"
+          "type": "bytes",
+          "name": "_exitTxBytes"
         },
         {
-          "name": "_eUtxoPos",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_utxoPos"
         },
         {
-          "name": "_cPos",
-          "type": "uint256"
+          "type": "int128",
+          "name": "_eInputPos"
         },
         {
-          "name": "_txBytes",
-          "type": "bytes"
+          "type": "uint256",
+          "name": "_start"
         },
         {
-          "name": "_txInfos",
-          "type": "bytes"
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
         }
       ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 72998
+    },
+    {
       "name": "challengeBefore",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [
         {
-          "components": [
-            {
-              "name": "start",
-              "type": "uint256"
-            },
-            {
-              "name": "end",
-              "type": "uint256"
-            }
-          ],
-          "name": "value",
-          "type": "tuple"
-        }
-      ],
-      "name": "getSlot",
-      "outputs": [
+          "type": "bytes32",
+          "name": "_exitHash"
+        },
         {
-          "name": "",
-          "type": "uint256"
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "uint256",
+          "name": "_challengeId"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
         }
       ],
-      "payable": false,
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
       "constant": false,
-      "inputs": [
-        {
-          "name": "_rInputIndex",
-          "type": "uint256"
-        },
-        {
-          "name": "_rOutputIndex",
-          "type": "uint256"
-        },
-        {
-          "name": "_rBlkNum",
-          "type": "uint256"
-        },
-        {
-          "name": "_eUtxoPos",
-          "type": "uint256"
-        },
-        {
-          "name": "_challengePos",
-          "type": "uint256"
-        },
-        {
-          "name": "_txBytes",
-          "type": "bytes"
-        },
-        {
-          "name": "_txInfos",
-          "type": "bytes"
-        }
-      ],
-      "name": "respondParent",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
+      "payable": true,
+      "type": "function",
+      "gas": 259188
     },
     {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "_rIndex",
-          "type": "uint256"
-        },
-        {
-          "name": "_rBlkNum",
-          "type": "uint256"
-        },
-        {
-          "name": "_eUtxoPos",
-          "type": "uint256"
-        },
-        {
-          "name": "_challengePos",
-          "type": "uint256"
-        },
-        {
-          "name": "_txBytes",
-          "type": "bytes"
-        },
-        {
-          "name": "_txInfos",
-          "type": "bytes"
-        }
-      ],
       "name": "respondChallenge",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": false,
       "inputs": [
         {
-          "name": "_utxoPos",
-          "type": "uint256"
-        }
-      ],
-      "name": "finalizeExits",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "constant": true,
-      "inputs": [
-        {
-          "name": "_blockNumber",
-          "type": "uint256"
-        }
-      ],
-      "name": "getChildChain",
-      "outputs": [
-        {
-          "name": "",
-          "type": "bytes32"
+          "type": "uint256",
+          "name": "_challengeId"
         },
         {
-          "name": "",
-          "type": "uint256"
+          "type": "bytes",
+          "name": "_cTxBytes"
+        },
+        {
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
         }
       ],
+      "constant": false,
       "payable": false,
-      "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "gas": 257784
     },
     {
-      "constant": true,
+      "name": "finalizeExit",
+      "outputs": [],
       "inputs": [
         {
-          "name": "_utxoPos",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_exitHash"
         }
       ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 96805
+    },
+    {
+      "name": "finalizeChallenge",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_challengeId"
+        }
+      ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 59939
+    },
+    {
+      "name": "forceIncludeRequest",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "_exitHash"
+        },
+        {
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "uint256",
+          "name": "_challengeId"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
+        },
+        {
+          "type": "uint256",
+          "name": "hasSig"
+        }
+      ],
+      "constant": false,
+      "payable": true,
+      "type": "function",
+      "gas": 371318
+    },
+    {
+      "name": "includeSignature",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_challengeId"
+        },
+        {
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
+        }
+      ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 100516
+    },
+    {
+      "name": "challengeTooOldExit",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "bytes32",
+          "name": "_exitHash"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
+        }
+      ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 30330
+    },
+    {
+      "name": "respondTooOldChallenge",
+      "outputs": [],
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "_utxoPos"
+        },
+        {
+          "type": "uint256",
+          "name": "_challengeId"
+        },
+        {
+          "type": "uint256",
+          "name": "_start"
+        },
+        {
+          "type": "uint256",
+          "name": "_end"
+        },
+        {
+          "type": "bytes",
+          "name": "_txBytes"
+        },
+        {
+          "type": "bytes",
+          "name": "_proof"
+        },
+        {
+          "type": "bytes",
+          "name": "_sig"
+        }
+      ],
+      "constant": false,
+      "payable": false,
+      "type": "function",
+      "gas": 81343
+    },
+    {
       "name": "getExit",
       "outputs": [
         {
-          "name": "",
-          "type": "address[]"
+          "type": "address",
+          "name": "out"
         },
         {
-          "name": "",
-          "type": "uint256[]"
-        },
-        {
-          "name": "",
-          "type": "bytes"
-        },
-        {
-          "name": "",
-          "type": "uint8"
+          "type": "uint256",
+          "name": "out"
         }
       ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "constant": true,
       "inputs": [
         {
-          "components": [
-            {
-              "name": "owners",
-              "type": "address[]"
-            },
-            {
-              "components": [
-                {
-                  "name": "start",
-                  "type": "uint256"
-                },
-                {
-                  "name": "end",
-                  "type": "uint256"
-                }
-              ],
-              "name": "value",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                {
-                  "name": "len",
-                  "type": "uint256"
-                },
-                {
-                  "name": "memPtr",
-                  "type": "uint256"
-                }
-              ],
-              "name": "state",
-              "type": "tuple[]"
-            },
-            {
-              "name": "stateBytes",
-              "type": "bytes"
-            },
-            {
-              "name": "blkNum",
-              "type": "uint256"
-            }
-          ],
-          "name": "_txo",
-          "type": "tuple"
-        },
-        {
-          "name": "blkNum",
-          "type": "uint256"
+          "type": "bytes32",
+          "name": "_exitHash"
         }
       ],
-      "name": "getExitTxo",
-      "outputs": [
-        {
-          "components": [
-            {
-              "name": "owners",
-              "type": "address[]"
-            },
-            {
-              "name": "values",
-              "type": "uint256[]"
-            },
-            {
-              "name": "state",
-              "type": "bytes"
-            },
-            {
-              "name": "blkNum",
-              "type": "uint256"
-            }
-          ],
-          "name": "",
-          "type": "tuple"
-        }
-      ],
+      "constant": true,
       "payable": false,
-      "stateMutability": "pure",
-      "type": "function"
+      "type": "function",
+      "gas": 2804
     }
-  ]
+  ],
+  "networks": {},
+  "schemaVersion": "3.0.1",
+  "updatedAt": "2019-02-01T03:59:14.528Z"
 }

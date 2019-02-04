@@ -1,7 +1,8 @@
-const ChildChain = require('@cryptoeconomicslab/chamber-childchain');
-const Listener = require('@cryptoeconomicslab/chamber-listener');
+const {
+  ChainManager,
+  MongoDown
+} = require('@cryptoeconomicslab/chamber-childchain');
 const Rpc = require('@cryptoeconomicslab/chamber-rpc');
-const MongoDown = ChildChain.MongoDown;
 const leveldown = require('leveldown');
 
 function getOption() {
@@ -24,10 +25,9 @@ function getOption() {
 }
 
 async function main(){
-  let childChain = await ChildChain.run(getOption());
-  Listener.run(childChain);
-  Rpc.run(childChain);
-  childChain.emit('Ready', {});
+  const chainManager = new ChainManager();
+  await chainManager.start(getOption())
+  Rpc.run(chainManager.getChain());
   return true;
 }
 

@@ -4,39 +4,27 @@ var connect = require('connect');
 const jsonParser = require('body-parser').json;
 const MQTTServer = require('./mqtt');
 const app = connect();
+const {
+  SignedTransaction
+} = require('@layer2/core')
 
 module.exports.run = childChain => {
   // create a server
   var server = jayson.server({
-    net_version: (args, cb) => {
-      console.log('net_version', args);
-      cb(null, 10);
-    },
-    // These RPC Method must align with ETH
-    eth_sendRawTransaction: (args, cb) => {
-      const txHash = childChain.createTx(args[0])
+    sendTransaction: (args, cb) => {
+      const signedTx = SignedTransaction.deserialize(args[0])
+      const txHash = childChain.appendTx(signedTx);
       cb(null, txHash);
     },
-    eth_blockNumber: (args, cb) => {
+    getBlockNumber: (args, cb) => {
       // Get latest block for descending manner
       // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_blocknumber
       cb(null, childChain.blockHeight)
     },
-    eth_getBlockByNumber: (args, cb) => {
-      console.log('eth_getBlockByNumber', args);
+    getBlock: (args, cb) => {
       childChain.getBlock(args[0]).then((block) => {
-        cb(null, block);
+        cb(null, block.serialize());
       })
-    },
-    eth_getBlockTransactionCountByNumber: (args, cb) => {
-      // Get block info for them
-      // https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getblocktransactioncountbynumber
-    },
-    eth_getBalance: (args, cb) => {
-
-    },
-    eth_getFilterLogs: (args, cb) => {
-
     }
   });
   app.use(cors({methods: ['POST']}));
