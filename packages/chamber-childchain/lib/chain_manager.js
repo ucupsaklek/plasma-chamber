@@ -16,15 +16,15 @@ const abi = [
   'function exit(uint256 _utxoPos, uint256 _start, uint256 _end, bytes _txBytes, bytes _proof, bytes _sig) payable'
 ]
 
-const privateKey = process.env.OPERATOR_PRIVATE_KEY || 'c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3';
-const httpProvider = new ethers.providers.JsonRpcProvider(process.env.ROOTCHAIN_ENDPOINT)
-const contract = new ethers.Contract(process.env.ROOTCHAIN_ADDRESS, abi, httpProvider)
-const wallet = new ethers.Wallet(privateKey, httpProvider)
-const rootChain = contract.connect(wallet)
-
 class ChainManager {
 
-  constructor(){
+  constructor(privateKey, endpoint, contractAddress) {
+    this.privateKey = privateKey;
+    this.httpProvider = new ethers.providers.JsonRpcProvider(endpoint)
+    this.contractAddress = contractAddress
+    const contract = new ethers.Contract(this.contractAddress, abi, this.httpProvider)
+    this.wallet = new ethers.Wallet(this.privateKey, this.httpProvider)
+    this.rootChain = contract.connect(this.wallet)
     this.chain = null;
     this.timer = null;
   }
@@ -53,8 +53,8 @@ class ChainManager {
 
     const RootChainConfirmationBlockNum = 1;
     const rootChainEventListener = new RootChainEventListener(
-      httpProvider,
-      process.env.ROOTCHAIN_ADDRESS,
+      this.httpProvider,
+      this.contractAddress,
       chainDb,
       await this.getSeenEvents(),
       RootChainConfirmationBlockNum);
@@ -63,10 +63,10 @@ class ChainManager {
       try {
         if(this.chain.txQueue.length > 0) {
           const root = await this.chain.generateBlock();
-          const result = await rootChain.submitBlock(
+          const result = await this.rootChain.submitBlock(
             root
           ).send({
-            from: operatorAddress,
+            from: this.wallet.address,
             gas: 200000
           });
           console.log(result.events.BlockSubmitted);
