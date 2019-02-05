@@ -29,6 +29,23 @@
   dependencies:
     regenerator-runtime "^0.12.0"
 
+"@cryptoeconomicslab/chamber-childchain@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@cryptoeconomicslab/chamber-childchain/-/chamber-childchain-1.1.0.tgz#bdaba29b257be401fd4ac922877a3d6d72eac801"
+  dependencies:
+    "@cryptoeconomicslab/chamber-core" "^1.1.0"
+    bignumber.js "^8.0.1"
+    ethereumjs-util "^5.2.0"
+    istanbul-coveralls "^1.0.3"
+    leveldown "^4.0.1"
+    levelup "^3.1.1"
+    memdown "^3.0.0"
+    merkle-patricia-tree "^2.3.1"
+    mocha "^5.2.0"
+    mongodb "^3.1.6"
+    secp256k1 "^3.5.2"
+    web3 "^1.0.0-beta.36"
+
 "@cryptoeconomicslab/chamber-core@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@cryptoeconomicslab/chamber-core/-/chamber-core-1.1.0.tgz#81834a25a52a575ecc21a82f605f1a7ea78b632a"
@@ -38,11 +55,11 @@
     ethereumjs-util "^5.2.0"
     rlp "^2.1.0"
 
-"@layer2/childchain@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.5.tgz#3026fb2ed41b1d25efd8946d48e520e90dfa95ef"
+"@layer2/childchain@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.6.tgz#8307558548a02f0c31c64a90e75d24aad888dda4"
   dependencies:
-    "@layer2/core" "^0.0.5"
+    "@layer2/core" "^0.0.6"
     "@types/chai" "^4.1.7"
     "@types/mocha" "^5.2.5"
     chai "^4.2.0"
@@ -59,6 +76,24 @@
 "@layer2/core@^0.0.5":
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.5.tgz#2e3e343fed3a275aa0eea98420b1926491ee16c0"
+  dependencies:
+    "@types/chai" "^4.1.7"
+    "@types/mocha" "^5.2.5"
+    "@types/node-fetch" "^2.1.4"
+    chai "^4.2.0"
+    chai-as-promised "^7.1.1"
+    chai-bignumber "^3.0.0"
+    ethers "^4.0.21"
+    istanbul "^0.4.5"
+    istanbul-coveralls "^1.0.3"
+    node-fetch "^2.3.0"
+    remap-istanbul "^0.13.0"
+    ts-node "^7.0.1"
+    typescript "^3.2.2"
+
+"@layer2/core@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.6.tgz#ec9112f2c4bbb82853864f7cef9f949e2954f907"
   dependencies:
     "@types/chai" "^4.1.7"
     "@types/mocha" "^5.2.5"
@@ -2545,7 +2580,7 @@ ethereumjs-wallet@^0.6.2:
     utf8 "^3.0.0"
     uuid "^3.3.2"
 
-ethers@^4.0.0, ethers@^4.0.21:
+ethers@^4.0.0, ethers@^4.0.21, ethers@^4.0.23:
   version "4.0.23"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-4.0.23.tgz#930c7b1585241f61b29c262ffd8f21e82721ba30"
   dependencies:

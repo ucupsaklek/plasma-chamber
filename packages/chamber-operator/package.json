@@ -1,5 +1,5 @@
 {
-  "name": "@cryptoeconomicslab/chamber-childchain",
+  "name": "@cryptoeconomicslab/chamber-operator",
   "version": "1.1.0",
   "description": "",
   "main": "lib/index.js",

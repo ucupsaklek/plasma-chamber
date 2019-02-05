@@ -1,7 +1,7 @@
 const {
   ChainManager,
   MongoDown
-} = require('@cryptoeconomicslab/chamber-childchain');
+} = require('@cryptoeconomicslab/chamber-operator');
 const Rpc = require('@cryptoeconomicslab/chamber-rpc');
 const leveldown = require('leveldown');
 
