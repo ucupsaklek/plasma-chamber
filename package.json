@@ -22,14 +22,16 @@
     "type": "git",
     "url": "git+https://github.com/cryptoeconomicslab/plasma-chamber.git"
   },
-  "author": "",
+  "author": {
+    "name": "Cryptoeconomics Lab",
+    "url": "https://www.cryptoeconomicslab.com/"
+  },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/cryptoeconomicslab/plasma-chamber/issues"
   },
   "homepage": "https://github.com/cryptoeconomicslab/plasma-chamber",
   "dependencies": {
-    "@cryptoeconomicslab/chamber-listener": "^1.0.0",
     "dotenv": "^6.0.0",
     "eslint": "^5.6.0",
     "ganache-cli": "^6.2.3",

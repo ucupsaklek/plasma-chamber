@@ -1,7 +1,8 @@
-const ChildChain = require('@cryptoeconomicslab/chamber-childchain');
-const Listener = require('@cryptoeconomicslab/chamber-listener');
+const {
+  ChainManager,
+  MongoDown
+} = require('@cryptoeconomicslab/chamber-operator');
 const Rpc = require('@cryptoeconomicslab/chamber-rpc');
-const MongoDown = ChildChain.MongoDown;
 const leveldown = require('leveldown');
 
 function getOption() {
@@ -24,10 +25,13 @@ function getOption() {
 }
 
 async function main(){
-  let childChain = await ChildChain.run(getOption());
-  Listener.run(childChain);
-  Rpc.run(childChain);
-  childChain.emit('Ready', {});
+  const chainManager = new ChainManager(
+    process.env.OPERATOR_PRIVATE_KEY || 'c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3',
+    process.env.ROOTCHAIN_ENDPOINT,
+    process.env.ROOTCHAIN_ADDRESS
+  );
+  await chainManager.start(getOption())
+  Rpc.run(chainManager.getChain());
   return true;
 }
 

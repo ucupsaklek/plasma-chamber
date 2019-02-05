@@ -13,22 +13,11 @@ Plasma is a 2nd layer scaling solution focusing on transaction's throughput per 
 
 ## Folder Structure
 
-### core
-The core module of Plasma.
-The definition of Transaction and Block.
-Utilities for Plasma core logic.
+check https://github.com/cryptoeconomicslab/chamber-packages
 
-### rootchain
-Solidity contract for deposit, submit, exit, challenge, withdraw and verification of application specific state transition.
+### chamber-operator
 
-### childchain
-Child chain implementation using the core module.
-Collect transactions, verify these, generate a block and submit.
-
-### wallet
-Wallet implementation.
-Responsibilities of wallet are calculating UTXOs,
-the interface of some methods for root chain(deposit, startExit, and challenge), and history verification.
+chamber-operator is operating application for Plasma chain.
 
 ## Development
 
@@ -60,8 +49,4 @@ Launch child chain.
 ```
 yarn run start
 ```
-
-You can use child chain's JSON RPC from a sample app.
-
-https://github.com/cryptoeconomicslab/plasma-sample-app
 
