@@ -45,6 +45,8 @@ yarn test
 
 Please deploy contracts by [chamber-contracts/README.md](https://github.com/cryptoeconomicslab/chamber-packages/blob/master/packages/chamber-contracts/README.md).
 
+Please deploy contracts by [chamber-contracts/README.md](https://github.com/cryptoeconomicslab/chamber-packages/blob/master/packages/chamber-contracts/README.md).
+
 Launch child chain.
 
 ```
