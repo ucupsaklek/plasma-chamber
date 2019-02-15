@@ -92,6 +92,7 @@ class ChainManager {
       try {
         await this.chain.handleDeposit(
           e.values._depositer,
+          e.values._tokenId,
           e.values._start,
           e.values._end,
           e.values._blkNum);

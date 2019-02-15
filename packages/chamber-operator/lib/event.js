@@ -36,7 +36,7 @@ class RootChainEventListener {
       return !this.seenEvents[e.transactionHash];
     }).forEach((e) => {
       const logDesc = rootChainInterface.parseLog(e)
-      this.checkingEvents[logDesc.name](logDesc)
+      if(this.checkingEvents[logDesc.name]) this.checkingEvents[logDesc.name](logDesc)
       this.seenEvents[e.transactionHash] = true;
     });
   }
