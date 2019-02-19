@@ -13,8 +13,13 @@ module.exports.run = childChain => {
   var server = jayson.server({
     sendTransaction: (args, cb) => {
       const signedTx = SignedTransaction.deserialize(args[0])
-      const txHash = childChain.appendTx(signedTx);
-      cb(null, txHash);
+      const result = childChain.appendTx(signedTx);
+      cb(null, result);
+      if(result.isOk()) {
+        cb(null, result.ok());
+      } else {
+        cb(result.error().serialize().error);
+      }      
     },
     getBlockNumber: (args, cb) => {
       // Get latest block for descending manner
@@ -22,16 +27,18 @@ module.exports.run = childChain => {
       cb(null, childChain.blockHeight)
     },
     getBlock: (args, cb) => {
-      childChain.getBlock(args[0]).then((block) => {
-        cb(null, block.serialize());
-      }).catch((e) => {
-        console.log(e.message)
-        if(e.message == 'NotFoundError') {
-          cb(null, null)
-        }else{
-          console.error(e)
-          cb(e)
+      childChain.getBlock(args[0]).then((result) => {
+        if(result.isOk()) {
+          cb(null, result.serialize());
+        } else {
+          cb(result.error().serialize().error);
         }
+      }).catch((e) => {
+        console.error(e)
+        cb({
+          code: -100,
+          message: e.message
+        })
       })
     }
   });

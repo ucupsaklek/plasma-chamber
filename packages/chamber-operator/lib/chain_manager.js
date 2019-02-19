@@ -63,17 +63,22 @@ class ChainManager {
     const generateBlock = async () => {
       try {
         if(this.chain.txQueue.length > 0) {
-          const root = await this.chain.generateBlock();
-          const result = await this.rootChain.submit(
-            root,
-            {
-              gasLimit: 200000
-            });
-          this.chain.txQueue = []
-          console.log(result);
+          const generateBlockResult = await this.chain.generateBlock();
+          if(generateBlockResult.isOk()) {
+            const result = await this.rootChain.submit(
+              generateBlockResult.ok(),
+              {
+                gasLimit: 200000
+              });
+            console.log(result);
+          }else{
+            console.error(generateBlockResult.error())
+          }
+          this.chain.clear()
         }
       } catch(e) {
         console.error(e)
+        this.chain.clear()
       }
       this.timer = setTimeout(generateBlock, blockTime);
     }
