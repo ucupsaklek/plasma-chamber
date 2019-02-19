@@ -14,7 +14,6 @@ module.exports.run = childChain => {
     sendTransaction: (args, cb) => {
       const signedTx = SignedTransaction.deserialize(args[0])
       const result = childChain.appendTx(signedTx);
-      cb(null, result);
       if(result.isOk()) {
         cb(null, result.ok());
       } else {
@@ -29,7 +28,7 @@ module.exports.run = childChain => {
     getBlock: (args, cb) => {
       childChain.getBlock(args[0]).then((result) => {
         if(result.isOk()) {
-          cb(null, result.serialize());
+          cb(null, result.ok().serialize());
         } else {
           cb(result.error().serialize().error);
         }
