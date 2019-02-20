@@ -89,8 +89,10 @@ class ChainManager {
     rootChainEventListener.addEvent('BlockSubmitted', async (e) => {
       console.log('eventListener.BlockSubmitted', e.values._blkNum.toNumber());
       await this.chain.handleSubmit(
+        e.values._superRoot,
         e.values._root,
-        e.values._blkNum);
+        e.values._blkNum,
+        e.values._timestamp);
     })
     rootChainEventListener.addEvent('Deposited', async (e) => {
       console.log('eventListener.Deposited', e.values._blkNum.toNumber());
