@@ -44,13 +44,18 @@ class ChainManager {
   }
 
   async start (options){
-    const blockTime = options.blockTime || 10000;
+    const blockTime = options.blockTime || 30000;
     const chainDb = new ChainDb(options.blockdb)
     const snapshotDb = new SnapshotDb(options.snapshotdb);
     this.chain = new Chain(
       new Snapshot(snapshotDb),
       chainDb
     );
+    try {
+      await this.chain.readSnapshot()
+    } catch(e) {
+      console.log('snapshot root not found', e)
+    }
 
     const RootChainConfirmationBlockNum = 1;
     const rootChainEventListener = new RootChainEventListener(
