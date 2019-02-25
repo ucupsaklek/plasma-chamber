@@ -5,7 +5,9 @@ const jsonParser = require('body-parser').json;
 const MQTTServer = require('./mqtt');
 const app = connect();
 const {
-  SignedTransaction
+  SignedTransaction,
+  SignedTransactionWithProof,
+  SwapRequest
 } = require('@layer2/core')
 
 module.exports.run = childChain => {
@@ -19,6 +21,11 @@ module.exports.run = childChain => {
       } else {
         cb(result.error().serialize().error);
       }      
+    },
+    sendConfsig: async (args, cb) => {
+      const signedTx = SignedTransactionWithProof.deserialize(args[0])
+      const result = await childChain.updateConfSig(signedTx)
+      cb(null, true);
     },
     getBlockNumber: (args, cb) => {
       // Get latest block for descending manner
@@ -39,6 +46,33 @@ module.exports.run = childChain => {
           message: e.message
         })
       })
+    },
+    swapRequest: async (args, cb) => {
+      const swapRequest = SwapRequest.deserialize(args[0])
+      childChain.getSwapManager().requestSwap(swapRequest)
+      cb(null, true)
+    },
+    swapRequestResponse: async (args, cb) => {
+      console.log(args[0])
+      const signedTx = SignedTransaction.deserialize(args[1])
+      childChain.getSwapManager().respondRequestSwap(args[0], signedTx)
+      cb(null, true)
+    },
+    clearSwapRequestResponse: async (args, cb) => {
+      childChain.getSwapManager().clearRespond(args[0])
+      cb(null, true)
+    },
+    getSwapRequest: async (args, cb) => {
+      const swapRequests = childChain.getSwapManager().getRequests()
+      cb(null, swapRequests.map(r => r.serialize()))
+    },
+    getSwapRequestResponse: async (args, cb) => {
+      const signedTx = childChain.getSwapManager().getRespond(args[0])
+      if(signedTx) {
+        cb(null, signedTx.serialize())
+      } else {
+        cb({code: 0, message: ''})
+      }
     }
   });
   app.use(cors({methods: ['POST']}));

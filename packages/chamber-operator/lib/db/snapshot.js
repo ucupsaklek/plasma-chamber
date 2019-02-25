@@ -7,7 +7,8 @@ const levelup = require('levelup');
 class SnapshotDb {
   
   constructor(path) {
-    this.contTrie = new Trie(levelup(path));
+    this.db = levelup(path)
+    this.contTrie = new Trie(this.db);
     this.contTrie.revert();
   }
   
@@ -17,6 +18,14 @@ class SnapshotDb {
   
   setRoot(root) {
     this.contTrie = new Trie(this.db, Buffer.from(root, 'hex'));
+  }
+
+  commit() {
+    this.contTrie.commit()
+  }
+
+  revert() {
+    this.contTrie.revert()
   }
 
   /**

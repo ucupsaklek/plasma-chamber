@@ -18,7 +18,7 @@ class ChainDb {
   }
 
   async get(key) {
-    return await this.db.get(key)
+    return (await this.db.get(key)).toString()
   }
 
   async delete(key) {
