@@ -21,7 +21,7 @@
 - Cryptoeconomics Lab and Engate start feasibility study for peer-to-peer electricity trading system on the Ethereum blockchain
 - https://medium.com/cryptoeconomics-lab/cryptoeconomics-lab-and-engate-commissioned-to-develop-a-peer-to-peer-electricity-trading-system-3e2ca7e4f618
 
-
-
-
-
+### Website
+- 2019/02/27
+- design research about second layer solution
+- https://docs.google.com/document/d/1eh-DHYCT_BqwgbDnUXiScffUsHdZuKjG6dowt4xDDfY/edit
