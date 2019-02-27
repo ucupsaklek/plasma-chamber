@@ -47,10 +47,7 @@ class ChainManager {
     const blockTime = options.blockTime || 30000;
     const chainDb = new ChainDb(options.blockdb)
     const snapshotDb = new SnapshotDb(options.snapshotdb);
-    this.chain = new Chain(
-      new Snapshot(snapshotDb),
-      chainDb
-    );
+    this.chain = new Chain(chainDb);
     try {
       await this.chain.readSnapshot()
     } catch(e) {

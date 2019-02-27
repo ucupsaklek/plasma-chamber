@@ -18,7 +18,7 @@
   "dependencies": {
     "@cryptoeconomicslab/chamber-childchain": "^1.1.0",
     "@cryptoeconomicslab/chamber-core": "^1.1.0",
-    "@layer2/core": "^0.0.25",
+    "@layer2/core": "^0.0.28",
     "bip39": "^2.5.0",
     "commander": "^2.18.0",
     "ethereumjs-wallet": "^0.6.2",
