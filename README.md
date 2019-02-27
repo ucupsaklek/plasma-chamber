@@ -12,11 +12,13 @@ Plasma is a 2nd layer scaling solution focusing on transaction's throughput per 
 
 ## Plasma Spec
 
+Simple exit game, Plasma Fast Finality, Checkpoint and Custom Transaction.
 https://github.com/cryptoeconomicslab/plasma-chamber/wiki
 
-## Folder Structure
+## Packages
 
-check https://github.com/cryptoeconomicslab/chamber-packages
+Vyper contracts and core module are [here](https://github.com/cryptoeconomicslab/chamber-packages).
+https://github.com/cryptoeconomicslab/chamber-packages
 
 ### chamber-operator
 
