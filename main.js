@@ -4,17 +4,19 @@ const {
 } = require('@cryptoeconomicslab/chamber-operator');
 const Rpc = require('@cryptoeconomicslab/chamber-rpc');
 const leveldown = require('leveldown');
+const path = require('path')
 
 function getOption() {
+  const basePath = process.env.DB_BASEPATH || __dirname
   const mongoOptions = {
     blockdb: new MongoDown('blockdb'),
     metadb: new MongoDown('metadb'),
     snapshotdb: new MongoDown('snapshotdb')
   }
   const fsOptions = {
-    blockdb: leveldown('.db/blockdb'),
-    metadb: leveldown('.db/metadb'),
-    snapshotdb: leveldown('.db/snapshotdb')
+    blockdb: leveldown(path.join(basePath, '.db/blockdb') ),
+    metadb: leveldown(path.join(basePath, '.db/metadb')),
+    snapshotdb: leveldown(path.join(basePath, '.db/snapshotdb'))
   }
   const storage = process.env.STORAGE || 'leveldown';
   if(storage == 'leveldown') {
