@@ -21,7 +21,19 @@
 - Cryptoeconomics Lab and Engate start feasibility study for peer-to-peer electricity trading system on the Ethereum blockchain
 - https://medium.com/cryptoeconomics-lab/cryptoeconomics-lab-and-engate-commissioned-to-develop-a-peer-to-peer-electricity-trading-system-3e2ca7e4f618
 
+## Yuriko Nishijima
 
+### Plasma Chamber (English & Japanese)
 
+- 2019/2/8
 
+- "How I started studying Plasma and What I've got within 3 weeks" in English 
+
+- "プラズマ勉強法まとめノート ー 0から3週間で学んだこと" in Japanese 
+
+- 2019/2/9 
+
+- "Back to Basics on Plasma Proposals" in English 
+
+- "プラズマの基本とは" in Japanese 
 
