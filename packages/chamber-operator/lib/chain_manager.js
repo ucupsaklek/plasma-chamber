@@ -54,7 +54,8 @@ class ChainManager {
       console.log('snapshot root not found', e)
     }
 
-    const RootChainConfirmationBlockNum = 1;
+    const RootChainConfirmationBlockNum = Number(process.env.CONFIRMATION || 6);
+    console.log('RootChainConfirmationBlockNum=', RootChainConfirmationBlockNum)
     const rootChainEventListener = new RootChainEventListener(
       this.httpProvider,
       this.contractAddress,
