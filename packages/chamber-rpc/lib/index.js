@@ -75,10 +75,13 @@ module.exports.run = childChain => {
       }
     }
   });
-  app.use(cors({methods: ['POST']}));
+  app.use('/check', (req, res) => {
+    res.end('OK!\n');
+  })
+  app.use(cors({methods: ['POST', 'GET']}));
   app.use(jsonParser());
   app.use(server.middleware());
-  
+
   app.listen(process.env.PORT || 3000);
 
   MQTTServer();
