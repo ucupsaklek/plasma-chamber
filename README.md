@@ -10,10 +10,15 @@
 
 Plasma is a 2nd layer scaling solution focusing on transaction's throughput per second scaling rather than quick finality. Plasma isn't EVM scaling solution but Ethereum security inheritance solution to UTXO transaction, In other words, it aims to give a perfect fund safety, a transaction compresssion, and no guarantee of stability. We often apply Plasma toward several kinds of dapps, like games, asset exchanges, etc. But it requires a team to employee rare and talented Plasma researchers, and so very careful security analysis is needed for each domain specific Plasma. This causes duplicated research for each project, and security insights wouldn't be shared enough. Our solution is coined "Plasma Chamber", it generates a specific Plasma implementation from Plasma specific language. It's a kind of extension of Plasma Cash, but support more complex transaction without security downside.
 
+## Plasma Spec
 
-## Folder Structure
+Simple exit game, Plasma Fast Finality, Checkpoint and Custom Transaction.
+https://github.com/cryptoeconomicslab/plasma-chamber/wiki
 
-check https://github.com/cryptoeconomicslab/chamber-packages
+## Packages
+
+Vyper contracts and core module are [here](https://github.com/cryptoeconomicslab/chamber-packages).
+https://github.com/cryptoeconomicslab/chamber-packages
 
 ### chamber-operator
 

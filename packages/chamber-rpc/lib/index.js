@@ -5,7 +5,9 @@ const jsonParser = require('body-parser').json;
 const MQTTServer = require('./mqtt');
 const app = connect();
 const {
-  SignedTransaction
+  SignedTransaction,
+  SignedTransactionWithProof,
+  SwapRequest
 } = require('@layer2/core')
 
 module.exports.run = childChain => {
@@ -13,8 +15,17 @@ module.exports.run = childChain => {
   var server = jayson.server({
     sendTransaction: (args, cb) => {
       const signedTx = SignedTransaction.deserialize(args[0])
-      const txHash = childChain.appendTx(signedTx);
-      cb(null, txHash);
+      const result = childChain.appendTx(signedTx);
+      if(result.isOk()) {
+        cb(null, result.ok());
+      } else {
+        cb(result.error().serialize().error);
+      }      
+    },
+    sendConfsig: async (args, cb) => {
+      const signedTx = SignedTransactionWithProof.deserialize(args[0])
+      const result = await childChain.updateConfSig(signedTx)
+      cb(null, true);
     },
     getBlockNumber: (args, cb) => {
       // Get latest block for descending manner
@@ -22,23 +33,55 @@ module.exports.run = childChain => {
       cb(null, childChain.blockHeight)
     },
     getBlock: (args, cb) => {
-      childChain.getBlock(args[0]).then((block) => {
-        cb(null, block.serialize());
-      }).catch((e) => {
-        console.log(e.message)
-        if(e.message == 'NotFoundError') {
-          cb(null, null)
-        }else{
-          console.error(e)
-          cb(e)
+      childChain.getBlock(args[0]).then((result) => {
+        if(result.isOk()) {
+          cb(null, result.ok().serialize());
+        } else {
+          cb(result.error().serialize().error);
         }
+      }).catch((e) => {
+        console.error(e)
+        cb({
+          code: -100,
+          message: e.message
+        })
       })
+    },
+    swapRequest: async (args, cb) => {
+      const swapRequest = SwapRequest.deserialize(args[0])
+      childChain.getSwapManager().requestSwap(swapRequest)
+      cb(null, true)
+    },
+    swapRequestResponse: async (args, cb) => {
+      console.log(args[0])
+      const signedTx = SignedTransaction.deserialize(args[1])
+      childChain.getSwapManager().respondRequestSwap(args[0], signedTx)
+      cb(null, true)
+    },
+    clearSwapRequestResponse: async (args, cb) => {
+      childChain.getSwapManager().clearRespond(args[0])
+      cb(null, true)
+    },
+    getSwapRequest: async (args, cb) => {
+      const swapRequests = childChain.getSwapManager().getRequests()
+      cb(null, swapRequests.map(r => r.serialize()))
+    },
+    getSwapRequestResponse: async (args, cb) => {
+      const signedTx = childChain.getSwapManager().getRespond(args[0])
+      if(signedTx) {
+        cb(null, signedTx.serialize())
+      } else {
+        cb({code: 0, message: ''})
+      }
     }
   });
-  app.use(cors({methods: ['POST']}));
+  app.use('/check', (req, res) => {
+    res.end('OK!\n');
+  })
+  app.use(cors({methods: ['POST', 'GET']}));
   app.use(jsonParser());
   app.use(server.middleware());
-  
+
   app.listen(process.env.PORT || 3000);
 
   MQTTServer();

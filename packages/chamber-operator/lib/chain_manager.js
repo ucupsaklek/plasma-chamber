@@ -44,15 +44,18 @@ class ChainManager {
   }
 
   async start (options){
-    const blockTime = options.blockTime || 10000;
+    const blockTime = options.blockTime || 30000;
     const chainDb = new ChainDb(options.blockdb)
     const snapshotDb = new SnapshotDb(options.snapshotdb);
-    this.chain = new Chain(
-      new Snapshot(snapshotDb),
-      chainDb
-    );
+    this.chain = new Chain(chainDb);
+    try {
+      await this.chain.readSnapshot()
+    } catch(e) {
+      console.log('snapshot root not found', e)
+    }
 
-    const RootChainConfirmationBlockNum = 1;
+    const RootChainConfirmationBlockNum = Number(process.env.CONFIRMATION || 6);
+    console.log('RootChainConfirmationBlockNum=', RootChainConfirmationBlockNum)
     const rootChainEventListener = new RootChainEventListener(
       this.httpProvider,
       this.contractAddress,
@@ -63,17 +66,22 @@ class ChainManager {
     const generateBlock = async () => {
       try {
         if(this.chain.txQueue.length > 0) {
-          const root = await this.chain.generateBlock();
-          const result = await this.rootChain.submit(
-            root,
-            {
-              gasLimit: 200000
-            });
-          this.chain.txQueue = []
-          console.log(result);
+          const generateBlockResult = await this.chain.generateBlock();
+          if(generateBlockResult.isOk()) {
+            const result = await this.rootChain.submit(
+              generateBlockResult.ok(),
+              {
+                gasLimit: 200000
+              });
+            console.log(result);
+          }else{
+            console.error(generateBlockResult.error())
+          }
+          this.chain.clear()
         }
       } catch(e) {
         console.error(e)
+        this.chain.clear()
       }
       this.timer = setTimeout(generateBlock, blockTime);
     }
@@ -84,14 +92,17 @@ class ChainManager {
     rootChainEventListener.addEvent('BlockSubmitted', async (e) => {
       console.log('eventListener.BlockSubmitted', e.values._blkNum.toNumber());
       await this.chain.handleSubmit(
+        e.values._superRoot,
         e.values._root,
-        e.values._blkNum);
+        e.values._blkNum,
+        e.values._timestamp);
     })
     rootChainEventListener.addEvent('Deposited', async (e) => {
       console.log('eventListener.Deposited', e.values._blkNum.toNumber());
       try {
         await this.chain.handleDeposit(
           e.values._depositer,
+          e.values._tokenId,
           e.values._start,
           e.values._end,
           e.values._blkNum);

@@ -55,12 +55,13 @@
     ethereumjs-util "^5.2.0"
     rlp "^2.1.0"
 
-"@layer2/childchain@^0.0.12":
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.12.tgz#d4caa461ffcf6de58a388077a2112a5c0eba889f"
+"@layer2/childchain@^0.0.29":
+  version "0.0.29"
+  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.29.tgz#e0b4df148db8726afc0efc825b2aaf90cfe782c8"
   dependencies:
-    "@layer2/core" "^0.0.12"
+    "@layer2/core" "^0.0.29"
     "@types/chai" "^4.1.7"
+    "@types/chai-as-promised" "^7.1.0"
     "@types/mocha" "^5.2.5"
     chai "^4.2.0"
     chai-as-promised "^7.1.1"
@@ -73,11 +74,12 @@
     ts-node "^7.0.1"
     typescript "^3.2.2"
 
-"@layer2/core@^0.0.12":
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.12.tgz#31cd1e4195b10f13042e69da09a6d5a46ebb52b7"
+"@layer2/core@^0.0.29":
+  version "0.0.29"
+  resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.29.tgz#a52a535fa514bb422988dedfe69c3e90441005a3"
   dependencies:
     "@types/chai" "^4.1.7"
+    "@types/chai-as-promised" "^7.1.0"
     "@types/mocha" "^5.2.5"
     "@types/node-fetch" "^2.1.4"
     chai "^4.2.0"
@@ -642,7 +644,13 @@
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
 
-"@types/chai@^4.1.7":
+"@types/chai-as-promised@^7.1.0":
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/@types/chai-as-promised/-/chai-as-promised-7.1.0.tgz#010b04cde78eacfb6e72bfddb3e58fe23c2e78b9"
+  dependencies:
+    "@types/chai" "*"
+
+"@types/chai@*", "@types/chai@^4.1.7":
   version "4.1.7"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.1.7.tgz#1b8e33b61a8c09cbe1f85133071baa0dbf9fa71a"
 
