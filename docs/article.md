@@ -25,3 +25,19 @@
 - 2019/02/27
 - design research about second layer solution
 - https://docs.google.com/document/d/1eh-DHYCT_BqwgbDnUXiScffUsHdZuKjG6dowt4xDDfY/edit
+
+## Yuriko Nishijima
+
+### Plasma Chamber (English & Japanese)
+
+- 2019/2/8
+
+- "How I started studying Plasma and What I've got within 3 weeks" in English 
+
+- "プラズマ勉強法まとめノート ー 0から3週間で学んだこと" in Japanese 
+
+- 2019/2/9 
+
+- "Back to Basics on Plasma Proposals" in English 
+
+- "プラズマの基本とは" in Japanese 
