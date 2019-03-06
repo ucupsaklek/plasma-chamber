@@ -73,6 +73,9 @@ module.exports.run = childChain => {
       } else {
         cb({code: 0, message: ''})
       }
+    },
+    getCurrentSegments: (args, cb) => {
+      cb(null, childChain.getCurrentSegments())
     }
   });
   app.use('/check', (req, res) => {

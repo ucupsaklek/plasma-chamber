@@ -55,11 +55,11 @@
     ethereumjs-util "^5.2.0"
     rlp "^2.1.0"
 
-"@layer2/childchain@^0.0.29":
-  version "0.0.29"
-  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.29.tgz#e0b4df148db8726afc0efc825b2aaf90cfe782c8"
+"@layer2/childchain@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@layer2/childchain/-/childchain-0.0.30.tgz#3b62f9e4013b77a9c8b5e7b95d72dd2910b40dcd"
   dependencies:
-    "@layer2/core" "^0.0.29"
+    "@layer2/core" "^0.0.30"
     "@types/chai" "^4.1.7"
     "@types/chai-as-promised" "^7.1.0"
     "@types/mocha" "^5.2.5"
@@ -74,9 +74,9 @@
     ts-node "^7.0.1"
     typescript "^3.2.2"
 
-"@layer2/core@^0.0.29":
-  version "0.0.29"
-  resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.29.tgz#a52a535fa514bb422988dedfe69c3e90441005a3"
+"@layer2/core@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@layer2/core/-/core-0.0.30.tgz#59a917fbe6232d1d0743ba805ad60971b8445be6"
   dependencies:
     "@types/chai" "^4.1.7"
     "@types/chai-as-promised" "^7.1.0"
