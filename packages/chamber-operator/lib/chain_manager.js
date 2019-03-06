@@ -4,9 +4,44 @@ const {
 } = require("@layer2/childchain");
 const ChainDb = require('./db/chaindb');
 const SnapshotDb = require('./db/snapshot');
-const RootChainEventListener = require('./event')
+const { IEventWatcherStorage, EventWatcher, ETHEventAdaptor } = require('@layer2/events-watcher')
 const ethers = require('ethers')
+const rootChainInterface = new ethers.utils.Interface(require('../assets/RootChain.json').abi)
 require("dotenv").config();
+
+class WalletEventWatcherStorage {
+
+  constructor(storage) {
+    this.storage = storage
+    this.seen = {}
+  }
+
+  async getLoaded(initialBlock) {
+    try {
+      const loaded = await this.storage.get('loaded')
+      if(loaded) {
+        return parseInt(loaded)
+      } else {
+        return initialBlock
+      }
+    } catch(e) {
+      return initialBlock
+    }
+  }
+
+  async setLoaded(loaded) {
+    await this.storage.insert('loaded', loaded.toString())
+  }
+
+  addSeen(event) {
+    this.seen[event] = true
+  }
+
+  getSeen(event) {
+    return this.seen[event]
+  }
+
+}
 
 const abi = [
   'event BlockSubmitted(bytes32 _root, uint256 _timestamp, uint256 _blkNum)',
@@ -45,6 +80,7 @@ class ChainManager {
 
   async start (options){
     const blockTime = options.blockTime || 30000;
+    const metaDb = new ChainDb(options.metadb)
     const chainDb = new ChainDb(options.blockdb)
     const snapshotDb = new SnapshotDb(options.snapshotdb);
     this.chain = new Chain(chainDb);
@@ -54,14 +90,17 @@ class ChainManager {
       console.log('snapshot root not found', e)
     }
 
-    const RootChainConfirmationBlockNum = Number(process.env.CONFIRMATION || 6);
+    const RootChainConfirmationBlockNum = Number(process.env.CONFIRMATION || 0);
     console.log('RootChainConfirmationBlockNum=', RootChainConfirmationBlockNum)
-    const rootChainEventListener = new RootChainEventListener(
-      this.httpProvider,
-      this.contractAddress,
-      chainDb,
-      await this.getSeenEvents(),
-      RootChainConfirmationBlockNum);
+    const rootChainEventListener = new EventWatcher(
+      new ETHEventAdaptor(this.contractAddress, this.httpProvider, rootChainInterface),
+      new WalletEventWatcherStorage(metaDb),
+      {
+        initialBlock: process.env.INITIAL_BLOCK || 1,
+        interval: 15000,
+        confirmation: RootChainConfirmationBlockNum        
+      }
+    )
 
     const generateBlock = async () => {
       try {
@@ -73,7 +112,10 @@ class ChainManager {
               {
                 gasLimit: 200000
               });
-            console.log(result);
+            console.log(
+              'submit',
+              generateBlockResult.ok(),
+              result.hash);
           }else{
             console.error(generateBlockResult.error())
           }
@@ -90,7 +132,10 @@ class ChainManager {
     }
 
     rootChainEventListener.addEvent('BlockSubmitted', async (e) => {
-      console.log('eventListener.BlockSubmitted', e.values._blkNum.toNumber());
+      console.log(
+        'eventListener.BlockSubmitted',
+        e.values._blkNum.toNumber(),
+        e.values._superRoot);
       await this.chain.handleSubmit(
         e.values._superRoot,
         e.values._root,
@@ -98,7 +143,10 @@ class ChainManager {
         e.values._timestamp);
     })
     rootChainEventListener.addEvent('Deposited', async (e) => {
-      console.log('eventListener.Deposited', e.values._blkNum.toNumber());
+      console.log(
+        'eventListener.Deposited',
+        e.values._blkNum.toNumber(),
+        e.values._depositer);
       try {
         await this.chain.handleDeposit(
           e.values._depositer,
@@ -112,9 +160,15 @@ class ChainManager {
     })
     rootChainEventListener.addEvent('ExitStarted', async (e) => {
       console.log('eventListener.ExitStarted');
-    })
-    await rootChainEventListener.initPolling()
+      await this.chain.handleExit(
+        e.values._Exitor,
+        e.values._segment,
+        e.values._blkNum);
 
+    })
+    await rootChainEventListener.initPolling(()=>{
+      console.log('polling completed')
+    })
     return this.chain;
   }
   
