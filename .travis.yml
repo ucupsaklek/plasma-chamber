@@ -5,6 +5,9 @@ node_js:
 
 before_install:
   - npm install -g yarn
+  - npm install -g lerna
+install:
+  - lerna bootstrap
 script:
   - yarn build
   - yarn test

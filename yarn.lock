@@ -93,6 +93,10 @@
     ts-node "^7.0.1"
     typescript "^3.2.2"
 
+"@layer2/events-watcher@^0.0.30":
+  version "0.0.30"
+  resolved "https://registry.yarnpkg.com/@layer2/events-watcher/-/events-watcher-0.0.30.tgz#6970011eb3b0b7730ce3e0cc8039bbdb546de786"
+
 "@lerna/add@3.10.6":
   version "3.10.6"
   resolved "https://registry.yarnpkg.com/@lerna/add/-/add-3.10.6.tgz#6f2c6b26eb905c40fef4180f3ffa34ad9dbb860b"

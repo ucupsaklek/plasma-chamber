@@ -1,10 +1,6 @@
-const {
-  Chain,
-  Snapshot
-} = require("@layer2/childchain");
+const { Chain } = require("@layer2/childchain");
 const ChainDb = require('./db/chaindb');
-const SnapshotDb = require('./db/snapshot');
-const { IEventWatcherStorage, EventWatcher, ETHEventAdaptor } = require('@layer2/events-watcher')
+const { EventWatcher, ETHEventAdaptor } = require('@layer2/events-watcher')
 const ethers = require('ethers')
 const rootChainInterface = new ethers.utils.Interface(require('../assets/RootChain.json').abi)
 require("dotenv").config();
@@ -78,11 +74,12 @@ class ChainManager {
     return this.chain
   }
 
-  async start (options){
+  async start (options) {
+    const confirmation = Number(options.confirmation || 0)
+    const initialBlock = Number(options.initialBlock || 1)
     const blockTime = options.blockTime || 30000;
     const metaDb = new ChainDb(options.metadb)
     const chainDb = new ChainDb(options.blockdb)
-    const snapshotDb = new SnapshotDb(options.snapshotdb);
     this.chain = new Chain(chainDb);
     try {
       await this.chain.readSnapshot()
@@ -90,15 +87,13 @@ class ChainManager {
       console.log('snapshot root not found', e)
     }
 
-    const RootChainConfirmationBlockNum = Number(process.env.CONFIRMATION || 0);
-    console.log('RootChainConfirmationBlockNum=', RootChainConfirmationBlockNum)
     const rootChainEventListener = new EventWatcher(
       new ETHEventAdaptor(this.contractAddress, this.httpProvider, rootChainInterface),
       new WalletEventWatcherStorage(metaDb),
       {
-        initialBlock: process.env.INITIAL_BLOCK || 1,
+        initialBlock: initialBlock,
         interval: 15000,
-        confirmation: RootChainConfirmationBlockNum        
+        confirmation: confirmation        
       }
     )
 
@@ -166,9 +161,16 @@ class ChainManager {
         e.values._blkNum);
 
     })
-    await rootChainEventListener.initPolling(()=>{
-      console.log('polling completed')
-    })
+    try {
+      await rootChainEventListener.initPolling(()=>{
+        console.log('polling completed')
+      })
+    } catch(e) {
+      console.log("############################################################")
+      console.log("#! ROOTCHAIN_ENDPOINT or ROOTCHAIN_ADDRESS isn't correct? !#")
+      console.log("############################################################")
+      throw e
+    }
     return this.chain;
   }
   
