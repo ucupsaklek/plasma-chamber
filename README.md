@@ -100,7 +100,7 @@ Or you can install global module.
 
 ```sh
 npm i @layer2/operator -g
-chamber-operator
+ROOTCHAIN_ENDPOINT=http://127.0.0.1:8545 ROOTCHAIN_ADDRESS=0xeec918d74c746167564401103096d45bbd494b74 OPERATOR_PRIVATE_KEY=0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3 layer2-operator
 ```
 
 Or use docker image.
@@ -117,6 +117,7 @@ You need envs described [here](https://github.com/cryptoeconomicslab/chamber-pac
 ```sh
 git clone https://github.com/cryptoeconomicslab/plasma-wallet
 yarn install
+cp .env.example .env
 yarn start
 ```
 
