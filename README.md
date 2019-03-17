@@ -5,7 +5,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/plasma-chamber/badge.svg?branch=master)](https://coveralls.io/github/cryptoeconomicslab/plasma-chamber?branch=master)
 
-Plasma Chamber is a toolset that guarantees security, scalability, and versatility of Dapps development on Plasma. 
+Plasma Chamber is a toolset that guarantees security, scalability, and versatility of Dapps development on Plasma.
 
 
 **IMPORTANT NOTICE:** <br>
@@ -14,44 +14,44 @@ Plasma Chamber is a toolset that guarantees security, scalability, and versatili
 * **Vyper contracts and core modules are [here](https://github.com/cryptoeconomicslab/chamber-packages).**
 <br />
 
-**Table of Contents** 
+**Table of Contents**
 
 * [Introduction](#introduction)
 
 * [Overview](#overview)
 
-* [Getting Started](#getting-started) 
+* [Getting Started](#getting-started)
 
-* [Architecture](#architecture) 
+* [Architecture](#architecture)
 
-    * [Root Chain Contracts](#root-chain-contracts) 
-        * [Deposit](#deposit) 
+    * [Root Chain Contracts](#root-chain-contracts)
+        * [Deposit](#deposit)
         * [Exit](#exit)
         * [Challenge](#challenge)
-    
+
     * [Child Chain](#child-chain)  
         * [Tx Verification](#tx-verification)
         * [Plasma Block Generation and Submission](#plasma-block-generation-and-submission)
 
-    * [Wallet](#wallet) 
+    * [Wallet](#wallet)
         * [History Verification](#history-verification)
         * [Guard Feature](#guard-feature)
-        * [Wallet SDK](#wallet-sdk) 
+        * [Wallet SDK](#wallet-sdk)
 
-* [Plasma Chamber Implementation Design](#plasma-chamber-implementation-design) 
+* [Plasma Chamber Implementation Design](#plasma-chamber-implementation-design)
 	* [Key Features](#key-features)
 		* [1. Defragmentation](#defragmentation)
 		* [2. Fast Finality](#fast-finality)
 		* [Checkpoint](#checkpoint)
 		* [Custom Transaction](#custom-transaction)
-        
+
 	* [Security Guarantees](#security-guarantees)
 		* [Simple Exit Game](#simple-exit-game)
 		* [Specific Exit Game for Custom Transactions](#specific-exit-game-for-custom-transactions)
 		* [Longer Online Requirement](#longer-online-requirement)
 
-* [Implementation Schedule](#implementation-schedule) 
-	* [Demo Gadgets](#demo-gadgets) 
+* [Implementation Schedule](#implementation-schedule)
+	* [Demo Gadgets](#demo-gadgets)
 	* [User Generated Contracts](#user-generated-contracts)
 
 # Introduction
@@ -124,7 +124,7 @@ Open http://localhost:1234 in browser.
 # Architecture
 
 Plasma Chamber's architecture enables service providers and its users to take advantage of lower transaction costs and higher throughput without sacrificing security derived from the rootchain. This is accomplished by process of compacting multiple transaction data on a child chain block and submitting it to a root chain (Ethereum blockchain in our case). The diagram below illustrates the connection between the wallets of service provider/ users and Plasma Chamber on top of Ethereum blockchain as its root chain.<br>
-[![Image](https://gyazo.com/69e8f115f253c6af0840eabad473d8f8/thumb/1000)](https://gyazo.com/69e8f115f253c6af0840eabad473d8f8)<br>
+![Image](images/PlasmaArchitecture.png)<br>
 
 ## Root Chain Contracts
 ### Deposit
@@ -136,9 +136,9 @@ As users request to withdraw their funds deposited on the root chain, child chai
 Please see  [Simple Exit Game](https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Exit-Game) section for the details of our Exit and Challenge design, including Exit games.<br>
 
 ### Challenge
-When transactions are in the process of exit requested by a user, another use can invalidate the transaction by "Challenge" action, presenting other transaction with true ownership. When the challenge was approved by the contract, then the exit get blocked. 
+When transactions are in the process of exit requested by a user, another use can invalidate the transaction by "Challenge" action, presenting other transaction with true ownership. When the challenge was approved by the contract, then the exit get blocked.
 
-## Child Chain 
+## Child Chain
 1. Uses UTXO model to transfer pseudo fungible coins with a unique id. <br>
 2. Enables a PoA network, which is centrally controlled by a single party or entity called ‘operator.’ This enables high transaction throughput, while deriving the security robustness from the root chain.<br>
 
@@ -146,27 +146,27 @@ When transactions are in the process of exit requested by a user, another use ca
 In the Child Chain network, the state of UTXO gets updated to the latest status everytime Child Chain receives Deposit, Blocksubmitte, ExitStarted events. This single party operation enables faster transactions verification and it returns the response to the client wallets faster.
 
 ### Plasma Block Generation and Submission
-In the Child Chain network, an operator assembles transactions initiated by end users hash them into Merkle Root. Sum Merkle Tree gets constructed, defining transaction hash as its leaf and the output of transaction hash as its range. Then, Merkle Root is submited to Root Chain contract. In short, utilizing Sum Merkle Tree, thousands of transaction data can be reduced in to 32 bytes Merkle Root and get processed on the Main Chain as 1 transaction, resulting in the gas cost reduction. 
+In the Child Chain network, an operator assembles transactions initiated by end users hash them into Merkle Root. Sum Merkle Tree gets constructed, defining transaction hash as its leaf and the output of transaction hash as its range. Then, Merkle Root is submited to Root Chain contract. In short, utilizing Sum Merkle Tree, thousands of transaction data can be reduced in to 32 bytes Merkle Root and get processed on the Main Chain as 1 transaction, resulting in the gas cost reduction.
 
-## Wallet 
+## Wallet
 ### History Verification
 * Client wallet conducts inspection of UTXO history data referring to events on the Root Chain contract and Merkle Proof submited by the Child Chain. This inspection is conducted whenever the wallet receives and uses new UTXOs. This is a distinct design which diffirenciates Plasma Chamber from any other sidechains  as a trustless sidechain, inheritating main chain security from the first layer.
-* Compared to Plasma full nodes, Plasma Chamber significantly reduces the size of the history data that clients have to inspect with range chunking and checkpoint functions. The size of the history data with one UTXO is expected to be not more than a few mega bytes utmost. Also, with the defragmentation feature, data size that each client has to hold will not be more than a few mega bytes either since UTXOs will be chunk up into one UTXO. 
+* Compared to Plasma full nodes, Plasma Chamber significantly reduces the size of the history data that clients have to inspect with range chunking and checkpoint functions. The size of the history data with one UTXO is expected to be not more than a few mega bytes utmost. Also, with the defragmentation feature, data size that each client has to hold will not be more than a few mega bytes either since UTXOs will be chunk up into one UTXO.
 
-### Guard Feature 
-Client wallet can detect invalid exit of a transaction which is related to some UTXO that the wallet owns while it becomes online at a regular interval. 
+### Guard Feature
+Client wallet can detect invalid exit of a transaction which is related to some UTXO that the wallet owns while it becomes online at a regular interval.
 
 ### Wallet SDK
 Cliet wallet can handle and generate not only transfer transactions, but also more complex transactions. We provide our wallet SDK, which include functions of history verification, guard feature, and syncronization of Root Chain and Child Chain data [here](https://cryptoeconomicslab.github.io/chamber-packages/wallet/classes/_wallet_.chamberwallet.html).
 
-# Plasma Chamber Implementation Design 
+# Plasma Chamber Implementation Design
 This section describes the feature of Plasma Chamber's protocol design.Plasma Cash model is the basis for our implementation, but several modifications proposed later in Plasma Cashflow and Plasma Prime design are incorporated. <br>
 
 **Plasma Chamber has 4 key features and 3 security guarantees listed below.**
 
 ## Key Features
-### Defragmentation 
-Plasma Chamber has intra-chain atomic swap and force inclusion property. These properties are implemented for the fragmentation of the [segment](https://scrapbox.io/cryptoeconimicslab/segment) of the coins. Defragmentation requires the intra-chain atomic swap first, then securing the safety of the exit game. The [Force Inclusion](https://hackmd.io/DgzmJIRjSzCYvl4lUjZXNQ?view#Atomic-Swap-Force-Include)function is required to mitigate newly introduced atomic swap feature. You can refer to [our docs](https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Exit-Game#force-inclusionsegment-tx-proof-sigs-sigsindex) for more details of Force Inclusion function. 
+### Defragmentation
+Plasma Chamber has intra-chain atomic swap and force inclusion property. These properties are implemented for the fragmentation of the [segment](https://scrapbox.io/cryptoeconimicslab/segment) of the coins. Defragmentation requires the intra-chain atomic swap first, then securing the safety of the exit game. The [Force Inclusion](https://hackmd.io/DgzmJIRjSzCYvl4lUjZXNQ?view#Atomic-Swap-Force-Include)function is required to mitigate newly introduced atomic swap feature. You can refer to [our docs](https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Exit-Game#force-inclusionsegment-tx-proof-sigs-sigsindex) for more details of Force Inclusion function.
 Current limitation requires of the end users who are swapping the segments of the coins to be online simultaneously for atomic swap. By making the operator as the broker of swap request matching, end users' online requirement would be mitigated. This update doesn't lower the fund security of Plasma, and incentivize the operator to maintain the chain defragmented.<br>
 Please also see more of our documents on Defragmentation form [here](https://scrapbox.io/cryptoeconimicslab/Defragmentation). <br>
 
@@ -202,7 +202,7 @@ Since various UTXO contracts are permitted on this Plasma childchain, the inputs
 Developers can choose to implement longer exit period. Even with a longer exit period, end users can withdraw their funds immediately as long as they can provide the history of the asset by the [Simple Fast Withdrawals](https://ethresear.ch/t/simple-fast-withdrawals/2128) function and verify themselves. On the other hand, clients will have to hold their history incrementing in proportion to the longer exit period.<br>
 
 
-# Implementation Schedule 
+# Implementation Schedule
 ## Demo Gadgets
 Those are interface programs predicted to be implemented soon to improve the usability of Plasma Chamber.<br>
 - UI of Escrow<br>
@@ -214,12 +214,9 @@ Those are interface programs predicted to be implemented soon to improve the usa
     - Only merge&swapTx can be ZeroFee.
     - GasToken based flat fee (gastoken.io)
 
-## User Generated Contracts 
+## User Generated Contracts
 After we release our first demo, we would like ask Dapps developers across the world to implement these functions through open-source contribution here. <br>
 - MerchantWallet<br>
 - BlockExplorer<br>
 - Deployer: must return SDK and Documentation<br>
 - UserExperienceTarget: 5 days for deploy<br>
-
-
-
