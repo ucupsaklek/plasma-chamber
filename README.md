@@ -11,7 +11,7 @@ Plasma Chamber is a toolset that guarantees security, scalability, and versatili
 **IMPORTANT NOTICE:** <br>
 * **This is an experimental software, does not run in a production yet.**
 
-* **Vyper contracts and core modules are [here](https://github.com/cryptoeconomicslab/chamber-packages).**
+* **Vyper contracts are [here](https://github.com/cryptoeconomicslab/plasma-chamber/tree/master/packages/contracts).**
 <br />
 
 **Table of Contents**
@@ -80,9 +80,9 @@ deploy contracts.
 ```sh
 npm i lerna -g
 npm i yarn -g
-git clone https://github.com/cryptoeconomicslab/chamber-packages
+git clone https://github.com/cryptoeconomicslab/plasma-chamber
 lerna bootstrap
-cd packages/chamber-contracts
+cd packages/contracts
 yarn build
 truffle migrate --network local
 ```
@@ -107,7 +107,7 @@ Or use docker image.
 docker run -e 'ROOTCHAIN_ADDRESS='{root chain address}' -e 'OPERATOR_PRIVATE_KEY={private key}' -e 'ROOTCHAIN_ENDPOINT='{endpoint}' -v /path/to/db:/var/plasmadb  -itd -u node cryptoeconomicslab/plasma-chamber:development
 ```
 
-You need envs described [here](https://github.com/cryptoeconomicslab/chamber-packages/tree/master/packages/operator#environment-variables)
+You need envs described [here](https://github.com/cryptoeconomicslab/plasma-chamber/tree/master/packages/operator#environment-variables)
 
 
 ## Run wallet

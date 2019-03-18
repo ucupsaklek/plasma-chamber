@@ -1,0 +1,25 @@
+{
+  "name": "@layer2/events-watcher",
+  "version": "0.0.32",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build ./tsconfig.json",
+    "build:ci": "npm run build",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "mocha -r ts-node/register 'test/**/*.ts'",
+    "test:ci": "npm run test",
+    "docs": "typedoc --out ../../docs/core ./src"
+  },
+  "dependencies": {
+    "ethers": "^4.0.27",
+    "tslib": "^1.9.3"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.0.2"
+  }
+}
