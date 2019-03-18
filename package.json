@@ -1,41 +1,31 @@
 {
   "name": "plasma-chamber",
-  "version": "1.0.0",
-  "description": "",
   "private": true,
   "workspaces": {
     "packages": [
       "packages/*"
     ]
   },
-  "main": "main.js",
-  "scripts": {
-    "bootstrap": "lerna bootstrap",
-    "build": "lerna run build",
-    "publish": "yarn build && lerna publish",
-    "run-all": "yarn run wsrun",
-    "start": "node main",
-    "start:ganache-cli": "ganache-cli --mnemonic='candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'",
-    "test": "lerna run test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cryptoeconomicslab/plasma-chamber.git"
-  },
   "author": {
     "name": "Cryptoeconomics Lab",
     "url": "https://www.cryptoeconomicslab.com/"
   },
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/cryptoeconomicslab/plasma-chamber/issues"
+  "engines": {
+    "node": ">=8"
   },
-  "homepage": "https://github.com/cryptoeconomicslab/plasma-chamber",
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build",
+    "test": "lerna run test",
+    "build:ci": "lerna run build:ci",
+    "test:ci": "lerna run test:ci",
+    "format": "lerna run format",
+    "publish": "yarn build && lerna publish",
+    "start": "node app",
+    "docs:wallet": "typedoc --out ./docs ./packages/chamber-wallet/src",
+    "docs": "lerna run docs"
+  },
   "dependencies": {
-    "dotenv": "^6.0.0",
-    "eslint": "^5.6.0",
-    "ganache-cli": "^6.2.3",
-    "lerna": "^3.4.3",
-    "wsrun": "^2.2.1"
+    "lerna": "^3.10.5"
   }
 }
