@@ -38,7 +38,7 @@ describe('Transaction', () => {
 
   it('encode and decode transfer transaction', () => {
     const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-    const encoded = tx.encode()
+    const encoded = tx.serialize()
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf601b4f394953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c0019434fdeadc2b69fd24f3043a89f9231f10f1284a4a');
     assert.equal(decoded.label.toNumber(), 11);
@@ -48,7 +48,7 @@ describe('Transaction', () => {
   it('encode and decode split transaction', () => {
     const tx = new SplitTransaction(
       AliceAddress, splitSegment, blkNum, BobAddress)
-    const encoded = tx.encode()
+    const encoded = tx.serialize()
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf85102b84ef84c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c00194953b8fb338ef870eda6d74c1dd4769b6c977b8cf9434fdeadc2b69fd24f3043a89f9231f10f1284a4a8327ac40');
     const outputSegment = decoded.getOutput(0).getSegment(0)
@@ -61,7 +61,7 @@ describe('Transaction', () => {
   it('encode and decode merge transaction', () => {
     const tx = new MergeTransaction(
       AliceAddress, segment1, segment2, BobAddress, blkNum1, blkNum2)
-    const encoded = tx.encode()
+    const encoded = tx.serialize()
     const decoded: MergeTransaction = TransactionDecoder.decode(encoded) as MergeTransaction
     //assert.equal(encoded, '0xf83d03b83af83894953b8fb338ef870eda6d74c1dd4769b6c977b8cf834c4b40835b8d80836acfc09434fdeadc2b69fd24f3043a89f9231f10f1284a4a3234');
     assert.equal(decoded.getOutput().getSegment(0).start.toString(), '5000000')
@@ -71,7 +71,7 @@ describe('Transaction', () => {
   it('encode and decode swap transaction', () => {
     const tx = SwapTransaction.SimpleSwap(
       AliceAddress, segment1, blkNum1, BobAddress, segment2, blkNum2)
-    const encoded = tx.encode()
+    const encoded = tx.serialize()
     const decoded: SwapTransaction = TransactionDecoder.decode(encoded) as SwapTransaction
     //assert.equal(encoded, '0xf84105b83ef83c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf834c4b40835b8d80329434fdeadc2b69fd24f3043a89f9231f10f1284a4a835b8d80836acfc034');
     assert.equal(decoded.hash(), tx.hash());

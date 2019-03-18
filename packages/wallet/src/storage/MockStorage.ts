@@ -26,6 +26,7 @@ export class MockStorage implements IStorage {
     return true
   }
   addProof(key: string, blkNum: number, value: string): Promise<boolean> {
+    console.log(value)
     this.data.set(key + '.' + blkNum, value)
     return Promise.resolve(true)
   }

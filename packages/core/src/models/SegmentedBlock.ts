@@ -75,24 +75,24 @@ export class SegmentedBlock {
   }
 
   serialize() {
-    return {
-      originalSegment: this.originalSegment.serialize(),
-      items: this.items.map(item => item.serialize()),
-      blkNum: this.blkNum
-    }
+    return [
+      this.originalSegment.serialize(),
+      this.items.map(item => item.serialize()),
+      this.blkNum
+    ]
   }
 
-  static deserialize(data: any) {
+  static deserialize(data: any[]) {
     return new SegmentedBlock(
-      Segment.deserialize(data.originalSegment),
-      data.items.map((item: any) => {
+      Segment.deserialize(data[0]),
+      data[1].map((item: any) => {
         if(item.type == 'E') {
           return ExclusionProof.deserialize(item)
         } else {
           return SignedTransactionWithProof.deserialize(item)
         }
       }),
-      data.blkNum
+      data[2]
     )
   }
 

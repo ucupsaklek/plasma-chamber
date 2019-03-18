@@ -127,7 +127,7 @@ export class SignedTransaction {
 
   serialize() {
     return {
-      rawTxs: this.txs.map(tx => tx.encode()),
+      rawTxs: this.txs.map(tx => tx.serialize()),
       sigs: this.signatures
     }
   }
@@ -297,32 +297,32 @@ export class SignedTransactionWithProof {
 
   serialize() {
     return {
-      signedTx: this.getSignedTx().serialize(),
-      txIndex: this.txIndex,
-      outputIndex: this.outputIndex,
-      superRoot: this.superRoot,
-      root: this.root,
-      timestamp: this.timestamp.toString(),
+      tx: this.getSignedTx().serialize(),
+      i: this.txIndex,
+      o: this.outputIndex,
+      sr: this.superRoot,
+      r: this.root,
+      ts: this.timestamp.toString(),
       proof: this.proof.serialize(),
       blkNum: this.blkNum.toString(),
       confSigs: this.confSigs,
       txo: this.txo.serialize(),
-      verified: this.verifiedFlag
+      v: this.verifiedFlag
     }
   }
 
   static deserialize(data: any): SignedTransactionWithProof {
     return new SignedTransactionWithProof(
-      SignedTransaction.deserialize(data.signedTx),
-      data.txIndex,
-      data.outputIndex,
-      data.superRoot,
-      data.root,
-      utils.bigNumberify(data.timestamp),
+      SignedTransaction.deserialize(data.tx),
+      data.i,
+      data.o,
+      data.sr,
+      data.r,
+      utils.bigNumberify(data.ts),
       SumMerkleProof.deserialize(data.proof),
       utils.bigNumberify(data.blkNum),
       TransactionOutputDeserializer.deserialize(data.txo)
-    ).withRawConfSigs(data.confSigs).checkVerified(data.verified)
+    ).withRawConfSigs(data.confSigs).checkVerified(data.v)
   }
 
   spend(txo: TransactionOutput) {
