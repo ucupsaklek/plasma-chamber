@@ -12,6 +12,7 @@ import {
 import * as constants from './helpers/constants'
 
 import BigNumber = utils.BigNumber
+import RLP = utils.RLP
 
 export class DecoderUtility {
   static decode(bytes: string) {
@@ -67,6 +68,10 @@ export abstract class BaseTransaction {
     return utils.keccak256(this.encode())
   }
 
+  serialize() {
+    return RLP.encode([this.label, this.maxBlock, this.items])
+  }
+
   abstract getInput(index: number): TransactionOutput
 
   abstract getInputs(): TransactionOutput[]
@@ -100,15 +105,16 @@ export class TransactionDecoder {
    * @param bytes is hex string
    */
   static decode(bytes: string): BaseTransaction {
-    const label = utils.bigNumberify(utils.hexDataSlice(bytes, 0, 8)).toNumber()
-    const maxBlkNum = utils.bigNumberify(utils.hexDataSlice(bytes, 8, 16)).toNumber()
-    const body = DecoderUtility.decode(utils.hexDataSlice(bytes, 16, 496))
-    if(label === 11) {
+    const decoded = RLP.decode(bytes)
+    const label = utils.bigNumberify(decoded[0]).toNumber()
+    const maxBlkNum = utils.bigNumberify(decoded[1]).toNumber()
+    const body = decoded[2]
+    if(label === 1) {
+      return DepositTransaction.fromTuple(body).withMaxBlkNum(maxBlkNum)
+    }else if(label === 11) {
       return SplitTransaction.fromTuple(body).withMaxBlkNum(maxBlkNum)
     }else if(label === 12) {
       return MergeTransaction.fromTuple(body).withMaxBlkNum(maxBlkNum)
-    }else if(label === 1) {
-      return DepositTransaction.fromTuple(body).withMaxBlkNum(maxBlkNum)
     }else if(label === 21) {
       return SwapTransaction.fromTuple(body).withMaxBlkNum(maxBlkNum)
     }else{
@@ -277,12 +283,12 @@ export class DepositTransaction extends BaseTransaction {
 
   static fromTuple(tuple: RLPItem[]): DepositTransaction {
     return new DepositTransaction(
-      DecoderUtility.getAddress(tuple[0]),
+      utils.getAddress(tuple[0]),
       Segment.fromBigNumber(utils.bigNumberify(tuple[1])))
   }
 
-  static decode(bytes: string): DepositTransaction {
-    return DepositTransaction.fromTuple(DecoderUtility.decode(utils.hexDataSlice(bytes, 16, 496)))
+  static deserialize(bytes: string): DepositTransaction {
+    return DepositTransaction.fromTuple(RLP.decode(bytes)[2])
   }
 
   getInput(): TransactionOutput {
@@ -352,10 +358,10 @@ export class SplitTransaction extends BaseTransaction {
 
   static fromTuple(tuple: RLPItem[]): SplitTransaction {
     return new SplitTransaction(
-      DecoderUtility.getAddress(tuple[0]),
+      utils.getAddress(tuple[0]),
       Segment.fromBigNumber(utils.bigNumberify(tuple[1])),
       utils.bigNumberify(tuple[2]),
-      DecoderUtility.getAddress(tuple[3]))
+      utils.getAddress(tuple[3]))
   }
 
   static decode(bytes: string): SplitTransaction {
@@ -445,10 +451,10 @@ export class MergeTransaction extends BaseTransaction {
     const segment = Segment.fromBigNumber(utils.bigNumberify(tuple[1]))
     const offset = utils.bigNumberify(tuple[2])
     return new MergeTransaction(
-      DecoderUtility.getAddress(tuple[0]),
+      utils.getAddress(tuple[0]),
       new Segment(segment.tokenId, segment.start, offset),
       new Segment(segment.tokenId, offset, segment.end),
-      DecoderUtility.getAddress(tuple[3]),
+      utils.getAddress(tuple[3]),
       utils.bigNumberify(tuple[4]),
       utils.bigNumberify(tuple[5]))
   }
@@ -571,10 +577,10 @@ export class SwapTransaction extends BaseTransaction {
 
   static fromTuple(tuple: RLPItem[]): SwapTransaction {
     return new SwapTransaction(
-      DecoderUtility.getAddress(tuple[0]),
+      utils.getAddress(tuple[0]),
       Segment.fromBigNumber(utils.bigNumberify(tuple[1])),
       utils.bigNumberify(tuple[2]),
-      DecoderUtility.getAddress(tuple[3]),
+      utils.getAddress(tuple[3]),
       Segment.fromBigNumber(utils.bigNumberify(tuple[4])),
       utils.bigNumberify(tuple[5]))
   }

@@ -57,7 +57,7 @@ export class PlasmaBlockHeader {
     if(this.block) {
       return ['B', this.block.serialize()]
     } else if(this.deposit) {
-      return ['D', this.deposit.encode()]
+      return ['D', this.deposit.serialize()]
     } else {
       throw new Error('unknown type')
     }
@@ -68,7 +68,7 @@ export class PlasmaBlockHeader {
     if(data[0] == 'B') {
       plasmaBlockHeader.setBlock(WaitingBlockWrapper.deserialize(data[1]))
     } else if(data[0] == 'D') {
-      plasmaBlockHeader.setDeposit(DepositTransaction.decode(data[1]))
+      plasmaBlockHeader.setDeposit(DepositTransaction.deserialize(data[1]))
     } else {
       throw new Error('unknown type')
     }
