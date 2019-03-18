@@ -4,7 +4,7 @@ import { IEventWatcherStorage } from './storage'
 
 export type RootChainEventHandler = (e: any) => void
 export type CompletedHandler = () => void
-export type ErrorHandler = () => void
+export type ErrorHandler = (err: Error) => void
 
 export interface IETHEventAdaptor {
 
@@ -80,11 +80,18 @@ export class EventWatcher {
   }
 
   async initPolling(handler: CompletedHandler, errorHandler?: ErrorHandler) {
-    const blockNumber = await this.adaptor.getLatestBlockNumber()
-    const loaded = await this.storage.getLoaded(this.options.initialBlock)
-    await this.polling(loaded, blockNumber, handler)
+    try {
+      const blockNumber = await this.adaptor.getLatestBlockNumber()
+      const loaded = await this.storage.getLoaded(this.options.initialBlock)
+      await this.polling(loaded, blockNumber, handler)
+    } catch(e) {
+      console.log(e)
+      if(errorHandler) {
+        errorHandler(e)
+      }
+    }
     setTimeout(async ()=>{
-      await this.initPolling(handler);
+      await this.initPolling(handler, errorHandler);
     }, this.options.interval);
   }
 

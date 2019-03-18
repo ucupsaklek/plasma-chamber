@@ -160,16 +160,13 @@ class ChainManager {
         e.values._blkNum);
 
     })
-    try {
-      await rootChainEventListener.initPolling(()=>{
-        console.log('polling completed')
-      })
-    } catch(e) {
+    await rootChainEventListener.initPolling(()=>{
+      console.log('polling completed')
+    }, (e) => {
       console.log("############################################################")
       console.log("#! ROOTCHAIN_ENDPOINT or ROOTCHAIN_ADDRESS isn't correct? !#")
       console.log("############################################################")
-      throw e
-    }
+    })
     return this.chain;
   }
   
