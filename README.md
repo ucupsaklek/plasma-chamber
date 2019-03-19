@@ -40,8 +40,8 @@ Plasma Chamber is a toolset that guarantees security, scalability, and versatili
 
 * [Plasma Chamber Implementation Design](#plasma-chamber-implementation-design)
 	* [Key Features](#key-features)
-		* [1. Defragmentation](#defragmentation)
-		* [2. Fast Finality](#fast-finality)
+		* [Defragmentation](#defragmentation)
+		* [Fast Finality](#fast-finality)
 		* [Checkpoint](#checkpoint)
 		* [Custom Transaction](#custom-transaction)
 
@@ -204,15 +204,16 @@ Developers can choose to implement longer exit period. Even with a longer exit p
 
 # Implementation Schedule
 ## Demo Gadgets
-Those are interface programs predicted to be implemented soon to improve the usability of Plasma Chamber.<br>
-- UI of Escrow<br>
-- Cloud KeyStore<br>
-- SDK of Escrow Verifier<br>
-- Start from DAI and use LCETH:JPY<br>
+Those are outer-protocol inventions to be implemented Q2~Q3 of 2019 to improve the usability of Plasma Chamber.<br>
+- Escrow with Trusted Third Party with repeated game enforcement<br>
+- Escrow SDK, Tx format verifier, and extended exit game<br>
+- Cloud Keystore as email-passphrase import enabler<br>
+- DAI and LCJPY(LCNEM Inc.'s pseudo-hard-peg JPY Stablecoin) integration<br>
+- Instant deposit from traditional mobile banking app
 - Fee Model<br>
-    - head-body Tx structure
-    - Only merge&swapTx can be ZeroFee.
-    - GasToken based flat fee (gastoken.io)
+    - head-body Tx structure for enabling exit-game-safe fee model for both operator and contract developer
+    - Only merge&swapTx can be ZeroFee in order to disincentivice fragmentation.
+    - [GasToken](gastoken.io) based one year locked fee model to deal with the volatility of ETH price
 
 ## User Generated Contracts
 After we release our first demo, we would like ask Dapps developers across the world to implement these functions through open-source contribution here. <br>
