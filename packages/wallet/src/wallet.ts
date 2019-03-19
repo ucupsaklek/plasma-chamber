@@ -1,6 +1,6 @@
 import * as ethers from 'ethers'
 import {
-  PlasmaClient
+  PlasmaClient, FastTransferResponse
 } from './client'
 import {
   IStorage
@@ -589,6 +589,32 @@ export class ChamberWallet {
     }
     signedTx.sign(this.wallet.privateKey)
     return await this.client.sendTransaction(signedTx)
+  }
+
+  sendFastTransferToMerchant(
+    to: Address,
+    amountStr: string,
+    feeTo?: Address,
+    feeAmountStr?: string
+  ): ChamberResult<boolean> {
+    const amount = ethers.utils.bigNumberify(amountStr)
+    const feeAmount = feeAmountStr ? ethers.utils.bigNumberify(feeAmountStr) : undefined
+    const signedTx = this.searchUtxo(to, amount, feeTo, feeAmount)
+    if(signedTx == null) {
+      return new ChamberResultError(WalletErrorFactory.TooLargeAmount())
+    }
+    signedTx.sign(this.wallet.privateKey)
+    this.client.fastTransferToMerchant(to, signedTx)
+    return new ChamberOk(true)
+  }
+
+  async sendFastTransferToOperator(
+    signedTx: SignedTransaction
+  ): Promise<ChamberResult<FastTransferResponse>> {
+    const fastTransferResponse = await this.client.fastTransfer(signedTx)
+    // should check operator's signature: fastTransferResponse.sig
+    // should count bandwidth: fastTransferResponse.tx
+    return fastTransferResponse
   }
 
   async merge() {

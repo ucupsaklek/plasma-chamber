@@ -4,7 +4,7 @@ import {
 } from '../src'
 import {
   INetworkClient,
-  JsonRpcClient,
+  IPubsubClient,
   PlasmaClient
 } from '../src/client'
 
@@ -18,6 +18,11 @@ class MockNetworkClient implements INetworkClient {
   }
 }
 
+class MockPubsubClient implements IPubsubClient {
+  publish(topic: string, message: string) {
+    return true
+  }
+}
 
 describe('ChamberWallet', () => {
 
@@ -25,7 +30,7 @@ describe('ChamberWallet', () => {
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const ContractAddress = '0xfb88de099e13c3ed21f80a7a1e49f8caecf10df6'
   const mockClient = new MockNetworkClient()
-  const client = new PlasmaClient(mockClient)
+  const client = new PlasmaClient(mockClient, new MockPubsubClient())
   let storage = new MockStorage()
 
   beforeEach(() => {
