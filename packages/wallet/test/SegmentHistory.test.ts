@@ -5,7 +5,7 @@ import {
 import { MockStorage } from "../src/storage/MockStorage";
 import {
   INetworkClient,
-  JsonRpcClient,
+  IPubsubClient,
   PlasmaClient
 } from '../src/client'
 import { assert } from "chai"
@@ -20,11 +20,22 @@ class MockNetworkClient implements INetworkClient {
   }
 }
 
+class MockPubsubClient implements IPubsubClient {
+  publish(topic: string, message: string) {
+    return true
+  }
+  subscribe(
+    topic: string,
+    event: (e: any) => void
+  ): void {
+  }
+}
+
 describe('SegmentHistoryManager', () => {
 
   let storage = new MockStorage()
   const mockClient = new MockNetworkClient()
-  const client = new PlasmaClient(mockClient)
+  const client = new PlasmaClient(mockClient, new MockPubsubClient())
   const AlicePrivateKey = '0xe88e7cda6f7fae195d0dcda7ccb8d733b8e6bb9bd0bc4845e1093369b5dc2257'
   const BobPrivateKey = '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f'
   const AliceAddress = utils.computeAddress(AlicePrivateKey)

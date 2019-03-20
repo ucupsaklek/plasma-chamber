@@ -1,4 +1,5 @@
 const jayson = require('jayson');
+const mosca = require('mosca');
 const cors = require('cors');
 const connect = require('connect');
 const jsonParser = require('body-parser').json;
@@ -8,6 +9,8 @@ const {
   SignedTransactionWithProof,
   SwapRequest
 } = require('@layer2/core')
+
+const operatorKey = process.env.OPERATOR_PRIVATE_KEY
 
 module.exports.run = childChain => {
   // create a server
@@ -75,6 +78,17 @@ module.exports.run = childChain => {
     },
     getCurrentSegments: (args, cb) => {
       cb(null, childChain.getCurrentSegments())
+    },
+    fastTransfer: (args, cb) => {
+      const signedTx = SignedTransaction.deserialize(args[0])
+      const result = childChain.appendTx(signedTx);
+      if(result.isOk()) {
+        // operator signs transaction
+        const sign = signedTx.justSign(operatorKey)
+        cb(null, {sign: sign, tx: result.ok()});
+      } else {
+        cb(result.error().serialize().error);
+      }      
     }
   });
   app.use('/check', (req, res) => {
@@ -85,5 +99,13 @@ module.exports.run = childChain => {
   app.use(server.middleware());
 
   app.listen(process.env.PORT || 3000);
+
+  const mqttServer = new mosca.Server({
+    port: 1883
+  });
+  mqttServer.on('ready', () => {
+    console.log('MQTT server is up and running!!')
+  });
+
 
 }

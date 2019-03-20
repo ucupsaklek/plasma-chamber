@@ -1,6 +1,7 @@
 import * as ethers from 'ethers'
+import EventEmitter from 'events'
 import {
-  PlasmaClient
+  PlasmaClient, FastTransferResponse
 } from './client'
 import {
   IStorage
@@ -48,7 +49,7 @@ const abi = [
   'function getExit(uint256 _exitId) constant returns(address, uint256)',
 ]
 
-export class ChamberWallet {
+export class ChamberWallet extends EventEmitter {
   private client: PlasmaClient
   private loadedBlockNumber: number
   private rootChainContract: Contract
@@ -148,6 +149,7 @@ export class ChamberWallet {
     storage: IStorage,
     options?: any
   ) {
+    super()
     this.client = client
     this.options = options || {}
     this.httpProvider = provider
@@ -212,6 +214,9 @@ export class ChamberWallet {
   async init(handler: (wallet: ChamberWallet) => void) {
     this.updatedHandler = handler
     await this.plasmaSyncher.init(() => handler(this))
+    await this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
+      await this.sendFastTransferToOperator(tx)
+    })
   }
 
   async loadBlockNumber() {
@@ -262,6 +267,7 @@ export class ChamberWallet {
         const verified = await this.verifyHistory(tx)
         if(verified) {
           this.storage.addUTXO(tx)
+          this.emit('receive', {tx: tx})
           // require confirmation signature?
           if(tx.requireConfsig()) {
             tx.confirmMerkleProofs(this.wallet.privateKey)
@@ -589,6 +595,33 @@ export class ChamberWallet {
     }
     signedTx.sign(this.wallet.privateKey)
     return await this.client.sendTransaction(signedTx)
+  }
+
+  sendFastTransferToMerchant(
+    to: Address,
+    amountStr: string,
+    feeTo?: Address,
+    feeAmountStr?: string
+  ): ChamberResult<boolean> {
+    const amount = ethers.utils.bigNumberify(amountStr)
+    const feeAmount = feeAmountStr ? ethers.utils.bigNumberify(feeAmountStr) : undefined
+    const signedTx = this.searchUtxo(to, amount, feeTo, feeAmount)
+    if(signedTx == null) {
+      return new ChamberResultError(WalletErrorFactory.TooLargeAmount())
+    }
+    signedTx.sign(this.wallet.privateKey)
+    this.client.fastTransferToMerchant(to, signedTx)
+    return new ChamberOk(true)
+  }
+
+  async sendFastTransferToOperator(
+    signedTx: SignedTransaction
+  ): Promise<ChamberResult<FastTransferResponse>> {
+    const fastTransferResponse = await this.client.fastTransfer(signedTx)
+    // should check operator's signature: fastTransferResponse.sig
+    // should count bandwidth: fastTransferResponse.tx
+    this.emit('receive', {tx: fastTransferResponse, isFast: true})
+    return fastTransferResponse
   }
 
   async merge() {

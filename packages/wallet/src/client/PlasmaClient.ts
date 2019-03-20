@@ -1,6 +1,5 @@
-import {
-  INetworkClient
-} from './JsonRpcClient'
+import { INetworkClient } from './JsonRpcClient'
+import { IPubsubClient } from './PubsubClient'
 import {
   ChamberResult,
   ChamberOk,
@@ -12,13 +11,29 @@ import {
   SignedTransaction
 } from '@layer2/core';
 
+export class FastTransferResponse {
+  sig: string
+  tx: SignedTransaction
+  
+  constructor(
+    sig: string,
+    tx: SignedTransaction
+  ) {
+    this.sig = sig
+    this.tx = tx
+  }
+}
+
 export class PlasmaClient {
   jsonRpcClient: INetworkClient
+  mqttClient: IPubsubClient
 
   constructor(
-    client: INetworkClient
-  ) {
+    client: INetworkClient,
+    mqttClient: IPubsubClient
+    ) {
     this.jsonRpcClient = client
+    this.mqttClient = mqttClient
   }
 
   static deserialize<T>(serialized: any, handler: (data: any) => T): ChamberResult<T> {
@@ -47,6 +62,24 @@ export class PlasmaClient {
   async sendTransaction(tx: SignedTransaction): Promise<ChamberResult<boolean>> {
     const res = await this.jsonRpcClient.request('sendTransaction', [tx.serialize()])
     return PlasmaClient.deserialize<boolean>(res, (result) => result as boolean)
+  }
+
+  fastTransferToMerchant(to: string, tx: SignedTransaction) {
+    this.mqttClient.publish('transfer/' + to, JSON.stringify(tx.serialize()))
+  }
+
+  subscribeFastTransfer(myAddress: string, handler: (tx: SignedTransaction) => Promise<void>) {
+    this.mqttClient.subscribe('transfer/' + myAddress, (e) => {
+      handler(SignedTransaction.deserialize(e))
+    })
+  }
+
+  async fastTransfer(tx: SignedTransaction): Promise<ChamberResult<FastTransferResponse>> {
+    const res = await this.jsonRpcClient.request('fastTransfer', [tx.serialize()])
+    return PlasmaClient.deserialize<FastTransferResponse>(res, (result: any) => new FastTransferResponse(
+      result.sign,
+      SignedTransaction.deserialize(result.tx)
+    ))
   }
 
   async sendConfsig(tx: SignedTransactionWithProof): Promise<ChamberResult<boolean>> {
