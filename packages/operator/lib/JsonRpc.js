@@ -1,3 +1,4 @@
+const http = require('http')
 const jayson = require('jayson');
 const mosca = require('mosca');
 const cors = require('cors');
@@ -98,14 +99,24 @@ module.exports.run = childChain => {
   app.use(jsonParser());
   app.use(server.middleware());
 
-  app.listen(process.env.PORT || 3000);
+  const httpServer = http.createServer(app);
+  // app.listen(process.env.PORT || 3000);
 
-  const mqttServer = new mosca.Server({
-    port: 1883
+  const mqttServer = new mosca.Server({});
+
+  mqttServer.attachHttpServer(httpServer)
+
+  mqttServer.on('clientConnected', function(client) {
+    console.log('client connected', client.id);
   });
+
+  mqttServer.on('published', function(packet, client) {
+    console.log('Published', packet.payload);
+  });
+
   mqttServer.on('ready', () => {
     console.log('MQTT server is up and running!!')
   });
 
-
+  httpServer.listen(3000)
 }

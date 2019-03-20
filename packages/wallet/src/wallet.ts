@@ -213,10 +213,10 @@ export class ChamberWallet extends EventEmitter {
    */
   async init(handler: (wallet: ChamberWallet) => void) {
     this.updatedHandler = handler
-    await this.plasmaSyncher.init(() => handler(this))
-    await this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
+    this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
       await this.sendFastTransferToOperator(tx)
     })
+    await this.plasmaSyncher.init(() => handler(this))
   }
 
   async loadBlockNumber() {
@@ -620,7 +620,9 @@ export class ChamberWallet extends EventEmitter {
     const fastTransferResponse = await this.client.fastTransfer(signedTx)
     // should check operator's signature: fastTransferResponse.sig
     // should count bandwidth: fastTransferResponse.tx
-    this.emit('receive', {tx: fastTransferResponse, isFast: true})
+    if(fastTransferResponse.isOk()) {
+      this.emit('receive', {tx: fastTransferResponse.ok().tx, isFast: true})
+    }
     return fastTransferResponse
   }
 
