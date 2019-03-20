@@ -2,7 +2,6 @@
 # Plasma Chamber
 
 [![Build Status](https://travis-ci.org/cryptoeconomicslab/plasma-chamber.svg?branch=master)](https://travis-ci.org/cryptoeconomicslab/plasma-chamber)
-
 [![Coverage Status](https://coveralls.io/repos/github/cryptoeconomicslab/plasma-chamber/badge.svg?branch=master)](https://coveralls.io/github/cryptoeconomicslab/plasma-chamber?branch=master)
 
 Plasma Chamber is a toolset that guarantees security, scalability, and versatility of Dapps development on Plasma.
@@ -55,7 +54,7 @@ Plasma Chamber is a toolset that guarantees security, scalability, and versatili
 	* [User Generated Contracts](#user-generated-contracts)
 
 # Introduction
-Plasma Chamber is Cryptoeconomics Lab's first product that enables to generate General Purpose Plasma. Our implementation used Plasma Cash design as its basis, but support more complex transactions for each decentralized application without sacrificing its security.
+Plasma Chamber is Cryptoeconomics Lab's first product that enables to generate General Purpose Plasma. Our implementation used [Plasma Cashflow](https://medium.com/plasma-group/plasma-spec-9d98d0f2fccf) design as its basis, but support more complex transactions for each decentralized application without sacrificing its security.
 
 # Overview
 Plasma is a 2nd layer scaling solution focusing on throughput improvement rather than quick finality. Plasma is not an EVM based, but a UTXO-model based scaling solution inheriting Ethereum blockchain's security. In other words, it aims to give a perfect fund safety, a transaction compression. Plasma is often times expected to be applied to several kinds of Dapps such as games, asset exchanges, etc. However, it requires production teams to employ expert Plasma researchers for careful security analysis in order to prepare their infrastructure. This causes duplicated research for each project, and security insights would not be shared sufficiently and efficiently amongst the projects. Hence, in order to solve this problem, Plasma Chamber is implemented to be a Dapp building framework without requiring domain-specific Plasma for each project.
