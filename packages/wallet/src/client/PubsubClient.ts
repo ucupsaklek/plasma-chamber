@@ -6,6 +6,10 @@ export interface IPubsubClient {
     topic: string,
     message: string
   ): boolean
+  subscribe(
+    topic: string,
+    event: (e: any) => void
+  ): void
 }
 
 export class WalletMQTTClient implements IPubsubClient {
@@ -14,6 +18,7 @@ export class WalletMQTTClient implements IPubsubClient {
   constructor(endpoint: string) {
     this.client = mqtt.connect(endpoint)
   }
+
   publish(
     topic: string,
     message: string
@@ -21,4 +26,12 @@ export class WalletMQTTClient implements IPubsubClient {
     this.client.publish(topic, message)
     return true
   }
+
+  subscribe(
+    topic: string,
+    event: (e: any) => void
+  ): void {
+    this.client.subscribe(topic, event)
+  }
+
 }

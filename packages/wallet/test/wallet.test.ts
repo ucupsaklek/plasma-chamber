@@ -22,6 +22,11 @@ class MockPubsubClient implements IPubsubClient {
   publish(topic: string, message: string) {
     return true
   }
+  subscribe(
+    topic: string,
+    event: (e: any) => void
+  ): void {
+  }
 }
 
 describe('ChamberWallet', () => {

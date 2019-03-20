@@ -1,4 +1,5 @@
 import * as ethers from 'ethers'
+import EventEmitter from 'events'
 import {
   PlasmaClient, FastTransferResponse
 } from './client'
@@ -48,7 +49,7 @@ const abi = [
   'function getExit(uint256 _exitId) constant returns(address, uint256)',
 ]
 
-export class ChamberWallet {
+export class ChamberWallet extends EventEmitter {
   private client: PlasmaClient
   private loadedBlockNumber: number
   private rootChainContract: Contract
@@ -148,6 +149,7 @@ export class ChamberWallet {
     storage: IStorage,
     options?: any
   ) {
+    super()
     this.client = client
     this.options = options || {}
     this.httpProvider = provider
@@ -212,6 +214,9 @@ export class ChamberWallet {
   async init(handler: (wallet: ChamberWallet) => void) {
     this.updatedHandler = handler
     await this.plasmaSyncher.init(() => handler(this))
+    await this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
+      await this.sendFastTransferToOperator(tx)
+    })
   }
 
   async loadBlockNumber() {
@@ -262,6 +267,7 @@ export class ChamberWallet {
         const verified = await this.verifyHistory(tx)
         if(verified) {
           this.storage.addUTXO(tx)
+          this.emit('receive', {tx: tx})
           // require confirmation signature?
           if(tx.requireConfsig()) {
             tx.confirmMerkleProofs(this.wallet.privateKey)
@@ -614,6 +620,7 @@ export class ChamberWallet {
     const fastTransferResponse = await this.client.fastTransfer(signedTx)
     // should check operator's signature: fastTransferResponse.sig
     // should count bandwidth: fastTransferResponse.tx
+    this.emit('receive', {tx: fastTransferResponse, isFast: true})
     return fastTransferResponse
   }
 
