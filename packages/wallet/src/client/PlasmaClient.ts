@@ -70,7 +70,7 @@ export class PlasmaClient {
 
   subscribeFastTransfer(myAddress: string, handler: (tx: SignedTransaction) => Promise<void>) {
     this.mqttClient.subscribe('transfer/' + myAddress, (e) => {
-      handler(SignedTransaction.deserialize(e))
+      handler(SignedTransaction.deserialize(JSON.parse(e)))
     })
   }
 
@@ -78,7 +78,7 @@ export class PlasmaClient {
     const res = await this.jsonRpcClient.request('fastTransfer', [tx.serialize()])
     return PlasmaClient.deserialize<FastTransferResponse>(res, (result: any) => new FastTransferResponse(
       result.sign,
-      SignedTransaction.deserialize(result.tx)
+      tx
     ))
   }
 
