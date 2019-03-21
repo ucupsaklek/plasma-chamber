@@ -134,6 +134,7 @@ def getTokenAddress() -> address:
   return self.ffToken
 
 # @dev depositAndMintToken
+#     Operator deposit collateral and mint FF NFT.
 @public
 @payable
 def depositAndMintToken(
@@ -166,6 +167,8 @@ def withdrawAndBurnToken(
   log.FFTokenBurned(_merchantId)
 
 # @dev dispute
+#     Merchant send "FF tx" with operator's signature
+#     Check operator's signature of inflight "FF tx" is valid
 @public
 @payable
 def dispute(
@@ -204,6 +207,7 @@ def dispute(
   })
 
 # @dev challenge
+#     Operator challenge showing inclusion of "FF tx"
 @public
 def challenge(
   _txBytes: bytes[496],
@@ -229,6 +233,7 @@ def challenge(
   self.disputes[txHash].status = STATE_CHALLENGED
 
 # @dev secondDispute
+#     Merchant show double spending of "FF tx"
 @public
 def secondDispute(
   _stateBytes: bytes[256],
@@ -268,12 +273,13 @@ def secondDispute(
   self.disputes[disputeId].status = STATE_SECOND_DISPUTED
 
 # @dev finalizeDispute
+#     Withdraw the amount of "FF tx" from operator's collateral
 @public
 def finalizeDispute(
   _merchantId: uint256,
   _txHash: bytes32
 ):
-  # finalize dispute after 7 days
+  # finalize dispute after a period
   dispute: Dispute = self.disputes[_txHash]
   assert dispute.withdrawableAt < block.timestamp
   assert dispute.status == STATE_FIRST_DISPUTED or dispute.status == STATE_SECOND_DISPUTED
