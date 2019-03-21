@@ -585,6 +585,27 @@ export class ChamberWallet extends EventEmitter {
     }
   }
 
+  /**
+   * 
+   * @param to The recipient address
+   * @param amountStr ex) '1.0'
+   * @param feeTo The recipient address of fee
+   * @param feeAmountStr ex) '0.01'
+   * 
+   * ### Example
+   * 
+   * sender
+   * ```typescript
+   * await wallet.transfer('0x....', '1.0')
+   * ```
+   * 
+   * recipient 
+   * ```typescript
+   * wallet.on('receive', (e) => {
+   *   console.log(e.tx)
+   * })
+   * ```
+   */
   async transfer(
     to: Address,
     amountStr: string,
@@ -601,6 +622,13 @@ export class ChamberWallet extends EventEmitter {
     return await this.client.sendTransaction(signedTx)
   }
 
+  /**
+   * fast transfer method
+   * @param to The recipient address
+   * @param amountStr ex) '1.0'
+   * @param feeTo The recipient address of fee
+   * @param feeAmountStr ex) '0.01'
+   */
   sendFastTransferToMerchant(
     to: Address,
     amountStr: string,
@@ -618,7 +646,11 @@ export class ChamberWallet extends EventEmitter {
     return new ChamberOk(true)
   }
 
-  async sendFastTransferToOperator(
+  /**
+   * @ignore
+   * @param signedTx 
+   */
+  private async sendFastTransferToOperator(
     signedTx: SignedTransaction
   ): Promise<ChamberResult<FastTransferResponse>> {
     const fastTransferResponse = await this.client.fastTransfer(signedTx)
