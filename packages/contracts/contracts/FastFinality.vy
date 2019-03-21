@@ -1,3 +1,6 @@
+# Plasma Fast Finality contract
+# see https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Plasma-Fast-Finality for more description.
+
 struct Merchant:
   amount: wei_value
   expiredAt: uint256
