@@ -63,6 +63,7 @@ export class ChamberWallet extends EventEmitter {
   private options: any
   private segmentHistoryManager: SegmentHistoryManager
   private updatedHandler: (wallet: ChamberWallet) => void
+  public isMerchant: boolean
 
   /**
    * 
@@ -166,6 +167,7 @@ export class ChamberWallet extends EventEmitter {
       this.storage,
       this.options
     )
+    this.isMerchant = this.options.isMerchant || false
     this.listener = this.plasmaSyncher.getListener()
     this.listener.addEvent('ExitStarted', (e) => {
       console.log('ExitStarted', e)
@@ -213,9 +215,11 @@ export class ChamberWallet extends EventEmitter {
    */
   async init(handler: (wallet: ChamberWallet) => void) {
     this.updatedHandler = handler
-    this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
-      await this.sendFastTransferToOperator(tx)
-    })
+    if(this.isMerchant) {
+      this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
+        await this.sendFastTransferToOperator(tx)
+      })
+    }
     await this.plasmaSyncher.init(() => handler(this))
   }
 
