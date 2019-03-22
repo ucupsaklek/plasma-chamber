@@ -2,15 +2,21 @@
 # see https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Plasma-Fast-Finality for more description.
 
 struct Merchant:
-  amount: wei_value
+  tokenAddress: address
+  amount: uint256
   expiredAt: uint256
 
 struct Dispute:
   recipient: address
   withdrawableAt: timestamp
+  tokenId: uint256
   amount: uint256
   status: uint256
   stateHash: bytes32
+
+contract ERC20:
+  def transferFrom(_from: address, _to: address, _value: uint256) -> bool: modifying
+  def transfer(_to: address, _value: uint256) -> bool: modifying
 
 contract ERC721:
   def setup(): modifying
@@ -19,6 +25,9 @@ contract ERC721:
   def burn(_tokenId: uint256): modifying
 
 contract RootChain():
+  def getTokenFromId(
+    tokenId: uint256
+  ) -> (address, uint256): constant
   def checkTransaction(
     _segment: uint256,
     _txHash: bytes32,
@@ -59,7 +68,7 @@ contract CustomVerifier():
     _timestamp: uint256
   ) -> bool: constant
 
-FFTokenMinted: event({_merchantId: uint256, _amount: wei_value, _expiredAt: uint256})
+FFTokenMinted: event({_merchantId: uint256, _amount: uint256, _expiredAt: uint256})
 FFTokenBurned: event({_merchantId: uint256})
 
 BOND: constant(wei_value) = as_wei_value(1, "finney")
@@ -115,6 +124,25 @@ def parseSegment(
   end: uint256 = bitwise_and(segment, MASK8BYTES)
   return (tokenId, start, end)
 
+@private
+def processDepositCollateral(
+  tokenAddress: address,
+  amount: uint256,
+  expireSpan: uint256
+) -> uint256:
+  assert expireSpan > 0 and expireSpan < 50 * 7 * 24 * 60 * 60
+  expiredAt: uint256 = as_unitless_number(block.timestamp) + expireSpan
+  merchantId: uint256 = self.merchantNonce
+  self.merchantNonce += 1
+  self.merchants[merchantId] = Merchant({
+    tokenAddress: tokenAddress,
+    amount: amount,
+    expiredAt: expiredAt
+  })
+  ERC721(self.ffToken).mint(self.operator, merchantId)
+  log.FFTokenMinted(merchantId, amount, expiredAt)
+  return merchantId
+
 # @dev Constructor
 @public
 def __init__(
@@ -140,28 +168,42 @@ def getTokenAddress() -> address:
 def depositAndMintToken(
   expireSpan: uint256
 ) -> uint256:
-  assert expireSpan > 0 and expireSpan < 50 * 7 * 24 * 60 * 60
   assert msg.sender == self.operator
-  amount: wei_value = msg.value
-  merchantId: uint256 = self.merchantNonce
-  expiredAt: uint256 = as_unitless_number(block.timestamp) + expireSpan
-  self.merchantNonce += 1
-  self.merchants[merchantId] = Merchant({
-    amount: amount,
-    expiredAt: expiredAt
-  })
-  ERC721(self.ffToken).mint(self.operator, merchantId)
-  log.FFTokenMinted(merchantId, amount, expiredAt)
-  return merchantId
+  return self.processDepositCollateral(
+    ZERO_ADDRESS,
+    as_unitless_number(msg.value),
+    expireSpan
+  )
+
+# @dev depositERC20AndMintToken
+#     Operator deposit ERC20 token as collateral and mint FF NFT.
+@public
+def depositERC20AndMintToken(
+  token: address,
+  amount: uint256,
+  expireSpan: uint256
+) -> uint256:
+  assert msg.sender == self.operator
+  assert ERC20(token).transferFrom(self.operator, self, amount)
+  return self.processDepositCollateral(
+    token,
+    amount,
+    expireSpan
+  )
 
 # @dev withdrawAndBurnToken
 @public
 def withdrawAndBurnToken(
   _merchantId: uint256
 ):
-  assert self.merchants[_merchantId].amount > 0
-  assert self.merchants[_merchantId].expiredAt < as_unitless_number(block.timestamp)
-  send(self.operator, self.merchants[_merchantId].amount)
+  merchant: Merchant = self.merchants[_merchantId]
+  assert merchant.amount > 0
+  assert merchant.expiredAt < as_unitless_number(block.timestamp)
+  if merchant.tokenAddress == ZERO_ADDRESS:
+    send(self.operator, as_wei_value(merchant.amount, 'wei'))
+  else:
+    ERC20(merchant.tokenAddress).transfer(self.operator, merchant.amount)
+    pass
   ERC721(self.ffToken).burn(_merchantId)
   clear(self.merchants[_merchantId])
   log.FFTokenBurned(_merchantId)
@@ -201,7 +243,8 @@ def dispute(
   self.disputes[txHash] = Dispute({
     recipient: msg.sender,
     withdrawableAt: block.timestamp + 1 * 7 * 24 * 60 * 60,
-    amount: as_unitless_number(as_wei_value((end - start), "gwei")),
+    tokenId: tokenId,
+    amount: (end - start),
     status: STATE_FIRST_DISPUTED,
     stateHash: sha3(_exitStateBytes)
   })
@@ -284,9 +327,19 @@ def finalizeDispute(
   assert dispute.withdrawableAt < block.timestamp
   assert dispute.status == STATE_FIRST_DISPUTED or dispute.status == STATE_SECOND_DISPUTED
   assert ERC721(self.ffToken).ownerOf(_merchantId) == msg.sender
-  amount: wei_value = as_wei_value(dispute.amount, "wei")
-  assert self.merchants[_merchantId].amount >= amount
-  send(dispute.recipient, amount + BOND)
+  amount: uint256
+  tokenAddress: address
+  decimalOffset: uint256
+  (tokenAddress, decimalOffset) = RootChain(self.rootchain).getTokenFromId(dispute.tokenId)
+  if dispute.tokenId == 0:
+    amount = dispute.amount * (10 ** 9)
+    assert self.merchants[_merchantId].amount >= amount
+    send(dispute.recipient, as_wei_value(amount, "wei") + BOND)
+  else:
+    amount = dispute.amount * decimalOffset
+    assert self.merchants[_merchantId].amount >= amount
+    ERC20(tokenAddress).transfer(dispute.recipient, amount)
+    send(dispute.recipient, BOND)
   self.merchants[_merchantId].amount -= amount
   self.disputes[_txHash].status = STATE_FINALIZED
 
