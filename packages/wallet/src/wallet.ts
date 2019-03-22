@@ -62,7 +62,7 @@ export class ChamberWallet extends EventEmitter {
   private plasmaSyncher: PlasmaSyncher
   private options: any
   private segmentHistoryManager: SegmentHistoryManager
-  private updatedHandler: (wallet: ChamberWallet) => void
+  private updatedHandlers: Array<(wallet: ChamberWallet) => void>
   public isMerchant: boolean
 
   /**
@@ -202,7 +202,7 @@ export class ChamberWallet extends EventEmitter {
     this.plasmaSyncher.on('PlasmaBlockHeaderAdded', (e: any) => {
       this.segmentHistoryManager.appendBlockHeader(e.blockHeader as WaitingBlockWrapper)
     })
-    this.updatedHandler = (wallet) => {}
+    this.updatedHandlers = []
   }
 
   /**
@@ -214,7 +214,7 @@ export class ChamberWallet extends EventEmitter {
    * ```
    */
   async init(handler: (wallet: ChamberWallet) => void) {
-    this.updatedHandler = handler
+    this.updatedHandlers.push(handler)
     if(this.isMerchant) {
       this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
         await this.sendFastTransferToOperator(tx)
@@ -232,6 +232,31 @@ export class ChamberWallet extends EventEmitter {
       await this.updateBlock(block)
     })
     return this.getUTXOArray()
+  }
+
+  /**
+   * 
+   * @param handler 
+   * 
+   * ```typescript
+   * wallet.addUpdatedHandler((wallet) => {})
+   * ```
+   */
+  public addUpdatedHandler(handler: (wallet: ChamberWallet) => void) {
+    this.updatedHandlers.push(handler)
+  }
+
+  /**
+   * 
+   * @param handler 
+   * 
+   * ```typescript
+   * wallet.removeUpdatedHandler((wallet) => {})
+   * ```
+   */
+  public removeUpdatedHandler(handler: (wallet: ChamberWallet) => void) {
+    const i = this.updatedHandlers.indexOf(handler)
+    this.updatedHandlers = this.updatedHandlers.splice(i, 1)
   }
 
   /**
@@ -404,7 +429,7 @@ export class ChamberWallet extends EventEmitter {
       tx.checkVerified(true)
       // update
       this.storage.addUTXO(tx)
-      this.updatedHandler(this)
+      this.updatedHandlers.forEach((handler) => handler(this))
       return true
     } else {
       return false
