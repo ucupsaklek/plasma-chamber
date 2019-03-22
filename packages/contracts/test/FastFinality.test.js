@@ -71,6 +71,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       {
         from: operator
       })
+    await this.rootChain.setup()
     this.fastFinality = await FastFinality.new(
       this.rootChain.address,
       this.customVerifier.address,
@@ -149,7 +150,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
           value: BOND,
           from: bob
         })
-
+      
       increaseTime(15 * 24 * 60 * 60)
       
       await this.fastFinality.finalizeDispute(

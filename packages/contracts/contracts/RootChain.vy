@@ -355,6 +355,7 @@ def __init__(
   self.exitNonce = 1
 
 @public
+@constant
 def getTokenAddress() -> address:
   return self.exitToken
 
@@ -371,6 +372,13 @@ def listToken(
   # init the new token exitable ranges
   self.exitable[tokenId][0].isAvailable = True
   log.ListingEvent(tokenId, tokenAddress)
+
+@public
+@constant
+def getTokenFromId(
+  tokenId: uint256
+) -> (address, uint256):
+  return (self.listings[tokenId].tokenAddress, self.listings[tokenId].decimalOffset)
 
 @public
 def setup():
