@@ -244,6 +244,7 @@ export class ChamberWallet extends EventEmitter {
    */
   public addUpdatedHandler(handler: (wallet: ChamberWallet) => void) {
     this.updatedHandlers.push(handler)
+    // this.plasmaSyncher.addHandler(() => handler) // need to store handler beforehand. what should i do
   }
 
   /**
@@ -257,6 +258,7 @@ export class ChamberWallet extends EventEmitter {
   public removeUpdatedHandler(handler: (wallet: ChamberWallet) => void) {
     const i = this.updatedHandlers.indexOf(handler)
     this.updatedHandlers = this.updatedHandlers.splice(i, 1)
+    // this.plasmaSyncher.removeHandler(() => handler) // need to store handler beforehand. what should i do
   }
 
   /**
