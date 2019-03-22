@@ -55,6 +55,7 @@ export class PlasmaSyncher extends EventEmitter {
   private listener: EventWatcher
   private rootChainInterface: ethers.utils.Interface
   private waitingBlocks: Map<string, string>
+  private handlers: Array<() => void>
 
   constructor(
     client: PlasmaClient,
@@ -69,6 +70,7 @@ export class PlasmaSyncher extends EventEmitter {
     this.storage = storage
     this.waitingBlocks = this.storage.loadMap<string>('waitingBlocks')
     this.rootChainInterface = new ethers.utils.Interface(artifact.abi)
+    this.handlers = []
     this.listener = new EventWatcher(
       new ETHEventAdaptor(contractAddress, this.httpProvider, this.rootChainInterface),
       new WalletEventWatcherStorage(storage.getStorage()),
@@ -96,9 +98,29 @@ export class PlasmaSyncher extends EventEmitter {
    * ```
    */
   async init(handler: () => void) {
+    this.handlers.push(handler)
     await this.listener.initPolling(() => {
-      handler()
+      this.handle()
     })
+  }
+
+  async addHandler(handler: () => void) {
+    this.handlers.push(handler)
+    await this.listener.restartPolling(() => {
+      this.handle()
+    })
+  }
+
+  async removeHandler(handler: () => void) {
+    const i = this.handlers.indexOf(handler)
+    this.handlers = this.handlers.splice(i, 1)
+    await this.listener.restartPolling(() => {
+      this.handle()
+    })
+  }
+
+  handle() {
+    this.handlers.forEach(handler => handler())
   }
 
   /**
