@@ -135,9 +135,9 @@ TOTAL_DEPOSIT: constant(uint256) = 2**48
 MASK8BYTES: constant(uint256) = 2**64 - 1
 
 # exit period is 4 weeks
-EXIT_PERIOD_SECONDS: constant(uint256) = 4 * 7 * 24 * 60 * 60
+EXIT_PERIOD_SECONDS: constant(uint256) = 1 * 60 * 60
 # 3 days extended period for withholding attack
-EXTEND_PERIOD_SECONDS: constant(uint256) = 3 * 24 * 60 * 60
+EXTEND_PERIOD_SECONDS: constant(uint256) = 20 * 60
 
 # bonds
 EXIT_BOND: constant(wei_value) = as_wei_value(1, "finney")
