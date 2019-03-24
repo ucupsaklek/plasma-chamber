@@ -644,6 +644,8 @@ def finalizeExit(
   assert exit.exitableAt < as_unitless_number(block.timestamp) and self.extendExits[_exitId].extendedExitableAt < as_unitless_number(block.timestamp)
   assert self.extendExits[_exitId].challengeCount == 0
   if self.extendExits[_exitId].forceInclude == 0:
+    # TODO: custom withdrawal
+    # assert exit.stateHash == sha3(_exitStateBytes)
     if tokenId == 0:
       send(exit.owner, as_wei_value(end - start, "gwei") + EXIT_BOND)
     else:
