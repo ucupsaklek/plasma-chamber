@@ -6,7 +6,7 @@ import {
 import {
   IStorage
 } from './IStorage'
-import { Exit } from '../models';
+import { Exit, UserAction } from '../models';
 
 export class WalletStorage {
   storage: IStorage
@@ -126,6 +126,23 @@ export class WalletStorage {
     } catch (e) {
       return MapUtil.deserialize<T>({})
     }
+  }
+
+  async addUserAction(blkNum: number, action: UserAction) {
+    await this.storage.addAction(action.id, blkNum, JSON.stringify(action))
+  }
+
+  async searchActions(blkNum: number): Promise<UserAction[]> {
+    const data = await this.storage.searchActions(blkNum)
+    return data.map(data => {
+      const obj = JSON.parse(data.value)
+      return {
+        type: obj.type,
+        id: obj.id,
+        amount: obj.amount,
+        address: obj.address
+      }
+    })
   }
 
 }

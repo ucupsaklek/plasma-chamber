@@ -6,10 +6,12 @@ import { promises } from 'fs';
 export class MockStorage implements IStorage {
   data: Map<string, string>
   blockHeaders: Map<number, string>
+  actions: Map<number, string>
 
   constructor() {
     this.data = new Map<string, string>()
     this.blockHeaders = new Map<number, string>()
+    this.actions = new Map<number, string>()
   }
 
   add(key: string, value: string): boolean {
@@ -56,4 +58,18 @@ export class MockStorage implements IStorage {
     })
     return Promise.resolve(arr)
   }
+  addAction(id: string, blkNum: number, value: string): Promise<boolean> {
+    this.actions.set(blkNum, value)
+    return Promise.resolve(true)
+  }
+  searchActions(blkNum: number): Promise<{blkNum: number, value: string}[]> {
+    const arr: {blkNum: number, value: string}[] = []
+    this.actions.forEach((val, key) => {
+      if(key >= blkNum) {
+        arr.push({blkNum: key, value: val})
+      }
+    })
+    return Promise.resolve(arr)
+  }
+
 }
