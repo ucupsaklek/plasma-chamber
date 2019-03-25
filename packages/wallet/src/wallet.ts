@@ -62,7 +62,6 @@ export class ChamberWallet extends EventEmitter {
   private plasmaSyncher: PlasmaSyncher
   private options: any
   private segmentHistoryManager: SegmentHistoryManager
-  private updatedHandler: (wallet: ChamberWallet) => void
   public isMerchant: boolean
 
   /**
@@ -202,7 +201,6 @@ export class ChamberWallet extends EventEmitter {
     this.plasmaSyncher.on('PlasmaBlockHeaderAdded', (e: any) => {
       this.segmentHistoryManager.appendBlockHeader(e.blockHeader as WaitingBlockWrapper)
     })
-    this.updatedHandler = (wallet) => {}
   }
 
   /**
@@ -213,14 +211,16 @@ export class ChamberWallet extends EventEmitter {
    * await wallet.init((wallet) => {})
    * ```
    */
-  async init(handler: (wallet: ChamberWallet) => void) {
-    this.updatedHandler = handler
+  async init() {
     if(this.isMerchant) {
       this.client.subscribeFastTransfer(this.getAddress(), async (tx) => {
         await this.sendFastTransferToOperator(tx)
       })
     }
-    await this.plasmaSyncher.init(() => handler(this))
+    await this.plasmaSyncher.init(() => {
+      this.emit('updated', {wallet: this})
+    })
+
   }
 
   async loadBlockNumber() {
@@ -404,7 +404,7 @@ export class ChamberWallet extends EventEmitter {
       tx.checkVerified(true)
       // update
       this.storage.addUTXO(tx)
-      this.updatedHandler(this)
+      this.emit('updated', {wallet: this})
       return true
     } else {
       return false
