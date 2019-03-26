@@ -50,6 +50,10 @@ const abi = [
   'function getExit(uint256 _exitId) constant returns(address, uint256)',
 ]
 
+const ERC20abi = [
+  'function approve(address _spender, uint256 _value) returns (bool)'
+]
+
 export class ChamberWallet extends EventEmitter {
   private client: PlasmaClient
   private loadedBlockNumber: number
@@ -447,6 +451,10 @@ export class ChamberWallet extends EventEmitter {
    * @param amount 
    */
   async depositERC20(token: Address, amount: number): Promise<ChamberResult<DepositTransaction>> {
+    const contract = new ethers.Contract(token, ERC20abi, this.httpProvider)
+    const ERC20 = contract.connect(this.wallet)
+    const resultApprove = await ERC20.approve(this.rootChainContract.address, amount)
+    await resultApprove.wait()
     const result = await this.rootChainContract.depositERC20(
       token,
       amount)
