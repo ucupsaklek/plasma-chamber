@@ -44,6 +44,7 @@ const abi = [
   'event ExitStarted(address indexed _exitor, uint256 _exitId, uint256 exitableAt, uint256 _segment, uint256 _blkNum, bool _isForceInclude)',
   'event FinalizedExit(uint256 _exitId, uint256 _tokenId, uint256 _start, uint256 _end)',
   'function deposit() payable',
+  'function depositERC20(address token, uint256 amount) payable',
   'function exit(uint256 _utxoPos, uint256 _segment, bytes _txBytes, bytes _proof, bytes _sig, uint256 _hasSig) payable',
   'function finalizeExit(uint256 _exitableEnd, uint256 _exitId)',
   'function getExit(uint256 _exitId) constant returns(address, uint256)',
@@ -411,14 +412,7 @@ export class ChamberWallet extends EventEmitter {
     }
   }
 
-  /**
-   * 
-   * @param ether 1.0
-   */
-  async deposit(ether: string): Promise<ChamberResult<DepositTransaction>> {
-    const result = await this.rootChainContract.deposit({
-      value: ethers.utils.parseEther(ether)
-    })
+  private async _deposit(result: any): Promise<ChamberResult<DepositTransaction>> {
     await result.wait()
     const receipt = await this.httpProvider.getTransactionReceipt(result.hash)
     if(receipt.logs && receipt.logs[0]) {
@@ -433,6 +427,30 @@ export class ChamberWallet extends EventEmitter {
     } else {
       return new ChamberResultError(WalletErrorFactory.InvalidReceipt())
     }
+  }
+
+
+  /**
+   * 
+   * @param ether 1.0
+   */
+  async deposit(ether: string): Promise<ChamberResult<DepositTransaction>> {
+    const result = await this.rootChainContract.deposit({
+      value: ethers.utils.parseEther(ether)
+    })
+    return await this._deposit(result)
+  }
+
+  /**
+   * @dev require to approve before depositERC20
+   * @param token token address
+   * @param amount 
+   */
+  async depositERC20(token: Address, amount: number): Promise<ChamberResult<DepositTransaction>> {
+    const result = await this.rootChainContract.depositERC20(
+      token,
+      amount)
+    return await this._deposit(result)
   }
 
   async exit(tx: SignedTransactionWithProof): Promise<ChamberResult<Exit>> {
