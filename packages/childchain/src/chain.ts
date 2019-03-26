@@ -112,7 +112,11 @@ export class Chain {
     this.txQueue = []
     this.txFilter.clear()
   }
-  
+
+  async handleListingEvent(tokenId: BigNumber, tokenAddress: string) {
+    this.numTokens++
+  }
+
   async handleSubmit(superRoot: string, root: string, blkNum: BigNumber, timestamp: BigNumber) {
     const block = await this.readWaitingBlock(root)
     block.txs.forEach(tx => {
