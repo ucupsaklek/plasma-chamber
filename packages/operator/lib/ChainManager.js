@@ -136,6 +136,17 @@ class ChainManager {
         e.values._blkNum,
         e.values._timestamp);
     })
+    rootChainEventListener.addEvent('ListingEvent', async (e) => {
+      console.log(
+        'eventListener.ListingEvent',
+        e.values._tokenId.toNumber(),
+        e.values._tokenAddress);
+      if(e.values._tokenId.toNumber() > 0) {
+        await this.chain.handleListingEvent(
+          e.values._tokenId,
+          e.values._tokenAddress);
+      }
+    })
     rootChainEventListener.addEvent('Deposited', async (e) => {
       console.log(
         'eventListener.Deposited',

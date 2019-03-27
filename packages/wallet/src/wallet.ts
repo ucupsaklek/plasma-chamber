@@ -388,10 +388,18 @@ export class ChamberWallet extends EventEmitter {
     return this.wallet.getBalance()
   }
 
-  getBalance() {
+  /**
+   * get balance of specified tokenId
+   * @param _tokenId tokenId ETH id 0
+   */
+  getBalance(_tokenId?: number) {
+    const tokenId = _tokenId || 0
     let balance = ethers.utils.bigNumberify(0)
     this.getUTXOArray().forEach((tx) => {
-      balance = balance.add(tx.getOutput().getSegment(0).getAmount())
+      const segment = tx.getOutput().getSegment(0)
+      if(segment.getTokenId().toNumber() == tokenId) {
+        balance = balance.add(tx.getOutput().getSegment(0).getAmount())
+      }
     })
     return balance
   }
@@ -416,11 +424,13 @@ export class ChamberWallet extends EventEmitter {
     }
   }
 
-  private async _deposit(result: any): Promise<ChamberResult<DepositTransaction>> {
+   private async _deposit(result: any): Promise<ChamberResult<DepositTransaction>> {
     await result.wait()
     const receipt = await this.httpProvider.getTransactionReceipt(result.hash)
     if(receipt.logs && receipt.logs[0]) {
-      const logDesc = this.rootChainInterface.parseLog(receipt.logs[0])
+      const rootChainAddress = ethers.utils.getAddress(this.rootChainContract.address)
+      const log = receipt.logs.filter(log => log.address == rootChainAddress)[0]
+      const logDesc = this.rootChainInterface.parseLog(log)
       return new ChamberOk(this.handleDeposit(
         logDesc.values._depositer,
         logDesc.values._tokenId,
@@ -512,9 +522,17 @@ export class ChamberWallet extends EventEmitter {
   /**
    * @ignore
    */
-  private searchUtxo(to: Address, amount: BigNumber, feeTo?: Address, fee?: BigNumber): SignedTransaction | null {
+  private searchUtxo(
+    to: Address,
+    tokenId: number,
+    amount: BigNumber,
+    feeTo?: Address,
+    fee?: BigNumber
+  ): SignedTransaction | null {
     let tx: SignedTransaction | null = null
-    this.getUTXOArray().forEach((_tx) => {
+    this.getUTXOArray()
+    .filter(_tx => _tx.getOutput().getSegment(0).getTokenId().eq(tokenId))
+    .forEach((_tx) => {
       const output = _tx.getOutput()
       const segment = output.getSegment(0)
       const sum = amount.add(fee || 0)
@@ -614,6 +632,7 @@ export class ChamberWallet extends EventEmitter {
   /**
    * 
    * @param to The recipient address
+   * @param tokenId tokenId
    * @param amountStr ex) '1.0'
    * @param feeTo The recipient address of fee
    * @param feeAmountStr ex) '0.01'
@@ -634,13 +653,14 @@ export class ChamberWallet extends EventEmitter {
    */
   async transfer(
     to: Address,
+    tokenId: number,
     amountStr: string,
     feeTo?: Address,
     feeAmountStr?: string
   ): Promise<ChamberResult<boolean>> {
     const amount = ethers.utils.bigNumberify(amountStr)
     const feeAmount = feeAmountStr ? ethers.utils.bigNumberify(feeAmountStr) : undefined
-    const signedTx = this.searchUtxo(to, amount, feeTo, feeAmount)
+    const signedTx = this.searchUtxo(to, tokenId, amount, feeTo, feeAmount)
     if(signedTx == null) {
       return new ChamberResultError(WalletErrorFactory.TooLargeAmount())
     }
@@ -651,19 +671,21 @@ export class ChamberWallet extends EventEmitter {
   /**
    * fast transfer method
    * @param to The recipient address
+   * @param tokenId tokenId
    * @param amountStr ex) '1.0'
    * @param feeTo The recipient address of fee
    * @param feeAmountStr ex) '0.01'
    */
   sendFastTransferToMerchant(
     to: Address,
+    tokenId: number,
     amountStr: string,
     feeTo?: Address,
     feeAmountStr?: string
   ): ChamberResult<boolean> {
     const amount = ethers.utils.bigNumberify(amountStr)
     const feeAmount = feeAmountStr ? ethers.utils.bigNumberify(feeAmountStr) : undefined
-    const signedTx = this.searchUtxo(to, amount, feeTo, feeAmount)
+    const signedTx = this.searchUtxo(to, tokenId, amount, feeTo, feeAmount)
     if(signedTx == null) {
       return new ChamberResultError(WalletErrorFactory.TooLargeAmount())
     }
