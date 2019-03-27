@@ -170,6 +170,7 @@ export class ChamberWallet extends EventEmitter {
     this.listener = this.plasmaSyncher.getListener()
     this.listener.addEvent('ExitStarted', (e) => {
       console.log('ExitStarted', e)
+      this.emit('exitStarted', { wallet: this })
       this.handleExit(
         e.values._exitId,
         e.values._exitStateHash,
@@ -179,6 +180,7 @@ export class ChamberWallet extends EventEmitter {
     })
     this.listener.addEvent('FinalizedExit', (e) => {
       console.log('FinalizedExit', e)
+      this.emit('finlaizedEixt', { wallet: this })
       this.handleFinalizedExit(
         e.values._tokenId,
         e.values._start,
@@ -187,6 +189,7 @@ export class ChamberWallet extends EventEmitter {
     })
     this.listener.addEvent('Deposited', (e) => {
       console.log('Deposited', e)
+      this.emit('deposited', { wallet: this })
       this.handleDeposit(
         e.values._depositer,
         e.values._tokenId,
