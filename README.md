@@ -112,13 +112,13 @@ You need envs described [here](https://github.com/cryptoeconomicslab/plasma-cham
 ## Run wallet
 
 ```sh
-git clone https://github.com/cryptoeconomicslab/plasma-wallet
+git clone https://github.com/cryptoeconomicslab/wallet
 yarn install
 cp .env.example .env
 yarn start
 ```
 
-Open http://localhost:1234 in browser.
+Open http://localhost:1234 in browser and enter your private key.
 
 # Architecture
 
