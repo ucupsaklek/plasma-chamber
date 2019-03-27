@@ -14,7 +14,7 @@
     "url": "https://www.cryptoeconomicslab.com/"
   },
   "homepage": "https://github.com/cryptoeconomicslab/chamber-packages",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "lib/operator.js",
   "bin": {
     "layer2-operator": "lib/entry.js"
