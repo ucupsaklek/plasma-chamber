@@ -189,14 +189,14 @@ export class ChamberWallet extends EventEmitter {
     })
     this.listener.addEvent('Deposited', (e) => {
       console.log('Deposited', e)
-      this.emit('deposited', { wallet: this })
-      this.handleDeposit(
+      const tx = this.handleDeposit(
         e.values._depositer,
         e.values._tokenId,
         e.values._start,
         e.values._end,
         e.values._blkNum
       )
+      this.emit('deposited', { wallet: this, tx })
     })
 
     this.exitableRangeManager = this.storage.loadExitableRangeManager()
