@@ -130,6 +130,7 @@ describe('ChamberWallet', () => {
       )
       await wallet.transfer(
         AliceAddress,
+        1,
         '2000000'
       )
     })

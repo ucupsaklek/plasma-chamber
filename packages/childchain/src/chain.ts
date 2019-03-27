@@ -214,7 +214,11 @@ export class Chain {
 
   async readNumToken() {
     const numTokens = await this.db.get('numTokens')
-    this.numTokens = JSON.parse(numTokens)
+    try {
+      this.numTokens = JSON.parse(numTokens)
+    } catch(e) {
+      this.numTokens = 1      
+    }
     return this.numTokens
   }
 
