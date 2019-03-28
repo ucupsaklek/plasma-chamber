@@ -28,7 +28,7 @@ import {
   TransactionOutput
 } from '@layer2/core'
 import { WalletErrorFactory } from './error'
-import { Exit, WaitingBlockWrapper } from './models'
+import { Exit, WaitingBlockWrapper, TokenType } from './models'
 import { Contract } from 'ethers'
 import { BigNumber } from 'ethers/utils';
 import { PlasmaSyncher } from './client/PlasmaSyncher'
@@ -173,6 +173,14 @@ export class ChamberWallet extends EventEmitter {
     )
     this.isMerchant = this.options.isMerchant || false
     this.listener = this.plasmaSyncher.getListener()
+    
+    this.listener.addEvent('ListingEvent', (e) => {
+      console.log('ListingEvent', e)
+      this.handleListingEvent(
+        e.values._tokenId,
+        e.values._tokenAddress
+      )
+    })
     this.listener.addEvent('ExitStarted', (e) => {
       console.log('ExitStarted', e)
       this.handleExit(
@@ -289,6 +297,15 @@ export class ChamberWallet extends EventEmitter {
     this.loadedBlockNumber = block.getBlockNumber()
     this.storage.setLoadedPlasmaBlockNumber(this.loadedBlockNumber)
     return tasks
+  }
+
+  async handleListingEvent(tokenId: BigNumber, tokenAddress: string) {
+    // add available token
+    this.storage.addToken(tokenId.toNumber(), tokenAddress)
+  }
+
+  getAvailableTokens(): TokenType[] {
+    return this.storage.getTokens()
   }
 
   /**

@@ -6,15 +6,17 @@ import {
 import {
   IStorage
 } from './IStorage'
-import { Exit } from '../models';
+import { Exit, TokenType } from '../models';
 
 export class WalletStorage {
   storage: IStorage
+  private tokens: TokenType[]
   private utxos: Map<string, string>
   private exitList: Map<string, string>
 
   constructor(storage: IStorage) {
     this.storage = storage
+    this.tokens = this.loadTokens()
     this.utxos = this.loadUTXO()
     this.exitList = this.loadExits()
   }
@@ -40,6 +42,31 @@ export class WalletStorage {
     this.storeMap('utxos', this.utxos)
   }
 
+  /**
+   * @ignore
+   */
+  private loadTokens() {
+    let tokens = []
+    try {
+      tokens = JSON.parse(this.storage.get('tokens'))
+    } catch(e) {
+      tokens = []
+    }
+    return tokens
+  }
+
+  getTokens(): TokenType[] {
+    return this.tokens
+  }
+
+  addToken(id: number, address: string) {
+    this.tokens[id] = {
+      id: id,
+      address: address
+    }
+    this.storage.add('tokens', JSON.stringify(this.tokens))
+  }
+  
   /**
    * @ignore
    */
