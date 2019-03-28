@@ -63,9 +63,22 @@ Plasma is a 2nd layer scaling solution focusing on throughput improvement rather
 
 ## Requirements
 
-* Node.JS v8.11.3 or higher
-* ganache-cli latest versionc
-* vyper 0.1.0b8
+You need to install them before deploying Plasma Chamber contracts. 
+
+* Node.js v8.11.3 or higher
+    * You can install Node.js from here; https://nodejs.org/en/
+* ganache-cli latest version
+    * You need to install npm or Yarn first 
+    * how to install ganache-cli; https://github.com/trufflesuite/ganache-cli#installation 
+* Vyper 0.1.0b8
+    * You need to install Python v3 or higher into your OS first (make sure to check the prerequisites on the official installation doc; https://vyper.readthedocs.io/en/latest/installing-vyper.html#prerequisites)
+    * how to install Vyper; https://vyper.readthedocs.io/en/latest/installing-vyper.html#installation
+* Other package management tools / Ethereum testing framework
+    * npm 
+    * lerna
+    * yarn 
+    * lerna bootstrap 
+    * truffle
 
 ## Deploy contracts
 
@@ -77,9 +90,10 @@ ganache-cli --mnemonic 'candy maple cake sugar pudding cream honey rich smooth c
 deploy contracts.
 
 ```sh
-npm i lerna -g
-npm i yarn -g
+sudo npm i lerna -g
+sudo npm i yarn -g
 git clone https://github.com/cryptoeconomicslab/plasma-chamber
+cd plasma-chamber 
 lerna bootstrap
 cd packages/contracts
 yarn build
@@ -90,6 +104,7 @@ truffle migrate --network local
 
 ```sh
 cd packages/operator
+cp ../../.env.sample ./.env
 node -r dotenv/config lib/entry
 ```
 
@@ -113,6 +128,7 @@ You need envs described [here](https://github.com/cryptoeconomicslab/plasma-cham
 
 ```sh
 git clone https://github.com/cryptoeconomicslab/plasma-wallet
+cd plasma-wallet
 yarn install
 cp .env.example .env
 yarn start
