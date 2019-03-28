@@ -45,13 +45,14 @@ export class WalletStorage {
   /**
    * @ignore
    */
-  private loadTokens() {
+  private loadTokens(): TokenType[] {
     let tokens = []
     try {
       tokens = JSON.parse(this.storage.get('tokens'))
     } catch(e) {
       tokens = []
     }
+    if(!Array.isArray(tokens)) tokens = []
     return tokens
   }
 
