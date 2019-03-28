@@ -28,7 +28,7 @@ import {
   TransactionOutput
 } from '@layer2/core'
 import { WalletErrorFactory } from './error'
-import { Exit, WaitingBlockWrapper, TokenType } from './models'
+import { Exit, WaitingBlockWrapper, TokenType, UserAction, UserActionUtil } from './models'
 import { Contract } from 'ethers'
 import { BigNumber } from 'ethers/utils';
 import { PlasmaSyncher } from './client/PlasmaSyncher'
@@ -250,16 +250,18 @@ export class ChamberWallet extends EventEmitter {
   /**
    * @ignore
    */
-  private _spend(txo: TransactionOutput) {
-    this.getUTXOArray().forEach((tx) => {
+  private _spend(txo: TransactionOutput): boolean {
+    return this.getUTXOArray().filter((tx) => {
       const output = tx.getOutput()
       if(output.isSpent(txo)) {
         this.storage.deleteUTXO(output.hash())
         tx.spend(txo).forEach(newTx => {
           this.storage.addUTXO(newTx)
         })
+        return true
       }
-    })
+      return false
+    }).length > 0
   }
 
   /**
@@ -275,7 +277,9 @@ export class ChamberWallet extends EventEmitter {
     })
     const tasks = block.getUserTransactionAndProofs(this.wallet.address).map(async tx => {
       tx.signedTx.getAllInputs().forEach(input => {
-        this._spend(input)
+        if(this._spend(input)) {
+          this.storage.addUserAction(tx.blkNum.toNumber(), UserActionUtil.createSend(tx))
+        }
       })
       if(tx.getOutput().getOwners().indexOf(this.wallet.address) >= 0) {
         this.segmentHistoryManager.init(
@@ -285,6 +289,7 @@ export class ChamberWallet extends EventEmitter {
         if(verified) {
           this.storage.addUTXO(tx)
           this.emit('receive', {tx: tx})
+          this.storage.addUserAction(tx.blkNum.toNumber(), UserActionUtil.createReceive(tx))
           // require confirmation signature?
           if(tx.requireConfsig()) {
             tx.confirmMerkleProofs(this.wallet.privateKey)
@@ -336,6 +341,7 @@ export class ChamberWallet extends EventEmitter {
     this.segmentHistoryManager.appendDeposit(blkNum.toNumber(), depositTx)
     this.exitableRangeManager.extendRight(end)
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('deposited', { wallet: this, tx: depositTx})
     return depositTx
   }
 
@@ -359,6 +365,7 @@ export class ChamberWallet extends EventEmitter {
         Segment.fromBigNumber(segment)
       )
       this.storage.setExit(exit)
+      this.emit('exitStarted', { wallet: this })
       return exit
     } else {
       null
@@ -379,10 +386,15 @@ export class ChamberWallet extends EventEmitter {
       console.warn(e.message)
     }
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('finlaizedEixt', { wallet: this })
   }
 
   getExits() {
     return this.storage.getExitList()
+  }
+
+  async getUserActions(blkNum: number): Promise<UserAction[]> {
+    return this.storage.searchActions(blkNum)
   }
 
   getUTXOArray(): SignedTransactionWithProof[] {
