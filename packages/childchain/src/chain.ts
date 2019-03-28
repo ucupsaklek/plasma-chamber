@@ -86,7 +86,8 @@ export class Chain {
   }
   
   async generateBlock(): Promise<ChamberResult<string>> {
-    const block = new Block(this.numTokens)
+    const numToken = await this.readNumToken()
+    const block = new Block(numToken)
     if(this.txQueue.length == 0) {
       return new ChamberResultError(ChainErrorFactory.NoValidTransactions())
     }
@@ -112,7 +113,13 @@ export class Chain {
     this.txQueue = []
     this.txFilter.clear()
   }
-  
+
+  async handleListingEvent(tokenId: BigNumber, tokenAddress: string) {
+    this.numTokens = tokenId.toNumber() + 1
+    await this.db.insert('numTokens', JSON.stringify(this.numTokens))
+
+  }
+
   async handleSubmit(superRoot: string, root: string, blkNum: BigNumber, timestamp: BigNumber) {
     const block = await this.readWaitingBlock(root)
     block.txs.forEach(tx => {
@@ -203,6 +210,16 @@ export class Chain {
   async readSnapshot() {
     const snapshot = await this.db.get('snapshot')
     this.segmentChecker.deserialize(JSON.parse(snapshot))
+  }
+
+  async readNumToken() {
+    const numTokens = await this.db.get('numTokens')
+    try {
+      this.numTokens = JSON.parse(numTokens)
+    } catch(e) {
+      this.numTokens = 1      
+    }
+    return this.numTokens
   }
 
   async syncBlocks() {

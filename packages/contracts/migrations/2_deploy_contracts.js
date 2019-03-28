@@ -1,4 +1,5 @@
 const ERC721 = artifacts.require("ERC721")
+const TestPlasmaToken = artifacts.require("TestPlasmaToken")
 const RootChain = artifacts.require("RootChain")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
@@ -51,6 +52,10 @@ module.exports = (deployer) => {
   .then((_rootChain) => {
     rootChain = _rootChain
     return rootChain.setup()
+  })
+  .then(() => deployer.deploy(TestPlasmaToken, "0x505050", "0x505050", 1, 100000))
+  .then(() => {
+    return rootChain.listToken(TestPlasmaToken.address, 1)
   })
   .then(() => {
     return checkpoint.setRootChain(RootChain.address)
