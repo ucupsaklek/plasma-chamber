@@ -319,6 +319,7 @@ export class ChamberWallet extends EventEmitter {
     this.segmentHistoryManager.appendDeposit(blkNum.toNumber(), depositTx)
     this.exitableRangeManager.extendRight(end)
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('deposited', { wallet: this, tx: depositTx})
     return depositTx
   }
 
@@ -342,6 +343,7 @@ export class ChamberWallet extends EventEmitter {
         Segment.fromBigNumber(segment)
       )
       this.storage.setExit(exit)
+      this.emit('exitStarted', { wallet: this })
       return exit
     } else {
       null
@@ -362,6 +364,7 @@ export class ChamberWallet extends EventEmitter {
       console.warn(e.message)
     }
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('finlaizedEixt', { wallet: this })
   }
 
   getExits() {
