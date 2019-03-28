@@ -170,7 +170,6 @@ export class ChamberWallet extends EventEmitter {
     this.listener = this.plasmaSyncher.getListener()
     this.listener.addEvent('ExitStarted', (e) => {
       console.log('ExitStarted', e)
-      this.emit('exitStarted', { wallet: this })
       this.handleExit(
         e.values._exitId,
         e.values._exitStateHash,
@@ -180,7 +179,6 @@ export class ChamberWallet extends EventEmitter {
     })
     this.listener.addEvent('FinalizedExit', (e) => {
       console.log('FinalizedExit', e)
-      this.emit('finlaizedEixt', { wallet: this })
       this.handleFinalizedExit(
         e.values._tokenId,
         e.values._start,
@@ -189,14 +187,13 @@ export class ChamberWallet extends EventEmitter {
     })
     this.listener.addEvent('Deposited', (e) => {
       console.log('Deposited', e)
-      const tx = this.handleDeposit(
+      this.handleDeposit(
         e.values._depositer,
         e.values._tokenId,
         e.values._start,
         e.values._end,
         e.values._blkNum
       )
-      this.emit('deposited', { wallet: this, tx })
     })
 
     this.exitableRangeManager = this.storage.loadExitableRangeManager()
@@ -322,6 +319,7 @@ export class ChamberWallet extends EventEmitter {
     this.segmentHistoryManager.appendDeposit(blkNum.toNumber(), depositTx)
     this.exitableRangeManager.extendRight(end)
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('deposited', { wallet: this, tx: depositTx})
     return depositTx
   }
 
@@ -345,6 +343,7 @@ export class ChamberWallet extends EventEmitter {
         Segment.fromBigNumber(segment)
       )
       this.storage.setExit(exit)
+      this.emit('exitStarted', { wallet: this })
       return exit
     } else {
       null
@@ -365,6 +364,7 @@ export class ChamberWallet extends EventEmitter {
       console.warn(e.message)
     }
     this.storage.saveExitableRangeManager(this.exitableRangeManager)
+    this.emit('finlaizedEixt', { wallet: this })
   }
 
   getExits() {
