@@ -77,8 +77,7 @@ ganache-cli --mnemonic 'candy maple cake sugar pudding cream honey rich smooth c
 deploy contracts.
 
 ```sh
-npm i lerna -g
-npm i yarn -g
+npm i lerna yarn -g
 git clone https://github.com/cryptoeconomicslab/plasma-chamber
 lerna bootstrap
 cd packages/contracts
