@@ -142,7 +142,7 @@ Plasma Chamber's architecture enables service providers and its users to take ad
 
 ## Root Chain Contracts
 ### Deposit
-Any Ethereum address may deposit Eth or other fungible token into the root chain contract. Then such deposits send the equivalent amount of pseudo Eth/ERC20 to the child chain contract. Those deposited funds are recognized as a single UTXO on the child cain. Such UTXO can then be both spent on the child chain or exited to the root chain by users after a challenge period ends without a successful challenge completion.<br>
+Any Ethereum address may deposit Eth or other fungible token into the root chain contract. Then such deposits send the equivalent amount of pseudo Eth/ERC20 to the child chain contract. Those deposited funds are recognized as a single UTXO on the child chain. Such UTXO can then be both spent on the child chain or exited to the root chain by users after a challenge period ends without a successful challenge completion.<br>
 
 ### Exit
 As users request to withdraw their funds deposited on the root chain, child chain gives the equivalent amount of pseudo coins deposited on the child to the root chain, submitting the existence proof of the transaction to the root chain. This procedure is called ‘exit.’ Existence proof is consists of 3 different piece of information; Merkle Hash of Merkle Tree, in which the exiting transaction was included, Merkle proof, and the block height of the transaction.<br>
@@ -150,17 +150,17 @@ As users request to withdraw their funds deposited on the root chain, child chai
 Please see  [Simple Exit Game](https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Exit-Game) section for the details of our Exit and Challenge design, including Exit games.<br>
 
 ### Challenge
-When transactions are in the process of exit requested by a user, another use can invalidate the transaction by "Challenge" action, presenting other transaction with true ownership. When the challenge was approved by the contract, then the exit get blocked.
+When transactions are in the process of exit requested by a user, another user can invalidate the transaction by "Challenge" action, presenting other transaction with true ownership. When the challenge was approved by the contract, then the exit get blocked.
 
 ## Child Chain
 1. Uses UTXO model to transfer pseudo fungible coins with a unique id. <br>
 2. Enables a PoA network, which is centrally controlled by a single party or entity called ‘operator.’ This enables high transaction throughput, while deriving the security robustness from the root chain.<br>
 
 ### Tx Verification
-In the Child Chain network, the state of UTXO gets updated to the latest status everytime Child Chain receives Deposit, Blocksubmitte, ExitStarted events. This single party operation enables faster transactions verification and it returns the response to the client wallets faster.
+In the Child Chain network, the state of UTXO gets updated to the latest status everytime Child Chain receives Deposited, BlockSubmitted, ExitStarted events. This single party operation enables faster transactions verification and it returns the response to the client wallets faster.
 
 ### Plasma Block Generation and Submission
-In the Child Chain network, an operator assembles transactions initiated by end users hash them into Merkle Root. Sum Merkle Tree gets constructed, defining transaction hash as its leaf and the output of transaction hash as its range. Then, Merkle Root is submited to Root Chain contract. In short, utilizing Sum Merkle Tree, thousands of transaction data can be reduced in to 32 bytes Merkle Root and get processed on the Main Chain as 1 transaction, resulting in the gas cost reduction.
+In the Child Chain network, an operator assembles transactions initiated by end users hash them into Merkle Root. Sum Merkle Tree gets constructed, defining transaction hash as its leaf and the output of transaction hash as its range. Then, Merkle Root is submitted to Root Chain contract. In short, utilizing Sum Merkle Tree, thousands of transaction data can be reduced in to 32 bytes Merkle Root and get processed on the Main Chain as 1 transaction, resulting in the gas cost reduction.
 
 ## Wallet
 ### History Verification
@@ -171,10 +171,10 @@ In the Child Chain network, an operator assembles transactions initiated by end 
 Client wallet can detect invalid exit of a transaction which is related to some UTXO that the wallet owns while it becomes online at a regular interval.
 
 ### Wallet SDK
-Cliet wallet can handle and generate not only transfer transactions, but also more complex transactions. We provide our wallet SDK, which include functions of history verification, guard feature, and syncronization of Root Chain and Child Chain data [here](https://cryptoeconomicslab.github.io/chamber-packages/wallet/classes/_wallet_.chamberwallet.html).
+Client wallet can handle and generate not only transfer transactions, but also more complex transactions. We provide our wallet SDK, which include functions of history verification, guard feature, and syncronization of Root Chain and Child Chain data [here](https://cryptoeconomicslab.github.io/chamber-packages/wallet/classes/_wallet_.chamberwallet.html).
 
 # Plasma Chamber Implementation Design
-This section describes the feature of Plasma Chamber's protocol design.Plasma Cash model is the basis for our implementation, but several modifications proposed later in Plasma Cashflow and Plasma Prime design are incorporated. <br>
+This section describes the feature of Plasma Chamber's protocol design. Plasma Cash model is the basis for our implementation, but several modifications proposed later in Plasma Cashflow and Plasma Prime design are incorporated. <br>
 
 **Plasma Chamber has 4 key features and 3 security guarantees listed below.**
 
@@ -185,10 +185,10 @@ Current limitation requires of the end users who are swapping the segments of th
 Please also see more of our documents on Defragmentation form [here](https://scrapbox.io/cryptoeconimicslab/Defragmentation). <br>
 
 ### Fast Finality
-Allows customers to have better user experience of transaction confirmation.The fast finality bandwidth is sold via Merchant PoS wallet.<br>
+Allows customers to have better user experience of transaction confirmation. The fast finality bandwidth is sold via Merchant PoS wallet.<br>
 
 ``Finality``<br>
-Finality means that once a transaction has been processed in a certain block, it will forever stay in history and nothing can revert that operation. This immutability of state transition will be especially important in the finance filed.<br>
+Finality means that once a transaction has been processed in a certain block, it will forever stay in history and nothing can revert that operation. This immutability of state transition will be especially important in the finance field.<br>
 
 Fast Finality function will only be available to limited third party service providers who hold wallets and control to transfer token values to users' wallets. Service clients can confirm their transaction's finality faster when the service providers buy Fast Finality Token from the operator (in this case, service providers are independent from the operator) and make a deal with them to include the transaction in a timely manner. In other words, the fast finality bandwidth is sold via merchandiser-wallet. If anything goes wrong within the network, service providers can challenge operators on the Fast Finality contract, claiming that the transaction was not included in the corresponding block.<br>
 See [Fast Finality](https://github.com/cryptoeconomicslab/plasma-chamber/wiki/Plasma-Fast-Finality) section for the source code of this Fast Finality contract. The rough specification is in [Learn Plasma - Research](https://www.learnplasma.org/en/research/). <br>
