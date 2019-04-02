@@ -18,10 +18,6 @@ struct ExtendExit:
   extendedExitableAt: uint256
   priority: uint256
   challengeCount: uint256
-  # 0: not force include
-  # 1: user don't have confsig 1
-  # 2: user don't have confsig 2
-  forceInclude: uint256
 
 struct Challenge:
   segment: uint256
@@ -66,13 +62,11 @@ contract VerifierUtil():
 contract CustomVerifier():
   def isExitGamable(
     _txHash: bytes32,
-    _merkleHash: bytes32,
     _txBytes: bytes[496],
     _sigs: bytes[260],
     _outputIndex: uint256,
     _owner: address,
-    _segment: uint256,
-    _hasSig: uint256
+    _segment: uint256
   ) -> bool: constant
   def getOutput(
     _txBytes: bytes[496],
@@ -97,7 +91,7 @@ contract CustomVerifier():
 ListingEvent: event({_tokenId: uint256, _tokenAddress: address})
 BlockSubmitted: event({_superRoot: bytes32, _root: bytes32, _timestamp: timestamp, _blkNum: uint256})
 Deposited: event({_depositer: indexed(address), _tokenId: uint256, _start: uint256, _end: uint256, _blkNum: uint256})
-ExitStarted: event({_exitor: indexed(address), _exitId: uint256, _exitStateHash: bytes32, _exitableAt: uint256, _segment: uint256, _blkNum: uint256, _isForceInclude: bool})
+ExitStarted: event({_exitor: indexed(address), _exitId: uint256, _exitStateHash: bytes32, _exitableAt: uint256, _segment: uint256, _blkNum: uint256})
 Challenged: event({_exitId: uint256})
 ForceIncluded: event({_exitId: uint256})
 FinalizedExit: event({_exitId: uint256, _tokenId: uint256, _start: uint256, _end: uint256})
@@ -130,7 +124,6 @@ extendExits: map(uint256, ExtendExit)
 challenges: map(bytes32, Challenge)
 childs: map(uint256, uint256)
 lowerExits: map(uint256, uint256)
-removed: map(bytes32, bool)
 
 # total deposit amount per token type
 TOTAL_DEPOSIT: constant(uint256) = 2**48
@@ -202,7 +195,6 @@ def checkTransaction(
   _blkNum: uint256,
   _proof: bytes[512],
   _sigs: bytes[260],
-  _hasSig: uint256,
   _outputIndex: uint256,
   _owner: address
 ) -> bytes[256]:
@@ -234,13 +226,12 @@ def checkTransaction(
   slicedTxBytes: bytes[496] = slice(_txBytes, start=txBytesOffset, len=txBytesSize)
   assert CustomVerifier(self.txverifier).isExitGamable(
     _txHash,
-    sha3(concat(_txHash, self.childChain[_blkNum])),
+    # sha3(concat(_txHash, self.childChain[_blkNum])),
     slicedTxBytes,
     _sigs,
     _outputIndex,
     _owner,
-    _segment,
-    _hasSig)
+    _segment)
   return CustomVerifier(self.txverifier).getOutput(
     slicedTxBytes,
     _blkNum,
@@ -454,8 +445,7 @@ def exit(
   _segment: uint256,
   _txBytes: bytes[496],
   _proof: bytes[512],
-  _sig: bytes[260],
-  _hasSig: uint256
+  _sig: bytes[260]
 ):
   assert msg.value == EXIT_BOND
   exitableAt: uint256 = as_unitless_number(block.timestamp) + EXIT_PERIOD_SECONDS
@@ -476,7 +466,6 @@ def exit(
     blkNum,
     _proof,
     _sig,
-    _hasSig,
     outputIndex,
     msg.sender
   )
@@ -491,11 +480,8 @@ def exit(
     segment: _segment,
     isFinalized: False
   })
-  if _hasSig > 0:
-    self.extendExits[exitId].forceInclude = _hasSig
-    self.removed[txHash] = True
   ERC721(self.exitToken).mint(msg.sender, exitId)
-  log.ExitStarted(msg.sender, exitId, exitStateHash, exitableAt, _segment, blkNum, _hasSig > 0)
+  log.ExitStarted(msg.sender, exitId, exitStateHash, exitableAt, _segment, blkNum)
 
 # @dev challenge
 # @param _utxoPos is blknum and index of challenge tx
@@ -526,8 +512,6 @@ def challenge(
     assert self.childs[_exitId] == _childExitId
     assert exitBlkNum < blkNum and blkNum < self.exits[_childExitId].blkNum
   assert exit.exitableAt > as_unitless_number(block.timestamp)
-  # check removed transaction sha3(_txBytes)
-  assert not self.removed[txHash]
   self.checkTransaction(
     _segment,
     txHash,
@@ -535,7 +519,6 @@ def challenge(
     blkNum,
     _proof,
     _sig,
-    0,
     0,
     ZERO_ADDRESS
   )
@@ -559,8 +542,6 @@ def challenge(
       _txBytes, txoIndex, _sig),
     blockTimestamp)
   # break exit procedure
-  if self.extendExits[_exitId].forceInclude > 0:
-    self.removed[exit.txHash] = False
   if _exitId == _childExitId:
     self.exits[_exitId].owner = ZERO_ADDRESS
     clear(self.exits[_exitId])
@@ -591,35 +572,6 @@ def requestHigherPriorityExit(
   self.extendExits[_lowerPriorityExitId].challengeCount += 1
   self.lowerExits[_higherPriorityExitId] = _lowerPriorityExitId
 
-@public
-def includeSignature(
-  _exitId: uint256,
-  _utxoPos: uint256,
-  _segment: uint256,
-  _txBytes: bytes[496],
-  _proof: bytes[512],
-  _sig: bytes[260]
-):
-  blkNum: uint256 = _utxoPos / 100
-  outputIndex: uint256 = _utxoPos - blkNum * 100
-  txHash: bytes32 = sha3(_txBytes)
-  exit: Exit = self.exits[_exitId]
-  self.checkTransaction(
-    _segment,
-    txHash,
-    _txBytes,
-    blkNum,
-    _proof,
-    _sig,
-    0,
-    outputIndex,
-    ZERO_ADDRESS
-  )
-  assert self.extendExits[_exitId].forceInclude > 0
-  self.removed[txHash] = False
-  send(msg.sender, FORCE_INCLUDE_BOND)
-  log.ForceIncluded(_exitId)
-
 # @dev finalizeExit
 @public
 def finalizeExit(
@@ -647,14 +599,11 @@ def finalizeExit(
   )
   assert exit.exitableAt < as_unitless_number(block.timestamp) and self.extendExits[_exitId].extendedExitableAt < as_unitless_number(block.timestamp)
   assert self.extendExits[_exitId].challengeCount == 0
-  if self.extendExits[_exitId].forceInclude == 0:
-    if tokenId == 0:
-      send(exit.owner, as_wei_value(end - start, "gwei") + EXIT_BOND)
-    else:
-      ERC20(self.listings[tokenId].tokenAddress).transfer(exit.owner, (end - start) * self.listings[tokenId].decimalOffset)
-      send(exit.owner, EXIT_BOND)
+  if tokenId == 0:
+    send(exit.owner, as_wei_value(end - start, "gwei") + EXIT_BOND)
   else:
-    send(exit.owner, FORCE_INCLUDE_BOND)
+    ERC20(self.listings[tokenId].tokenAddress).transfer(exit.owner, (end - start) * self.listings[tokenId].decimalOffset)
+    send(exit.owner, EXIT_BOND)
   self.exits[_exitId].isFinalized = True
   ERC721(self.exitToken).burn(_exitId)
   log.FinalizedExit(_exitId, tokenId, start, end)
@@ -690,7 +639,6 @@ def challengeTooOldExit(
     blkNum,
     _proof,
     _sig,
-    0,
     outputIndex,
     ZERO_ADDRESS
   )

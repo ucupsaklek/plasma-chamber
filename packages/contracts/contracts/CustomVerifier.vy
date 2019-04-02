@@ -37,13 +37,11 @@ contract TransactionVerifier():
   def isExitGamable(
     _label: uint256,
     _txHash: bytes32,
-    _merkleHash: bytes32,
     _txBytes: bytes[496],
     _sigs: bytes[260],
     _outputIndex: uint256,
     _owner: address,
-    _segment: uint256,
-    _hasSig: uint256
+    _segment: uint256
   ) -> (bool): constant
   def getOutput(
     _label: uint256,
@@ -161,13 +159,11 @@ def addVerifier(verifierAddress: address):
 @constant
 def isExitGamable(
   _txHash: bytes32,
-  _merkleHash: bytes32,
   _txBytes: bytes[496],
   _sigs: bytes[260],
   _outputIndex: uint256,
   _owner: address,
-  _segment: uint256,
-  _hasSig: uint256
+  _segment: uint256
 ) -> bool:
   label: uint256
   maxBlock: uint256
@@ -179,7 +175,7 @@ def isExitGamable(
   else:
     verifierAddress: address = self.verifiers[label / 10]
     return TransactionVerifier(verifierAddress).isExitGamable(
-      label % 10, _txHash, _merkleHash, _txBytes, _sigs, _outputIndex, _owner, _segment, _hasSig)
+      label % 10, _txHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
 
 @public
 @constant

@@ -35,7 +35,6 @@ contract RootChain():
     _blkNum: uint256,
     _proof: bytes[512],
     _sigs: bytes[260],
-    _hasSig: uint256,
     _outputIndex: uint256,
     _owner: address
   ) -> bytes[256]: constant
@@ -43,13 +42,11 @@ contract RootChain():
 contract CustomVerifier():
   def isExitGamable(
     _txHash: bytes32,
-    _merkleHash: bytes32,
     _txBytes: bytes[496],
     _sigs: bytes[260],
     _outputIndex: uint256,
     _owner: address,
-    _segment: uint256,
-    _hasSig: uint256
+    _segment: uint256
   ) -> bool: constant
   def getOutput(
     _txBytes: bytes[496],
@@ -232,14 +229,11 @@ def dispute(
   (tokenId, start, end) = self.parseSegment(_segment)
   CustomVerifier(self.txverifier).isExitGamable(
     txHash,
-    txHash, # dummy
     _txBytes,
     _sigs,
     _index,
     msg.sender,
-    _segment,
-    # dummy hasSig
-    0)
+    _segment)
   self.disputes[txHash] = Dispute({
     recipient: msg.sender,
     withdrawableAt: block.timestamp + 1 * 7 * 24 * 60 * 60,
@@ -270,7 +264,6 @@ def challenge(
     blkNum,
     _proof,
     _sigs,
-    0,
     index,
     ZERO_ADDRESS)
   self.disputes[txHash].status = STATE_CHALLENGED
@@ -297,7 +290,6 @@ def secondDispute(
     blkNum,
     _proof,
     _sigs,
-    0,
     index,
     ZERO_ADDRESS)
   disputeId: bytes32 = sha3(_disputeTxBytes)

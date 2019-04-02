@@ -69,13 +69,11 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       const tx = transactions.tx
       const isExitGamable = await this.customVerifier.isExitGamable(
         tx.getTxHash(),
-        tx.merkleHash(),
         tx.getTxBytes(),
         tx.getSignatures(),
         0,
         testAddresses.BobAddress,
         transactions.segments[0].toBigNumber(),
-        0,
         {
           from: alice
         });
@@ -94,13 +92,11 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       const invalidTx = transactions.invalidTx
       await assertRevert(this.customVerifier.isExitGamable(
         invalidTx.getTxHash(),
-        invalidTx.merkleHash(),
         invalidTx.getTxBytes(),
         invalidTx.getSignatures(),
         0,
         constants.AddressZero,
         transactions.segments[0].toBigNumber(),
-        0,
         {
           from: alice
         }))
@@ -110,13 +106,11 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       const tx = transactions.tx
       await assertRevert(this.customVerifier.isExitGamable(
         tx.getTxHash(),
-        tx.merkleHash(),
         tx.getTxBytes(),
         tx.getSignatures(),
         0,
         constants.AddressZero,
         transactions.segments[1].toBigNumber(),
-        0,
         {
           from: alice
         }))
@@ -130,13 +124,11 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       const tx = transactions.mergeTx
       const isExitGamable = await this.customVerifier.isExitGamable(
         tx.getTxHash(),
-        tx.merkleHash(),
         tx.getTxBytes(),
         tx.getSignatures(),
         0,
         testAddresses.BobAddress,
         transactions.segment45.toBigNumber(),
-        0,
         {
           from: alice
         });

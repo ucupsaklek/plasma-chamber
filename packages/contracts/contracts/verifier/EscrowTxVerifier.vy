@@ -82,7 +82,6 @@ def __init__(_verifierUtil: address, _ownStateVerifier: address, _escrowStateVer
 def isExitGamable(
   _label: uint256,
   _txHash: bytes32,
-  _merkleHash: bytes32,
   _txBytes: bytes[496],
   _sigs: bytes[260],
   _outputIndex: uint256,

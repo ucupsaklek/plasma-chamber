@@ -62,13 +62,11 @@ def __init__(_verifierUtil: address, _ownStateVerifier: address):
 def isExitGamable(
   _label: uint256,
   _txHash: bytes32,
-  _merkleHash: bytes32,
   _txBytes: bytes[496],
   _sigs: bytes[260],
   _outputIndex: uint256,
   _owner: address,
-  _segment: uint256,
-  _hasSig: uint256
+  _segment: uint256
 ) -> (bool):
   from1: address
   segment1: uint256
@@ -89,12 +87,6 @@ def isExitGamable(
   check1: bool = VerifierUtil(self.verifierUtil).ecrecoverSig(_txHash, _sigs, 0) == from1
   check2: bool = VerifierUtil(self.verifierUtil).ecrecoverSig(_txHash, _sigs, 1) == from2
   assert check1 and check2
-  if _hasSig == 0:
-    assert VerifierUtil(self.verifierUtil).ecrecoverSig(_merkleHash, _sigs, 2) == from1 and VerifierUtil(self.verifierUtil).ecrecoverSig(_merkleHash, _sigs, 3) == from2
-  elif _hasSig == 1:
-    assert VerifierUtil(self.verifierUtil).ecrecoverSig(_merkleHash, _sigs, 2) == from1
-  elif _hasSig == 2:
-    assert VerifierUtil(self.verifierUtil).ecrecoverSig(_merkleHash, _sigs, 2) == from2
   return True
 
 @public

@@ -86,7 +86,6 @@ def isExitGamableTransfer(
 @constant
 def isExitGamableMerge(
   _txHash: bytes32,
-  _merkleHash: bytes32,
   _txBytes: bytes[496],
   _sigs: bytes[260],
   _outputIndex: uint256,
@@ -102,7 +101,6 @@ def isExitGamableMerge(
   if _owner != ZERO_ADDRESS:
     assert(_owner == to)
   assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _segment)
-  assert VerifierUtil(self.verifierUtil).ecrecoverSig(_merkleHash, _sigs, 1) == _from
   assert VerifierUtil(self.verifierUtil).ecrecoverSig(_txHash, _sigs, 0) == _from
   return True
 
@@ -198,18 +196,16 @@ def __init__(_verifierUtil: address, _ownStateVerifier: address):
 def isExitGamable(
   _label: uint256,
   _txHash: bytes32,
-  _merkleHash: bytes32,
   _txBytes: bytes[496],
   _sigs: bytes[260],
   _outputIndex: uint256,
   _owner: address,
-  _segment: uint256,
-  _hasSig: uint256
+  _segment: uint256
 ) -> (bool):
   if _label == 1:
     return self.isExitGamableTransfer(_txHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
   elif _label == 2:
-    return self.isExitGamableMerge(_txHash, _merkleHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
+    return self.isExitGamableMerge(_txHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
 
 @public
 @constant

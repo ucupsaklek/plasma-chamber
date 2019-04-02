@@ -153,7 +153,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         tx.getTxBytes(),
         tx.getProofAsHex(),
         tx.getSignatures(),
-        0,
         {
           from: bob,
           value: EXIT_BOND
@@ -190,7 +189,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         tx.getTxBytes(),
         tx.getProofAsHex(),
         tx.getSignatures(),
-        0,
         {
           from: bob,
           value: EXIT_BOND
@@ -247,7 +245,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         tx.getTxBytes(),
         tx.getProofAsHex(),
         tx.getSignatures(),
-        0,
         {
           from: bob,
           value: EXIT_BOND
