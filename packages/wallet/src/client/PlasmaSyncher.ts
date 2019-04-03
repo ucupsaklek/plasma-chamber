@@ -26,10 +26,14 @@ export class WalletEventWatcherStorage implements IEventWatcherStorage {
   }
 
   async getLoaded(initialBlock: number) {
-    const loaded = this.storage.get('loaded')
-    if(loaded) {
-      return parseInt(loaded)
-    } else {
+    try {
+      const loaded = this.storage.get('loaded')
+      if(loaded) {
+        return parseInt(loaded)
+      } else {
+        return initialBlock
+      }
+    } catch(e) {
       return initialBlock
     }
   }
