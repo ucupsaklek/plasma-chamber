@@ -5,7 +5,8 @@ import {
 import {
   INetworkClient,
   IPubsubClient,
-  PlasmaClient
+  PlasmaClient,
+  SubscribeHandler
 } from '../src/client'
 
 import { assert } from "chai"
@@ -24,14 +25,16 @@ class MockPubsubClient implements IPubsubClient {
   }
   subscribe(
     topic: string,
-    event: (e: any) => void
+    event: SubscribeHandler
   ): void {
   }
   unsubscribe(
-    topic: string
+    topic: string,
+    handler: SubscribeHandler
   ): void {
-  }  
+  }
 }
+
 
 describe('ChamberWallet', () => {
 
