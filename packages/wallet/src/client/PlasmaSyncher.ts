@@ -26,10 +26,10 @@ export class WalletEventWatcherStorage implements IEventWatcherStorage {
   }
 
   async getLoaded(initialBlock: number) {
-    const loaded = this.storage.get('loaded')
-    if(loaded) {
+    try {
+      const loaded = await this.storage.get('loaded')
       return parseInt(loaded)
-    } else {
+    } catch(e) {
       return initialBlock
     }
   }
@@ -67,7 +67,7 @@ export class PlasmaSyncher extends EventEmitter {
     this.client = client
     this.httpProvider = provider
     this.storage = storage
-    this.waitingBlocks = this.storage.loadMap<string>('waitingBlocks')
+    this.waitingBlocks = new Map<string, string>()
     this.rootChainInterface = new ethers.utils.Interface(artifact.abi)
     this.listener = new EventWatcher(
       new ETHEventAdaptor(contractAddress, this.httpProvider, this.rootChainInterface),
@@ -96,6 +96,7 @@ export class PlasmaSyncher extends EventEmitter {
    * ```
    */
   async init(handler: () => void) {
+    this.waitingBlocks = await this.storage.loadMap<string>('waitingBlocks')
     await this.listener.initPolling(() => {
       handler()
     })

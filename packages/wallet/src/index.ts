@@ -4,7 +4,4 @@ export {
 
 export * from './client'
 
-export {
-  IStorage,
-  WalletStorage
-} from './storage'
+export * from './storage'

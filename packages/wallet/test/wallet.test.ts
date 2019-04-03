@@ -27,6 +27,10 @@ class MockPubsubClient implements IPubsubClient {
     event: (e: any) => void
   ): void {
   }
+  unsubscribe(
+    topic: string
+  ): void {
+  }  
 }
 
 describe('ChamberWallet', () => {
@@ -72,7 +76,6 @@ describe('ChamberWallet', () => {
         utils.bigNumberify(10000000),
         utils.bigNumberify(2)
       )
-      console.log(wallet.getUTXOArray())
       assert.equal(wallet.getBalance().toNumber(), 10000000)
     })
     

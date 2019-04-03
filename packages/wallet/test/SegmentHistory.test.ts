@@ -29,6 +29,10 @@ class MockPubsubClient implements IPubsubClient {
     event: (e: any) => void
   ): void {
   }
+  unsubscribe(
+    topic: string
+  ): void {
+  }
 }
 
 describe('SegmentHistoryManager', () => {

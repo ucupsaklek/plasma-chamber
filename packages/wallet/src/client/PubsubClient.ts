@@ -8,15 +8,28 @@ export interface IPubsubClient {
   ): boolean
   subscribe(
     topic: string,
-    event: (e: any) => void
+    event: (e: string) => void
+  ): void
+  unsubscribe(
+    topic: string
   ): void
 }
 
+type SubscribeHandler = (message: string) => void
+
 export class WalletMQTTClient implements IPubsubClient {
   client: MqttClient
+  handlers: Map<string, SubscribeHandler>
 
   constructor(endpoint: string) {
     this.client = mqtt.connect(endpoint)
+    this.handlers = new Map<string, SubscribeHandler>()
+    this.client.on('message', (_topic, message) => {
+      const handler = this.handlers.get(_topic)
+      if(handler) {
+        handler(message.toString())        
+      }
+    })
   }
 
   publish(
@@ -29,9 +42,17 @@ export class WalletMQTTClient implements IPubsubClient {
 
   subscribe(
     topic: string,
-    event: (e: any) => void
+    handler: SubscribeHandler
   ): void {
-    this.client.subscribe(topic, event)
+    this.client.subscribe(topic)
+    this.handlers.set(topic, handler)
+  }
+
+  unsubscribe(
+    topic: string
+  ): void {
+    this.client.unsubscribe(topic)
+    this.handlers.delete(topic)
   }
 
 }
