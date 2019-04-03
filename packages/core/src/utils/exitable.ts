@@ -14,17 +14,17 @@ export class ExitableRangeManager {
   }
 
   withRanges(ranges: Segment[]) {
-    this.ranges = ranges
+    this.ranges = this.ranges.concat(ranges)
+    this.sort()
     return this
   }
 
-  static deserialize(str: string) {
-    const arr: any[] = JSON.parse(str)
+  static deserialize(arr: any[]) {
     return new ExitableRangeManager().withRanges(arr.map(s => Segment.deserialize(s)))
   }
 
   serialize() {
-    return JSON.stringify(this.ranges.map(range => range.serialize()))
+    return this.ranges.map(range => range.serialize())
   }
 
   insert(tokenId: BigNumber, start: BigNumber, end: BigNumber) {
