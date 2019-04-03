@@ -14,7 +14,7 @@ export class MockStorage implements IStorage {
     this.actions = new Map<number, string>()
   }
 
-  add(key: string, value: string): Promise<boolean> {
+  set(key: string, value: string): Promise<boolean> {
     this.data.set(key, value)
     return Promise.resolve(true)
   }

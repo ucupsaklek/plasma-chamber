@@ -25,7 +25,7 @@ export class BrowserStorage implements IStorage {
 
   }
 
-  add(key: string, item: string) {
+  set(key: string, item: string) {
     window.localStorage.setItem(key, item)
     return Promise.resolve(true)
   }

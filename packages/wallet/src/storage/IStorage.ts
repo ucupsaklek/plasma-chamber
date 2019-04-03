@@ -1,5 +1,5 @@
 export interface IStorage {
-  add(key: string, value: string): Promise<boolean>
+  set(key: string, value: string): Promise<boolean>
   get(key: string): Promise<string>
   delete(key: string): Promise<boolean>
   addProof(key: string, blkNum: number, value: string): Promise<boolean>

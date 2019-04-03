@@ -41,7 +41,7 @@ export class WalletStorage {
   }
 
   private async set(key: string, value: any) {
-    return this.storage.add(key, JSON.stringify(value))
+    return this.storage.set(key, JSON.stringify(value))
   }
 
   async getLoadedPlasmaBlockNumber(): Promise<number> {

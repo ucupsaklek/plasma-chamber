@@ -35,7 +35,7 @@ export class WalletEventWatcherStorage implements IEventWatcherStorage {
   }
 
   async setLoaded(loaded: number) {
-    this.storage.add('loaded', loaded.toString())
+    this.storage.set('loaded', loaded.toString())
   }
 
   addSeen(event: string) {
