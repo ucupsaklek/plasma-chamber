@@ -6,7 +6,8 @@ export interface UserAction {
   type: UserActionType,
   amount: number,
   id: string,
-  address: string | undefined
+  address: string | undefined,
+  timestamp: number
 }
 
 export class UserActionUtil {
@@ -35,7 +36,8 @@ export class UserActionUtil {
       type: type,
       amount: tx.getOutput().getSegment(0).getAmount().toNumber(),
       id: tx.getTxHash(),
-      address: address
+      address: address,
+      timestamp: tx.getTimestamp().toNumber()
     }
   }
   
