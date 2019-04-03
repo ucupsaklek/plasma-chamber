@@ -14,7 +14,7 @@ const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnStateVerifier = artifacts.require("OwnStateVerifier")
 const StandardVerifier = artifacts.require("StandardVerifier")
-const SwapVerifier = artifacts.require("SwapVerifier")
+const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const ethers = require('ethers')
 const utils = ethers.utils
@@ -61,10 +61,7 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
       this.verifierUtil.address,
       this.ownStateVerifier.address,
       { from: operator })
-    this.swapVerifier = await SwapVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
+    this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
       this.ownStateVerifier.address,
@@ -72,9 +69,9 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
-    await this.customVerifier.addVerifier(this.swapVerifier.address, {from: operator})
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
+      this.serializer.address,
       this.customVerifier.address,
       this.erc721.address,
       this.checkpoint.address,
@@ -152,7 +149,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: EXIT_BOND
@@ -167,7 +163,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         lastTx.getTxBytes(),
         lastTx.getProofAsHex(),
-        lastTx.getSignatures(),
         {
           from: operator
         });
@@ -188,7 +183,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: EXIT_BOND
@@ -244,7 +238,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: EXIT_BOND

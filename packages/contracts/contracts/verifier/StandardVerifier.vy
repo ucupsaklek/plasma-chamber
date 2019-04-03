@@ -68,15 +68,13 @@ def isExitGamableTransfer(
   _owner: address,
   _segment: uint256
 ) -> (bool):
-  # from, start, end, blkNum, to1, to2, offset
   _from: address
   segment: uint256
   blkNum: uint256
   to: address
   (_from, segment, blkNum, to) = self.decodeTransfer(_txBytes)
   if _owner != ZERO_ADDRESS:
-    if _outputIndex == 0:
-      assert(_owner == to)
+    assert(_owner == to)
   assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _segment)
   assert VerifierUtil(self.verifierUtil).ecrecoverSig(_txHash, _sigs, 0) == _from
   return True

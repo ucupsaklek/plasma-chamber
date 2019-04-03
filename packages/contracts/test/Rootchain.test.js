@@ -14,7 +14,7 @@ const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnStateVerifier = artifacts.require("OwnStateVerifier")
 const StandardVerifier = artifacts.require("StandardVerifier")
-const SwapVerifier = artifacts.require("SwapVerifier")
+const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const TestPlasmaToken = artifacts.require("TestPlasmaToken")
 const ethers = require('ethers')
@@ -25,7 +25,7 @@ const {
   constants,
   Segment,
   SignedTransaction,
-  SwapTransaction,
+  SplitTransaction,
   OwnState
 } = require('@layer2/core')
 
@@ -57,10 +57,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       this.verifierUtil.address,
       this.ownStateVerifier.address,
       { from: operator })
-    this.swapVerifier = await SwapVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
+    this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
       this.ownStateVerifier.address,
@@ -69,6 +66,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       })
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
+      this.serializer.address,
       this.customVerifier.address,
       this.erc721.address,
       this.checkpoint.address,
@@ -76,7 +74,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
-    await this.customVerifier.addVerifier(this.swapVerifier.address, {from: operator})
     await this.rootChain.setup()
     const exitNFTAddress = await this.rootChain.getTokenAddress.call()
     const exitNFT = await ERC721.at(exitNFTAddress)
@@ -144,10 +141,9 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.blocks[0].transactions[0].hash())[0]
       const gasCost = await this.rootChain.exit.estimateGas(
         6 * 100,
-        Scenario1.segments[0].toBigNumber(),
+        tx.getSegment().toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -157,10 +153,9 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
 
       const result = await this.rootChain.exit(
         6 * 100,
-        Scenario1.segments[0].toBigNumber(),
+        tx.getSegment().toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -189,10 +184,9 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.blocks[4].transactions[2].hash())[1]
       const result = await this.rootChain.exit(
         14 * 100,
-        Scenario1.feeSegment.toBigNumber(),
+        tx.getSegment().toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -207,7 +201,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[5].toBigNumber(),
         depositTx.encode(),
         '0x00000050',
-        '0x',
         {
           from: bob,
           value: BOND
@@ -219,7 +212,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[3].toBigNumber(),
         tx2.getTxBytes(),
         tx2.getProofAsHex(),
-        tx2.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -243,7 +235,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -274,7 +265,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -287,7 +277,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         challengeTx.getTxBytes(),
         challengeTx.getProofAsHex(),
-        challengeTx.getSignatures(),
         {
           from: alice,
           value: BOND
@@ -320,7 +309,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -332,7 +320,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         challengeTx.getTxBytes(),
         challengeTx.getProofAsHex(),
-        challengeTx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -373,7 +360,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -385,7 +371,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         depositTx.encode(),
         '0x00000050',
-        '0x',
         {
           from: alice,
           gas: '1000000',
@@ -427,7 +412,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND
@@ -449,7 +433,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario1.segments[2].toBigNumber(),
         invalidTx.getTxBytes(),
         invalidTx.getProofAsHex(),
-        invalidTx.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -479,13 +462,9 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       ethers.utils.bigNumberify('1000000'),
       ethers.utils.bigNumberify('2000000'))
     const block3 = new Block()
-    const swapTx = new SignedTransaction([SwapTransaction.SimpleSwap(
-      testAddresses.AliceAddress,
-      segment1,
-      blkNum1,
-      testAddresses.OperatorAddress,
-      segment2,
-      blkNum2)])
+    const swapTx = new SignedTransaction([
+      SplitTransaction.Transfer(testAddresses.AliceAddress, segment1, blkNum1, testAddresses.OperatorAddress),
+      SplitTransaction.Transfer(testAddresses.OperatorAddress, segment2, blkNum2, testAddresses.AliceAddress)])
     swapTx.sign(testKeys.AlicePrivateKey)
     swapTx.sign(testKeys.OperatorPrivateKey)
     block3.setBlockNumber(6)
@@ -518,17 +497,12 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       const txs = block3.getSignedTransactionWithProof(swapTx.hash())
       const tx1 = txs[0]
       const tx2 = txs[1]
-      tx1.confirmMerkleProofs(testKeys.AlicePrivateKey)
-      tx1.confirmMerkleProofs(testKeys.OperatorPrivateKey)
-      tx2.confirmMerkleProofs(testKeys.AlicePrivateKey)
-      tx2.confirmMerkleProofs(testKeys.OperatorPrivateKey)
 
       const result1 = await this.rootChain.exit(
         6 * 100 + 0,
         segment1.toBigNumber(),
         tx1.getTxBytes(),
         tx1.getProofAsHex(),
-        tx1.getSignatures(),
         {
           from: operator,
           value: BOND
@@ -538,7 +512,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         segment2.toBigNumber(),
         tx2.getTxBytes(),
         tx2.getProofAsHex(),
-        tx2.getSignatures(),
         {
           from: alice,
           value: BOND
@@ -794,7 +767,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         Scenario4.segments[0].toBigNumber(),
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
         {
           from: bob,
           value: BOND

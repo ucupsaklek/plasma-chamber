@@ -29,12 +29,11 @@ contract RootChain():
     tokenId: uint256
   ) -> (address, uint256): constant
   def checkTransaction(
-    _segment: uint256,
+    _requestingSegment: uint256,
     _txHash: bytes32,
     _txBytes: bytes[496],
     _blkNum: uint256,
-    _proof: bytes[512],
-    _sigs: bytes[260],
+    _proofs: bytes[2352],
     _outputIndex: uint256,
     _owner: address
   ) -> bytes[256]: constant
@@ -248,23 +247,19 @@ def dispute(
 @public
 def challenge(
   _txBytes: bytes[496],
-  _proof: bytes[512],
-  _sigs: bytes[260],
-  _pos: uint256,
+  _proof: bytes[2352],
+  _blkNum: uint256,
   _segment: uint256,
 ):
   txHash: bytes32 = sha3(_txBytes)
-  blkNum: uint256 = _pos / 100
-  index: uint256 = _pos - blkNum * 100
   assert self.disputes[txHash].status == STATE_FIRST_DISPUTED
   RootChain(self.rootchain).checkTransaction(
     _segment,
     txHash,
     _txBytes,
-    blkNum,
+    _blkNum,
     _proof,
-    _sigs,
-    index,
+    0,
     ZERO_ADDRESS)
   self.disputes[txHash].status = STATE_CHALLENGED
 
@@ -275,28 +270,25 @@ def secondDispute(
   _stateBytes: bytes[256],
   _disputeTxBytes: bytes[496],
   _txBytes: bytes[496],
-  _proof: bytes[512],
+  _proof: bytes[2352],
   _sigs: bytes[260],
-  _pos: uint256,
+  _blkNum: uint256,
   _segment: uint256
 ):
   txHash: bytes32 = sha3(_txBytes)
-  blkNum: uint256 = _pos / 100
-  index: uint256 = _pos - blkNum * 100
   RootChain(self.rootchain).checkTransaction(
     _segment,
     txHash,
     _txBytes,
-    blkNum,
+    _blkNum,
     _proof,
-    _sigs,
-    index,
+    0,
     ZERO_ADDRESS)
   disputeId: bytes32 = sha3(_disputeTxBytes)
   assert self.disputes[disputeId].stateHash == sha3(_stateBytes)
   evidence: bytes[256] = CustomVerifier(self.txverifier).getSpentEvidence(
     _txBytes,
-    index,
+    0,
     _sigs
   )
   assert CustomVerifier(self.txverifier).isSpent(

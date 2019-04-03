@@ -13,7 +13,7 @@ const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnStateVerifier = artifacts.require("OwnStateVerifier")
 const StandardVerifier = artifacts.require("StandardVerifier")
-const SwapVerifier = artifacts.require("SwapVerifier")
+const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const {
   utils
@@ -22,7 +22,8 @@ const BigNumber = utils.BigNumber
 
 const {
   constants,
-  DepositTransaction
+  DepositTransaction,
+  OwnState
 } = require('@layer2/core')
 
 const {
@@ -51,10 +52,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       this.verifierUtil.address,
       this.ownStateVerifier.address,
       { from: operator })
-    this.swapVerifier = await SwapVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
+    this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
       this.ownStateVerifier.address,
@@ -62,9 +60,9 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
-    await this.customVerifier.addVerifier(this.swapVerifier.address, {from: operator})
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
+      this.serializer.address,
       this.customVerifier.address,
       this.erc721.address,
       this.checkpoint.address,
@@ -81,6 +79,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       })
     const getTokenAddressResult = await this.fastFinality.getTokenAddress.call()
     this.ffToken = await ERC721.at(getTokenAddressResult)
+    OwnState.setAddress(OwnStateVerifier.address)
   })
 
   describe('depositAndMintToken', () => {
@@ -235,8 +234,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       await this.fastFinality.challenge(
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
-        2 * 100 + 1,
+        2,
         Scenario3.segments[0].toBigNumber(),
         {
           from: operator,
@@ -251,8 +249,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       await assertRevert(this.fastFinality.challenge(
         invalidTx.getTxBytes(),
         invalidTx.getProofAsHex(),
-        invalidTx.getSignatures(),
-        2 * 100 + 1,
+        2,
         Scenario3.segments[1].toBigNumber(),
         {
           from: operator,
@@ -268,8 +265,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       await this.fastFinality.challenge(
         tx.getTxBytes(),
         tx.getProofAsHex(),
-        tx.getSignatures(),
-        2 * 100 + 0,
+        2,
         Scenario3.segments[0].toBigNumber(),
         {
           from: operator
@@ -280,7 +276,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
         secondDisputeTx.getTxBytes(),
         secondDisputeTx.getProofAsHex(),
         secondDisputeTx.getSignatures(),
-        4 * 100 + 0,
+        4,
         Scenario3.segments[0].toBigNumber(),
         {
           from: operator

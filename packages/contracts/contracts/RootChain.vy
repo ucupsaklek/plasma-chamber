@@ -59,6 +59,27 @@ contract VerifierUtil():
     segment2: uint256
   ) -> (uint256, uint256, uint256): constant
 
+contract Serializer():
+  def decodeInclusionWitness(
+    _proofs: bytes[2352],
+    _index: int128,
+    _numNodes: int128
+  ) -> (int128, int128, uint256, bytes[65]): constant
+  def decodeHeaderOfInclusionWitness(
+    _proofs: bytes[2352]
+  ) -> (int128, int128, bytes32, uint256, int128): constant
+  def decodeInclusionProofHeader(
+    _proofs: bytes[2352],
+    _index: int128,
+    _numNodes: int128
+  ) -> (uint256, uint256): constant
+  def decodeInclusionProof(
+    _proofs: bytes[2352],
+    _index: int128,
+    _i: int128,
+    _numNodes: int128
+  ) -> (uint256, uint256, bytes32): constant
+
 contract CustomVerifier():
   def isExitGamable(
     _txHash: bytes32,
@@ -100,6 +121,7 @@ ExitableMerged: event({_tokenId: uint256, _start: uint256, _end: uint256})
 # management
 operator: address
 verifierUtil:address
+serializer:address
 txverifier: address
 checkpointAddress: address
 childChain: map(uint256, bytes32)
@@ -158,22 +180,23 @@ def checkMembership(
   _end: uint256,
   _leaf: bytes32,
   _rootHash: bytes32,
-  _proof: bytes[512]
+  _proof: bytes[2352],
+  _index: int128,
+  _numNodes: int128
 ) -> bool:
-  currentAmount: uint256 = convert(slice(_proof, start=44, len=8), uint256)
-  _totalAmount: uint256 = TOTAL_DEPOSIT * convert(slice(_proof, start=52, len=2), uint256)
-  # currentAmount: uint256 = _end - _start
+  currentAmount: uint256
+  totalAmount: uint256
+  (currentAmount, totalAmount) = Serializer(self.serializer).decodeInclusionProofHeader(_proof, _index, _numNodes)
   currentLeft: uint256 = 0
-  currentRight: uint256 = _totalAmount
+  currentRight: uint256 = TOTAL_DEPOSIT * totalAmount
   computedHash: bytes32 = _leaf
   proofElement: bytes32
-
   for i in range(16):
-    if (54 + i * 41) >= len(_proof):
+    if i >= _numNodes:
       break
-    leftOrRight: uint256 = convert(slice(_proof, start=54 + i * 41, len=1), uint256)
-    amount: uint256 = convert(slice(_proof, start=54 + i * 41 + 1, len=8), uint256)
-    proofElement = extract32(_proof, 54 + i * 41 + 9, type=bytes32)
+    leftOrRight: uint256
+    amount: uint256
+    (leftOrRight, amount, proofElement) = Serializer(self.serializer).decodeInclusionProof(_proof, _index, i, _numNodes)
     if leftOrRight == 0:
       currentRight -= amount
       computedHash = sha3(concat(
@@ -189,53 +212,74 @@ def checkMembership(
 @public
 @constant
 def checkTransaction(
-  _segment: uint256,
+  _requestingSegment: uint256,
   _txHash: bytes32,
   _txBytes: bytes[496],
   _blkNum: uint256,
-  _proof: bytes[512],
-  _sigs: bytes[260],
+  _proofs: bytes[2352],
   _outputIndex: uint256,
   _owner: address
 ) -> bytes[256]:
   root: bytes32
   blockTimestamp: uint256
+  requestingTxBytes: bytes[496]
   if _blkNum % 2 == 0:
-    tokenId: uint256
-    start: uint256
-    end: uint256
-    (tokenId, start, end) = VerifierUtil(self.verifierUtil).parseSegment(_segment)
-    root = extract32(_proof, 0 + 4, type=bytes32)
-    blockTimestamp = convert(slice(_proof, start=32 + 4, len=8), uint256)
+    numTx: int128
+    txIndex: int128
+    numNodes: int128
+    (numTx, txIndex, root, blockTimestamp, numNodes) = Serializer(self.serializer).decodeHeaderOfInclusionWitness(_proofs)
     assert self.childChain[_blkNum] == self.getPlasmaBlockHash(root, blockTimestamp)
-    assert self.checkMembership(
-      start + tokenId * TOTAL_DEPOSIT,
-      end + tokenId * TOTAL_DEPOSIT,
-      _txHash,
-      root,
-      _proof
-    )
+    for i in range(4):
+      if i >= numTx:
+        break
+      tokenId: uint256
+      start: uint256
+      end: uint256
+      txBytesOffset: int128
+      txBytesSize: int128
+      segment: uint256
+      sig: bytes[65]
+      (txBytesOffset, txBytesSize, segment, sig) = Serializer(self.serializer).decodeInclusionWitness(_proofs, i, numNodes)
+      slicedTxBytes: bytes[496] = slice(_txBytes, start=txBytesOffset, len=txBytesSize)
+      (tokenId, start, end) = VerifierUtil(self.verifierUtil).parseSegment(segment)
+      assert self.checkMembership(
+        start + tokenId * TOTAL_DEPOSIT,
+        end + tokenId * TOTAL_DEPOSIT,
+        _txHash,
+        root,
+        _proofs,
+        i,
+        numNodes
+      )
+      if txIndex == i:
+        assert CustomVerifier(self.txverifier).isExitGamable(
+          _txHash,
+          slicedTxBytes,
+          sig,
+          0,
+          _owner,
+          segment)
+        assert _requestingSegment == segment
+        requestingTxBytes = slicedTxBytes
+      else:
+        assert CustomVerifier(self.txverifier).isExitGamable(
+          _txHash,
+          slicedTxBytes,
+          sig,
+          0,
+          ZERO_ADDRESS,
+          segment)
   else:
     root = self.childChain[_blkNum]
     blockTimestamp = 0
+    requestingTxBytes = _txBytes
     # deposit transaction
     depositHash: bytes32 = CustomVerifier(self.txverifier).getDepositHash(_txBytes)
     assert depositHash == root
-  txBytesOffset: int128 = convert(slice(_proof, start=0, len=2), int128)
-  txBytesSize: int128 = convert(slice(_proof, start=2, len=2), int128)
-  slicedTxBytes: bytes[496] = slice(_txBytes, start=txBytesOffset, len=txBytesSize)
-  assert CustomVerifier(self.txverifier).isExitGamable(
-    _txHash,
-    # sha3(concat(_txHash, self.childChain[_blkNum])),
-    slicedTxBytes,
-    _sigs,
-    _outputIndex,
-    _owner,
-    _segment)
   return CustomVerifier(self.txverifier).getOutput(
-    slicedTxBytes,
+    requestingTxBytes,
     _blkNum,
-    _outputIndex)
+    0)
 
 # checkExitable construction is from Plasma Group
 # https://github.com/plasma-group/plasma-contracts/blob/master/contracts/PlasmaChain.vy#L363
@@ -335,6 +379,7 @@ def processDepositFragment(
 @public
 def __init__(
   _verifierUtil: address,
+  _serializer: address,
   _txverifierAddress: address,
   _exitToken: address,
   _checkpointAddress: address
@@ -342,6 +387,7 @@ def __init__(
   self.operator = msg.sender
   self.currentChildBlock = 1
   self.verifierUtil = _verifierUtil
+  self.serializer = _serializer
   self.txverifier = _txverifierAddress
   self.exitToken = create_with_code_of(_exitToken)
   self.checkpointAddress = _checkpointAddress
@@ -444,8 +490,7 @@ def exit(
   _utxoPos: uint256,
   _segment: uint256,
   _txBytes: bytes[496],
-  _proof: bytes[512],
-  _sig: bytes[260]
+  _proof: bytes[2352]
 ):
   assert msg.value == EXIT_BOND
   exitableAt: uint256 = as_unitless_number(block.timestamp) + EXIT_PERIOD_SECONDS
@@ -465,7 +510,6 @@ def exit(
     _txBytes,
     blkNum,
     _proof,
-    _sig,
     outputIndex,
     msg.sender
   )
@@ -518,7 +562,6 @@ def challenge(
     _txBytes,
     blkNum,
     _proof,
-    _sig,
     0,
     ZERO_ADDRESS
   )
@@ -615,8 +658,7 @@ def challengeTooOldExit(
   _exitId: uint256,
   _segment: uint256,
   _txBytes: bytes[496],
-  _proof: bytes[512],
-  _sig: bytes[260]
+  _proof: bytes[2352]
 ):
   blkNum: uint256 = _utxoPos / 100
   outputIndex: uint256 = _utxoPos - blkNum * 100
@@ -638,7 +680,6 @@ def challengeTooOldExit(
     _txBytes,
     blkNum,
     _proof,
-    _sig,
     outputIndex,
     ZERO_ADDRESS
   )

@@ -74,9 +74,9 @@ export class SumMerkleProof {
   }
 
   toHex() {
-    const header = utils.padZeros(utils.arrayify(utils.bigNumberify(this.numTokens)), 2)
+    const numTokens = utils.padZeros(utils.arrayify(utils.bigNumberify(this.numTokens)), 2)
     const body = utils.arrayify(this.proof)
-    return utils.hexlify(utils.concat([header, body]))
+    return utils.hexlify(utils.concat([numTokens, body]))
   }
   
   serialize() {
@@ -282,12 +282,12 @@ export class SumMerkleTree {
       currentAmount = currentAmount.add(utils.bigNumberify(amount))
       hash = keccak256(Buffer.concat(buf))
     }
-
+    
     return (
       Buffer.compare(hash, root) === 0
       && currentAmount.eq(totalAmount)
-      && currentLeft.eq(start)
-      && currentRight.eq(end))
+      && currentLeft.lte(start)
+      && currentRight.gte(end))
   }
 }
 

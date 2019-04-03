@@ -190,11 +190,10 @@ class SegmentNode {
         return new SignedTransactionWithProof(
           signedTx,
           index.txIndex,
-          index.outputIndex,
           superRoot,
           this.getRoot(),
           this.timestamp,
-          p,
+          proofs,
           utils.bigNumberify(this.number))
       }).map(tx => {
         if(confSigs) {
@@ -227,11 +226,10 @@ class SegmentNode {
           return new SignedTransactionWithProof(
             signedTx,
             index.txIndex,
-            index.outputIndex,
             superRoot,
             this.getRoot(),
             this.timestamp,
-            proof,
+            proofs,
             utils.bigNumberify(this.number))
         }
       })

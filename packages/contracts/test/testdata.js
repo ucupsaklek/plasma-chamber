@@ -12,7 +12,6 @@ const {
   Segment,
   SplitTransaction,
   MergeTransaction,
-  SwapTransaction,
   SignedTransaction
 } = require('@layer2/core')
 
@@ -96,6 +95,7 @@ function scenario1() {
     SplitTransaction.Transfer(User5Address, segment1, blkNum3, BobAddress),
     SplitTransaction.Transfer(User5Address, feeSegment, blkNum8, OperatorAddress)])
   tx73.sign(User5PrivateKey)
+  tx73.sign(User5PrivateKey)
 
   
   block3.appendTx(tx31)
@@ -161,8 +161,9 @@ function scenario2() {
   const block5 = new Block(10)
   block5.setBlockNumber(10)
 
-  const tx31 = new SignedTransaction([SwapTransaction.SimpleSwap(
-    AliceAddress, segment4, blkNum1, OperatorAddress, segment5, blkNum2)])
+  const tx31 = new SignedTransaction([
+    SplitTransaction.Transfer(AliceAddress, segment4, blkNum1, OperatorAddress),
+    SplitTransaction.Transfer(OperatorAddress, segment5, blkNum2, AliceAddress)])
   tx31.sign(AlicePrivateKey)
   tx31.sign(OperatorPrivateKey)
   const tx32 = createTransfer(User4PrivateKey, User4Address, segment2, blkNum2, User5Address)

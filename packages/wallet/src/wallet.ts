@@ -45,7 +45,7 @@ const abi = [
   'event FinalizedExit(uint256 _exitId, uint256 _tokenId, uint256 _start, uint256 _end)',
   'function deposit() payable',
   'function depositERC20(address token, uint256 amount) payable',
-  'function exit(uint256 _utxoPos, uint256 _segment, bytes _txBytes, bytes _proof, bytes _sig, uint256 _hasSig) payable',
+  'function exit(uint256 _utxoPos, uint256 _segment, bytes _txBytes, bytes _proof) payable',
   'function finalizeExit(uint256 _exitableEnd, uint256 _exitId)',
   'function getExit(uint256 _exitId) constant returns(address, uint256)',
 ]
@@ -330,12 +330,11 @@ export class ChamberWallet extends EventEmitter {
       this.storage.addUTXO(new SignedTransactionWithProof(
         new SignedTransaction([depositTx]),
         0,
-        0,
         '0x',
         '0x',
         ethers.constants.Zero,
         // 0x00000050 is header. 0x0050 is size of deposit transaction
-        new SumMerkleProof(1, 0, segment, '', '0x00000050'),
+        [new SumMerkleProof(1, 0, segment, '', '0x00000050')],
         blkNum))
     }
     this.segmentHistoryManager.appendDeposit(blkNum.toNumber(), depositTx)
@@ -502,12 +501,10 @@ export class ChamberWallet extends EventEmitter {
 
   async exit(tx: SignedTransactionWithProof): Promise<ChamberResult<Exit>> {
     const result = await this.rootChainContract.exit(
-      tx.blkNum.mul(100).add(tx.outputIndex),
+      tx.blkNum.mul(100),
       tx.getOutput().getSegment(0).toBigNumber(),
       tx.getTxBytes(),
       tx.getProofAsHex(),
-      tx.getSignatures(),
-      0,
       {
       value: constants.EXIT_BOND
     })
