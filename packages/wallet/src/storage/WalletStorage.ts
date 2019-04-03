@@ -168,7 +168,8 @@ export class WalletStorage {
         type: obj.type,
         id: obj.id,
         amount: obj.amount,
-        address: obj.address
+        address: obj.address,
+        timestamp: obj.timestamp
       }
     })
   }

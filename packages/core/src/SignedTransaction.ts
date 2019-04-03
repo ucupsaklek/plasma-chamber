@@ -221,6 +221,10 @@ export class SignedTransactionWithProof {
     return this.root
   }
 
+  getTimestamp(): BigNumber {
+    return this.timestamp
+  }
+
   getProof(): SumMerkleProof {
     return this.proof
   }
