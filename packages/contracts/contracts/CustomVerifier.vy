@@ -90,9 +90,13 @@ def decodeDeposit(
 
 @public
 @constant
-def getDepositHash(
-  _txBytes: bytes[496]
-) -> (bytes32):
+def verifyDeposit(
+  _requestingSegment: uint256,
+  _owner: address,
+  _txBytes: bytes[496],
+  _hash: bytes32,
+  _txBlkNum: uint256
+) -> bytes32:
   depositor: address
   segment: uint256
   token: uint256
@@ -100,44 +104,18 @@ def getDepositHash(
   end: uint256
   (depositor, segment) = self.decodeDeposit(_txBytes)
   (token, start, end) = VerifierUtil(self.verifierUtil).parseSegment(segment)
-  return sha3(
+  assert(_hash == sha3(
           concat(
             convert(depositor, bytes32),
             convert(token, bytes32),
             convert(start, bytes32),
             convert(end, bytes32)
           )
-        )
+        ))
+  assert(_owner == depositor)
+  assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _requestingSegment)
+  return sha3(StateVerifier(self.ownStateVerifier).encodeState(depositor, _requestingSegment, _txBlkNum))
 
-@public
-@constant
-def isExitGamableDepositTx(
-  _txHash: bytes32,
-  _txBytes: bytes[496],
-  _owner: address,
-  _segment: uint256
-) -> (bool):
-  # depositor, segment
-  depositor: address
-  segment: uint256
-  (depositor, segment) = self.decodeDeposit(_txBytes)
-  if _owner != ZERO_ADDRESS:
-    assert(_owner == depositor)
-  assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _segment)
-  return True
-
-@private
-@constant
-def getOutputOfDeposit(
-  _segment: uint256,
-  _txBytes: bytes[496],
-  _txBlkNum: uint256
-) -> (bytes32):
-  depositor: address
-  segment: uint256
-  (depositor, segment) = self.decodeDeposit(_txBytes)
-  assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _segment)
-  return sha3(StateVerifier(self.ownStateVerifier).encodeState(depositor, _segment, _txBlkNum))
 
 # @dev Constructor
 @public
@@ -169,13 +147,9 @@ def isExitGamable(
   label: uint256
   maxBlock: uint256
   (label, maxBlock) = self.decodeBaseTx(_txBytes)
-  if label < 10:
-    return self.isExitGamableDepositTx(
-      _txHash, _txBytes, _owner, _segment)
-  else:
-    verifierAddress: address = self.verifiers[label / 10]
-    return TransactionVerifier(verifierAddress).isExitGamable(
-      label % 10, _txHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
+  verifierAddress: address = self.verifiers[label / 10]
+  return TransactionVerifier(verifierAddress).isExitGamable(
+    label % 10, _txHash, _txBytes, _sigs, _outputIndex, _owner, _segment)
 
 @public
 @constant
@@ -187,11 +161,8 @@ def getOutput(
   label: uint256
   maxBlock: uint256
   (label, maxBlock) = self.decodeBaseTx(_txBytes)
-  if label < 10:
-    return self.getOutputOfDeposit(_segment, _txBytes, _txBlkNum)
-  else:
-    verifierAddress: address = self.verifiers[label / 10]
-    return sha3(TransactionVerifier(verifierAddress).getOutput(label % 10, _txBytes, _txBlkNum, 0))
+  verifierAddress: address = self.verifiers[label / 10]
+  return sha3(TransactionVerifier(verifierAddress).getOutput(label % 10, _txBytes, _txBlkNum, 0))
 
 @public
 @constant

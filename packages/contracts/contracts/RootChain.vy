@@ -105,8 +105,12 @@ contract CustomVerifier():
     _evidence: bytes[256],
     _timestamp: uint256
   ) -> bool: constant
-  def getDepositHash(
-    _txBytes: bytes[496]
+  def verifyDeposit(
+    _requestingSegment: uint256,
+    _owner: address,
+    _txBytes: bytes[496],
+    _hash: bytes32,
+    _txBlkNum: uint256
   ) -> bytes32: constant
 
 ListingEvent: event({_tokenId: uint256, _tokenAddress: address})
@@ -269,24 +273,18 @@ def checkTransaction(
           0,
           ZERO_ADDRESS,
           segment)
-  else:
-    root = self.childChain[_blkNum]
-    blockTimestamp = 0
-    requestingTxBytes = _txBytes
-    # deposit transaction
-    depositHash: bytes32 = CustomVerifier(self.txverifier).getDepositHash(_txBytes)
-    assert depositHash == root
-    assert CustomVerifier(self.txverifier).isExitGamable(
-      _txHash,
+    return CustomVerifier(self.txverifier).getOutput(
+      _requestingSegment,
       requestingTxBytes,
-      "",
-      0,
+      _blkNum)
+  else:
+    # deposit transaction
+    return CustomVerifier(self.txverifier).verifyDeposit(
+      _requestingSegment,
       _owner,
-      _requestingSegment)
-  return CustomVerifier(self.txverifier).getOutput(
-    _requestingSegment,
-    requestingTxBytes,
-    _blkNum)
+      _txBytes,
+      self.childChain[_blkNum],
+      _blkNum)
 
 
 # checkExitable construction is from Plasma Group
