@@ -537,7 +537,7 @@ def challenge(
   _utxoPos: uint256,
   _segment: uint256,
   _txBytes: bytes[496],
-  _proof: bytes[512],
+  _proof: bytes[2352],
   _sig: bytes[260]
 ):
   blkNum: uint256 = _utxoPos / 100
