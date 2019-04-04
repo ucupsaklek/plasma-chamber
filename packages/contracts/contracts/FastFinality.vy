@@ -36,7 +36,7 @@ contract RootChain():
     _proofs: bytes[2352],
     _outputIndex: uint256,
     _owner: address
-  ) -> bytes[256]: constant
+  ) -> bytes32: constant
 
 contract CustomVerifier():
   def isExitGamable(

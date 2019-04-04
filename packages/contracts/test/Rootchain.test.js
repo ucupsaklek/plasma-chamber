@@ -200,7 +200,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         15 * 100,
         Scenario1.segments[5].toBigNumber(),
         depositTx.encode(),
-        '0x00000050',
+        '0x00',
         {
           from: bob,
           value: BOND

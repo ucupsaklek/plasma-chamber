@@ -90,10 +90,10 @@ contract CustomVerifier():
     _segment: uint256
   ) -> bool: constant
   def getOutput(
+    _segment: uint256,
     _txBytes: bytes[496],
-    _txBlkNum: uint256,
-    _index: uint256
-  ) -> bytes[256]: constant
+    _txBlkNum: uint256
+  ) -> bytes32: constant
   def getSpentEvidence(
     _txBytes: bytes[496],
     _index: uint256,
@@ -219,7 +219,7 @@ def checkTransaction(
   _proofs: bytes[2352],
   _outputIndex: uint256,
   _owner: address
-) -> bytes[256]:
+) -> bytes32:
   root: bytes32
   blockTimestamp: uint256
   requestingTxBytes: bytes[496]
@@ -276,10 +276,18 @@ def checkTransaction(
     # deposit transaction
     depositHash: bytes32 = CustomVerifier(self.txverifier).getDepositHash(_txBytes)
     assert depositHash == root
+    assert CustomVerifier(self.txverifier).isExitGamable(
+      _txHash,
+      requestingTxBytes,
+      "",
+      0,
+      _owner,
+      _requestingSegment)
   return CustomVerifier(self.txverifier).getOutput(
+    _requestingSegment,
     requestingTxBytes,
-    _blkNum,
-    0)
+    _blkNum)
+
 
 # checkExitable construction is from Plasma Group
 # https://github.com/plasma-group/plasma-contracts/blob/master/contracts/PlasmaChain.vy#L363
@@ -504,7 +512,7 @@ def exit(
     assert VerifierUtil(self.verifierUtil).isContainSegment(self.challenges[txHash].segment, _segment)
     self.extendExits[exitId].priority = self.challenges[txHash].blkNum
     self.childs[self.challenges[txHash].exitId] = exitId
-  exitStateBytes: bytes[256] = self.checkTransaction(
+  exitStateHash: bytes32 = self.checkTransaction(
     _segment,
     txHash,
     _txBytes,
@@ -513,7 +521,6 @@ def exit(
     outputIndex,
     msg.sender
   )
-  exitStateHash: bytes32 = sha3(exitStateBytes)
   self.exitNonce += 1
   self.exits[exitId] = Exit({
     owner: msg.sender,

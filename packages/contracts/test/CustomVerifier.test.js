@@ -71,14 +71,14 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
           from: alice
         });
       const output = await this.customVerifier.getOutput(
+        transactions.segments[0].toBigNumber(),
         tx.getTxBytes(),
         6,
-        0,
         {
           from: alice
         });
       assert.isTrue(isExitGamable)
-      assert.equal(output, tx.getStateBytes(this.ownStateVerifier.address))
+      assert.equal(output, utils.keccak256(tx.getStateBytes(this.ownStateVerifier.address)))
     })
 
     it("should not be exit gamable", async () => {
@@ -126,14 +126,14 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
           from: alice
         });
       const output = await this.customVerifier.getOutput(
+        transactions.segment45.toBigNumber(),
         tx.getTxBytes(),
         6,
-        0,
         {
           from: alice
         });
       assert.isTrue(isExitGamable)
-      assert.equal(output, tx.getStateBytes(this.ownStateVerifier.address))
+      assert.equal(output, utils.keccak256(tx.getStateBytes(this.ownStateVerifier.address)))
     })
 
   })

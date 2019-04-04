@@ -258,31 +258,36 @@ export class SignedTransactionWithProof {
    *     proof body  n * 41 bytes
    */
   getProofAsHex(): HexString {
-    const numTx = utils.padZeros(utils.arrayify(utils.bigNumberify(this.proofs.length)), 2)
-    const txIndex = utils.padZeros(utils.arrayify(utils.bigNumberify(this.txIndex)), 2)
-    const rootHeader = utils.arrayify(this.root)
-    const timestampHeader = utils.padZeros(utils.arrayify(this.timestamp), 8)
-    const proofLength = utils.bigNumberify(utils.hexDataLength(this.proofs[0].proof)).div(41)
-    const numNodes = utils.padZeros(utils.arrayify(proofLength), 2)
-    const proofs = this.proofs.map((proof, i) => {
-      const txOffset = utils.padZeros(utils.arrayify(this.getTxOffset(i)), 2)
-      const txSize = utils.padZeros(utils.arrayify(this.getTxSize(i)), 2)
-      const segment = utils.padZeros(utils.arrayify(proof.segment.toBigNumber()), 32)
-      // initiation_witness
-      const sig = utils.arrayify(this.getSignature(i))
-      // get original range
-      const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput().getSegment().getAmount()
-      const rangeHeader = utils.padZeros(utils.arrayify(range), 8)
-      const body = utils.arrayify(proof.toHex())
-      return utils.concat([
-        txOffset,
-        txSize,
-        segment,
-        sig,
-        rangeHeader,
-        body])
-    })
-    return utils.hexlify(utils.concat([numTx, txIndex, rootHeader, timestampHeader, numNodes].concat(proofs)))
+    if(this.getSignedTx().getAllInputs().length == 0) {
+      // In case of deposit
+      return utils.hexlify(0)
+    } else {
+      const numTx = utils.padZeros(utils.arrayify(utils.bigNumberify(this.proofs.length)), 2)
+      const txIndex = utils.padZeros(utils.arrayify(utils.bigNumberify(this.txIndex)), 2)
+      const rootHeader = utils.arrayify(this.root)
+      const timestampHeader = utils.padZeros(utils.arrayify(this.timestamp), 8)
+      const proofLength = utils.bigNumberify(utils.hexDataLength(this.proofs[0].proof)).div(41)
+      const numNodes = utils.padZeros(utils.arrayify(proofLength), 2)
+      const proofs = this.proofs.map((proof, i) => {
+        const txOffset = utils.padZeros(utils.arrayify(this.getTxOffset(i)), 2)
+        const txSize = utils.padZeros(utils.arrayify(this.getTxSize(i)), 2)
+        const segment = utils.padZeros(utils.arrayify(proof.segment.toBigNumber()), 32)
+        // initiation_witness
+        const sig = utils.arrayify(this.getSignature(i))
+        // get original range
+        const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput().getSegment().getAmount()
+        const rangeHeader = utils.padZeros(utils.arrayify(range), 8)
+        const body = utils.arrayify(proof.toHex())
+        return utils.concat([
+          txOffset,
+          txSize,
+          segment,
+          sig,
+          rangeHeader,
+          body])
+      })
+      return utils.hexlify(utils.concat([numTx, txIndex, rootHeader, timestampHeader, numNodes].concat(proofs)))
+    }
   }
 
   getSignature(i: number) {

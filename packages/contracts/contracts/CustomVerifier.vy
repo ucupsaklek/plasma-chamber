@@ -78,7 +78,7 @@ def decodeBaseTx(_txBytes: bytes[496]) -> (uint256, uint256):
           convert(slice(_txBytes, start=8, len=8), uint256))
 
 # @dev decode deposit tx
-@private
+@public
 @constant
 def decodeDeposit(
   _txBytes: bytes[496],
@@ -109,12 +109,11 @@ def getDepositHash(
           )
         )
 
-@private
+@public
 @constant
 def isExitGamableDepositTx(
   _txHash: bytes32,
   _txBytes: bytes[496],
-  _outputIndex: uint256,
   _owner: address,
   _segment: uint256
 ) -> (bool):
@@ -130,13 +129,15 @@ def isExitGamableDepositTx(
 @private
 @constant
 def getOutputOfDeposit(
+  _segment: uint256,
   _txBytes: bytes[496],
   _txBlkNum: uint256
-) -> (bytes[256]):
+) -> (bytes32):
   depositor: address
   segment: uint256
   (depositor, segment) = self.decodeDeposit(_txBytes)
-  return StateVerifier(self.ownStateVerifier).encodeState(depositor, segment, _txBlkNum)
+  assert VerifierUtil(self.verifierUtil).isContainSegment(segment, _segment)
+  return sha3(StateVerifier(self.ownStateVerifier).encodeState(depositor, _segment, _txBlkNum))
 
 # @dev Constructor
 @public
@@ -169,9 +170,8 @@ def isExitGamable(
   maxBlock: uint256
   (label, maxBlock) = self.decodeBaseTx(_txBytes)
   if label < 10:
-    return True
     return self.isExitGamableDepositTx(
-      _txHash, _txBytes, _outputIndex, _owner, _segment)
+      _txHash, _txBytes, _owner, _segment)
   else:
     verifierAddress: address = self.verifiers[label / 10]
     return TransactionVerifier(verifierAddress).isExitGamable(
@@ -180,18 +180,18 @@ def isExitGamable(
 @public
 @constant
 def getOutput(
+  _segment: uint256,
   _txBytes: bytes[496],
-  _txBlkNum: uint256,
-  _index: uint256
-) -> bytes[256]:
+  _txBlkNum: uint256
+) -> bytes32:
   label: uint256
   maxBlock: uint256
   (label, maxBlock) = self.decodeBaseTx(_txBytes)
   if label < 10:
-    return self.getOutputOfDeposit(_txBytes, _txBlkNum)
+    return self.getOutputOfDeposit(_segment, _txBytes, _txBlkNum)
   else:
     verifierAddress: address = self.verifiers[label / 10]
-    return TransactionVerifier(verifierAddress).getOutput(label % 10, _txBytes, _txBlkNum, _index)
+    return sha3(TransactionVerifier(verifierAddress).getOutput(label % 10, _txBytes, _txBlkNum, 0))
 
 @public
 @constant
