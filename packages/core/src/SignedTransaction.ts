@@ -3,8 +3,7 @@ import {
   BaseTransaction,
   TransactionDecoder,
   TransactionOutput,
-  TransactionOutputDeserializer,
-  SplitTransaction
+  TransactionOutputDeserializer
 } from './tx'
 import {
   HexString,
@@ -90,7 +89,7 @@ export class SignedTransaction {
 
   getSegments() {
     let segments = this.txs.reduce((segments: Segment[], tx) => {
-      return segments.concat(tx.getSegments())
+      return segments.concat([tx.getSegment()])
     }, [])
     segments.sort((a, b) => {
       if(a.start.gt(b.start)) return 1
@@ -107,14 +106,12 @@ export class SignedTransaction {
   getIndex(segment: Segment): any {
     let result
     this.txs.forEach((tx, txIndex) => {
-      tx.getSegments().forEach((s, outputIndex) => {
-        if(s.start.eq(segment.start)) {
-          result = {
-            txIndex: txIndex,
-            outputIndex: outputIndex
-          }
+      const s = tx.getSegment()
+      if(s.start.eq(segment.start)) {
+        result = {
+          txIndex: txIndex
         }
-      })
+      }
     })
     if(!result) throw new Error('error')
     return result
@@ -274,7 +271,7 @@ export class SignedTransactionWithProof {
       // initiation_witness
       const sig = utils.arrayify(this.getSignature(i))
       // get original range
-      const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput().getSegment(0).getAmount()
+      const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput().getSegment().getAmount()
       const rangeHeader = utils.padZeros(utils.arrayify(range), 8)
       const body = utils.arrayify(proof.toHex())
       return utils.concat([
@@ -318,8 +315,8 @@ export class SignedTransactionWithProof {
   checkInclusion() {
     return this.proofs.filter(proof => {
       return !SumMerkleTree.verify(
-        this.getOutput().getSegment(0).getGlobalStart(),
-        this.getOutput().getSegment(0).getGlobalEnd(),
+        this.getOutput().getSegment().getGlobalStart(),
+        this.getOutput().getSegment().getGlobalEnd(),
         Buffer.from(this.getTxHash().substr(2), 'hex'),
         TOTAL_AMOUNT.mul(proof.numTokens),
         Buffer.from(this.root.substr(2), 'hex'),

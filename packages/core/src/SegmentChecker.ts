@@ -35,7 +35,7 @@ export class SegmentChecker {
 
   private getIndex(txo: TransactionOutput) {
     for(let i=0; i < this.leaves.length;i++) {
-      if(this.leaves[i].getSegment(0).start.gt(txo.getSegment(0).start)) {
+      if(this.leaves[i].getSegment().start.gt(txo.getSegment().start)) {
         return i
       }
     }

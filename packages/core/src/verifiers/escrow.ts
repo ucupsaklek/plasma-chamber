@@ -65,7 +65,7 @@ export class EscrowLockState extends TransactionOutput {
     return [this.owner]
   }
 
-  getSegment(index: number) {
+  getSegment() {
     return this.segment
   }
 
@@ -73,7 +73,7 @@ export class EscrowLockState extends TransactionOutput {
     return [
       'escrow',
       this.getOwners()[0],
-      this.getSegment(0).serialize(),
+      this.getSegment().serialize(),
       this.ttp,
       this.to,
       this.timeout.toString(),
@@ -119,7 +119,7 @@ export class EscrowLockState extends TransactionOutput {
     if(txo instanceof OwnState
       && txo.getBlkNum().eq(this.getBlkNum())
       && txo.getOwners()[0] == this.getOwners()[0]
-      && this.getSegment(0).isContain(txo.getSegment(0))) {
+      && this.getSegment().isContain(txo.getSegment())) {
       return true
     } else {
       return false
@@ -132,8 +132,8 @@ export class EscrowLockState extends TransactionOutput {
 
   toObject() {
     return {
-      start: this.getSegment(0).start.toString(),
-      end: this.getSegment(0).end.toString(),
+      start: this.getSegment().start.toString(),
+      end: this.getSegment().end.toString(),
       owner: this.getOwners(),
       blkNum: this.getBlkNum().toString()
     }
@@ -197,8 +197,8 @@ export class EscrowTransaction extends BaseTransaction {
       )
   }
 
-  getSegments(): Segment[] {
-    return [this.segment]
+  getSegment(): Segment {
+    return this.segment
   }
 
   verify(signatures: string, hash: string): boolean {

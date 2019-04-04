@@ -78,7 +78,7 @@ export abstract class BaseTransaction {
 
   abstract getOutput(): TransactionOutput
 
-  abstract getSegments(): Segment[]
+  abstract getSegment(): Segment
 
   /**
    * @description verify function verify transaction's segment, owner and signatures.
@@ -135,7 +135,7 @@ export abstract class TransactionOutput {
   abstract withBlkNum(blkNum: BigNumber): TransactionOutput
   abstract getOwners(): Address[]
   abstract getBlkNum(): BigNumber
-  abstract getSegment(index: number): Segment
+  abstract getSegment(): Segment
   abstract hash(): Hash
   abstract getBytes(): string
   abstract serialize(): any
@@ -145,7 +145,7 @@ export abstract class TransactionOutput {
    */
   abstract isSpent(txo: TransactionOutput): boolean
   getRemainingState(txo: TransactionOutput): TransactionOutput[] {
-    const newSegments = this.getSegment(0).sub(txo.getSegment(0))
+    const newSegments = this.getSegment().sub(txo.getSegment())
     return newSegments.map(s => {
       return new OwnState(s, this.getOwners()[0]).withBlkNum(this.getBlkNum())
     })
@@ -198,7 +198,7 @@ export class OwnState extends TransactionOutput {
     return [this.owner]
   }
 
-  getSegment(index: number) {
+  getSegment() {
     return this.segment
   }
 
@@ -206,7 +206,7 @@ export class OwnState extends TransactionOutput {
     return [
       'own',
       this.getOwners()[0],
-      this.getSegment(0).serialize(),
+      this.getSegment().serialize(),
       this.getBlkNum().toString()
     ]
   }
@@ -242,7 +242,7 @@ export class OwnState extends TransactionOutput {
     if(txo.getLabel() == this.getLabel()
       && txo.getBlkNum().eq(this.getBlkNum())
       && txo.getOwners()[0] == this.getOwners()[0]
-      && this.getSegment(0).isContain(txo.getSegment(0))) {
+      && this.getSegment().isContain(txo.getSegment())) {
       return true
     } else {
       return false
@@ -255,8 +255,8 @@ export class OwnState extends TransactionOutput {
 
   toObject() {
     return {
-      start: this.getSegment(0).start.toString(),
-      end: this.getSegment(0).end.toString(),
+      start: this.getSegment().start.toString(),
+      end: this.getSegment().end.toString(),
       owner: this.getOwners(),
       blkNum: this.getBlkNum().toString()
     }
@@ -302,8 +302,8 @@ export class DepositTransaction extends BaseTransaction {
     )
   }
 
-  getSegments(): Segment[] {
-    return [this.segment]
+  getSegment(): Segment {
+    return this.segment
   }
 
   verify(signatures: string, hash: string): boolean {
@@ -379,8 +379,8 @@ export class SplitTransaction extends BaseTransaction {
   }
   
 
-  getSegments(): Segment[] {
-    return [this.segment]
+  getSegment(): Segment {
+    return this.segment
   }
 
   /**
@@ -476,10 +476,8 @@ export class MergeTransaction extends BaseTransaction {
     )
   }
   
-  getSegments(): Segment[] {
-    return [
-      new Segment(this.segment1.tokenId, this.segment1.start, this.segment2.end)
-    ]
+  getSegment(): Segment {
+    return new Segment(this.segment1.tokenId, this.segment1.start, this.segment2.end)
   }
   
   /**

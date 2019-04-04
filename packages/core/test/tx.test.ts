@@ -41,7 +41,7 @@ describe('Transaction', () => {
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf601b4f394953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c0019434fdeadc2b69fd24f3043a89f9231f10f1284a4a');
     assert.equal(decoded.label.toNumber(), 11);
-    assert.equal(decoded.getOutput().getSegment(0).start.toString(), '2000000');
+    assert.equal(decoded.getOutput().getSegment().start.toString(), '2000000');
   });
 
   it('encode and decode split transaction', () => {
@@ -50,7 +50,7 @@ describe('Transaction', () => {
     const encoded = tx.serialize()
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf85102b84ef84c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c00194953b8fb338ef870eda6d74c1dd4769b6c977b8cf9434fdeadc2b69fd24f3043a89f9231f10f1284a4a8327ac40');
-    const outputSegment = decoded.getOutput().getSegment(0)
+    const outputSegment = decoded.getOutput().getSegment()
     assert.equal(outputSegment.start.toString(), '2000000')
     assert.equal(outputSegment.end.toString(), '2600000')
     assert.equal(tx.hash(), decoded.hash())
@@ -63,8 +63,8 @@ describe('Transaction', () => {
     const encoded = tx.serialize()
     const decoded: MergeTransaction = TransactionDecoder.decode(encoded) as MergeTransaction
     //assert.equal(encoded, '0xf83d03b83af83894953b8fb338ef870eda6d74c1dd4769b6c977b8cf834c4b40835b8d80836acfc09434fdeadc2b69fd24f3043a89f9231f10f1284a4a3234');
-    assert.equal(decoded.getOutput().getSegment(0).start.toString(), '5000000')
-    assert.equal(decoded.getInput(0).getSegment(0).start.toString(), '5000000')
+    assert.equal(decoded.getOutput().getSegment().start.toString(), '5000000')
+    assert.equal(decoded.getInput(0).getSegment().start.toString(), '5000000')
   });
 
   it('hash of own state', () => {
@@ -150,8 +150,8 @@ describe('Transaction', () => {
       signedTx.sign(AlicePrivateKey)
       signedTx.sign(BobPrivateKey)
       assert.equal(signedTx.verify(), true)
-      const outputSegment1 = signedTx.getRawTx(0).getOutput().getSegment(0)
-      const outputSegment2 = signedTx.getRawTx(1).getOutput().getSegment(0)
+      const outputSegment1 = signedTx.getRawTx(0).getOutput().getSegment()
+      const outputSegment2 = signedTx.getRawTx(1).getOutput().getSegment()
       assert.equal(outputSegment1.start.toString(), utils.bigNumberify('5000000').toString())
       assert.equal(outputSegment1.end.toString(), utils.bigNumberify('5700000').toString())
       assert.equal(outputSegment2.start.toString(), utils.bigNumberify('6000000').toString())

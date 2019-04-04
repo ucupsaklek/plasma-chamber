@@ -34,7 +34,7 @@ export class UserActionUtil {
     }
     return {
       type: type,
-      amount: tx.getOutput().getSegment(0).getAmount().toNumber(),
+      amount: tx.getOutput().getSegment().getAmount().toNumber(),
       id: tx.getTxHash(),
       address: address,
       timestamp: tx.getTimestamp().toNumber()

@@ -80,7 +80,7 @@ export class SwapRequest {
 
   getSignedSwapTx() {
     if(this.target) {
-      const txs = this.getSwapTx(this.target.getOwners()[0], this.target.getBlkNum(), this.target.getSegment(0))
+      const txs = this.getSwapTx(this.target.getOwners()[0], this.target.getBlkNum(), this.target.getSegment())
       if(txs)
         return new SignedTransaction(txs)
     } else {

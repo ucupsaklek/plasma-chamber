@@ -19,7 +19,7 @@ export class TxFilter {
       throw new Error('conflicted transaction hash')
     }
     if(tx.getAllInputs().filter(input => {
-      const target = input.getSegment(0)
+      const target = input.getSegment()
       return this.segments.filter(segment => {
         return target.start.lt(segment.end) && target.end.gt(segment.start)
       }).length > 0

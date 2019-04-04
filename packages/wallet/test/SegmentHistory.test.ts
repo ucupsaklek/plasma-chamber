@@ -94,7 +94,7 @@ describe('SegmentHistoryManager', () => {
     const utxo = await segmentHistoryManager.verifyHistory('key')
     assert.equal(utxo[0].getBlkNum().toNumber(), blkNum8.toNumber())
     assert.deepEqual(utxo[0].getOwners(), [AliceAddress])
-    assert.equal(utxo[0].getSegment(0).toBigNumber().toNumber(), segment1.toBigNumber().toNumber())
+    assert.equal(utxo[0].getSegment().toBigNumber().toNumber(), segment1.toBigNumber().toNumber())
   })
 
 })

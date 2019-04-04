@@ -91,8 +91,8 @@ describe('SegmentChecker', () => {
     segmentChecker.insert(signedTx3, utils.bigNumberify(6))
     segmentChecker.insert(signedTx5, utils.bigNumberify(8))
     segmentChecker.insert(signedTx4, utils.bigNumberify(10))
-    assert.equal(segmentChecker.leaves[0].getSegment(0).start.toString(), '0')
-    assert.equal(segmentChecker.leaves[3].getSegment(0).start.toString(), '12000000')
+    assert.equal(segmentChecker.leaves[0].getSegment().start.toString(), '0')
+    assert.equal(segmentChecker.leaves[3].getSegment().start.toString(), '12000000')
   })
 
 })
