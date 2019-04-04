@@ -190,16 +190,11 @@ export class EscrowTransaction extends BaseTransaction {
     return [this.getInput()]
   }
 
-  getOutput(index: number): TransactionOutput {
-    return this.getOutputs()[index]
-  }
-  
-  getOutputs() {
-    return [
-      new OwnState(
+  getOutput() {
+    return new OwnState(
         this.segment,
         this.to
-      )]
+      )
   }
 
   getSegments(): Segment[] {

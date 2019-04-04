@@ -50,9 +50,9 @@ describe('SwapRequest', () => {
       const swapTx1: SplitTransaction = tx.getRawTx(0) as SplitTransaction
       const swapTx2: SplitTransaction = tx.getRawTx(1) as SplitTransaction
       assert.equal(swapTx1.getInput().getOwners()[0], BobAddress)
-      assert.equal(swapTx1.getOutput(0).getOwners()[0], AliceAddress)
+      assert.equal(swapTx1.getOutput().getOwners()[0], AliceAddress)
       assert.equal(swapTx2.getInput().getOwners()[0], AliceAddress)
-      assert.equal(swapTx2.getOutput(0).getOwners()[0], BobAddress)
+      assert.equal(swapTx2.getOutput().getOwners()[0], BobAddress)
 
     }
   })

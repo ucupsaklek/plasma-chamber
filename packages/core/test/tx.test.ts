@@ -41,7 +41,7 @@ describe('Transaction', () => {
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf601b4f394953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c0019434fdeadc2b69fd24f3043a89f9231f10f1284a4a');
     assert.equal(decoded.label.toNumber(), 11);
-    assert.equal(decoded.getOutput(0).getSegment(0).start.toString(), '2000000');
+    assert.equal(decoded.getOutput().getSegment(0).start.toString(), '2000000');
   });
 
   it('encode and decode split transaction', () => {
@@ -50,7 +50,7 @@ describe('Transaction', () => {
     const encoded = tx.serialize()
     const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
     //assert.equal(encoded, '0xf85102b84ef84c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c00194953b8fb338ef870eda6d74c1dd4769b6c977b8cf9434fdeadc2b69fd24f3043a89f9231f10f1284a4a8327ac40');
-    const outputSegment = decoded.getOutput(0).getSegment(0)
+    const outputSegment = decoded.getOutput().getSegment(0)
     assert.equal(outputSegment.start.toString(), '2000000')
     assert.equal(outputSegment.end.toString(), '2600000')
     assert.equal(tx.hash(), decoded.hash())
@@ -70,7 +70,7 @@ describe('Transaction', () => {
   it('hash of own state', () => {
     const tx1 = SplitTransaction.Transfer(AliceAddress, segment, blkNum1, BobAddress)
     const tx2 = SplitTransaction.Transfer(BobAddress, segment, blkNum2, AliceAddress)
-    assert.equal(tx1.getOutput(0).withBlkNum(blkNum2).hash(), tx2.getInput().hash())
+    assert.equal(tx1.getOutput().withBlkNum(blkNum2).hash(), tx2.getInput().hash())
   });
     
   describe('SignedTransaction', () => {
@@ -150,14 +150,12 @@ describe('Transaction', () => {
       signedTx.sign(AlicePrivateKey)
       signedTx.sign(BobPrivateKey)
       assert.equal(signedTx.verify(), true)
-      const outputSegment1 = signedTx.getRawTx(0).getOutput(0).getSegment(0)
-      const outputSegment2 = signedTx.getRawTx(1).getOutput(0).getSegment(0)
+      const outputSegment1 = signedTx.getRawTx(0).getOutput().getSegment(0)
+      const outputSegment2 = signedTx.getRawTx(1).getOutput().getSegment(0)
       assert.equal(outputSegment1.start.toString(), utils.bigNumberify('5000000').toString())
       assert.equal(outputSegment1.end.toString(), utils.bigNumberify('5700000').toString())
       assert.equal(outputSegment2.start.toString(), utils.bigNumberify('6000000').toString())
       assert.equal(outputSegment2.end.toString(), utils.bigNumberify('7000000').toString())
-      assert.equal(signedTx.getRawTx(0).getOutputs().length, 1)
-      assert.equal(signedTx.getRawTx(1).getOutputs().length, 1)
     });
 
   })

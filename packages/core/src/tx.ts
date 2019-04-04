@@ -76,9 +76,7 @@ export abstract class BaseTransaction {
 
   abstract getInputs(): TransactionOutput[]
 
-  abstract getOutput(index: number): TransactionOutput
-
-  abstract getOutputs(): TransactionOutput[]
+  abstract getOutput(): TransactionOutput
 
   abstract getSegments(): Segment[]
 
@@ -304,10 +302,6 @@ export class DepositTransaction extends BaseTransaction {
     )
   }
 
-  getOutputs() {
-    return [this.getOutput()]
-  }
-
   getSegments(): Segment[] {
     return [this.segment]
   }
@@ -377,17 +371,13 @@ export class SplitTransaction extends BaseTransaction {
     return [this.getInput()]
   }
 
-  getOutput(index: number): TransactionOutput {
-    return this.getOutputs()[index]
-  }
-  
-  getOutputs() {
-    return [
-      new OwnState(
+  getOutput(): TransactionOutput {
+    return new OwnState(
         this.segment,
         this.to
-      )]
+      )
   }
+  
 
   getSegments(): Segment[] {
     return [this.segment]
@@ -485,11 +475,7 @@ export class MergeTransaction extends BaseTransaction {
       this.to
     )
   }
-
-  getOutputs() {
-    return [this.getOutput()]
-  }
-
+  
   getSegments(): Segment[] {
     return [
       new Segment(this.segment1.tokenId, this.segment1.start, this.segment2.end)

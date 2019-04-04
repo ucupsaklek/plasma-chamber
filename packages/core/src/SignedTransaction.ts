@@ -78,7 +78,7 @@ export class SignedTransaction {
 
   getAllOutputs(): TransactionOutput[] {
     return this.txs.reduce((acc: TransactionOutput[], tx) => {
-      return acc.concat(tx.getOutputs())
+      return acc.concat([tx.getOutput()])
     }, [])
   }
 
@@ -174,7 +174,7 @@ export class SignedTransactionWithProof {
     if(txo) {
       this.txo = txo
     } else {
-      this.txo = this.signedTx.getRawTx(this.txIndex).getOutput(0).withBlkNum(this.blkNum)
+      this.txo = this.signedTx.getRawTx(this.txIndex).getOutput().withBlkNum(this.blkNum)
     }
     this.verifiedFlag = false
   }
@@ -274,7 +274,7 @@ export class SignedTransactionWithProof {
       // initiation_witness
       const sig = utils.arrayify(this.getSignature(i))
       // get original range
-      const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput(0).getSegment(0).getAmount()
+      const range: BigNumber = this.getSignedTx().getRawTx(i).getOutput().getSegment(0).getAmount()
       const rangeHeader = utils.padZeros(utils.arrayify(range), 8)
       const body = utils.arrayify(proof.toHex())
       return utils.concat([
