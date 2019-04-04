@@ -156,7 +156,7 @@ export class EscrowTransaction extends BaseTransaction {
     to: Address,
     timeout: BigNumber
   ) {
-    super(31, [from, segment.toBigNumber(), blkNum, ttp, to, timeout])
+    super(21, [from, segment.toBigNumber(), blkNum, ttp, to, timeout])
     this.from = from
     this.segment = segment
     this.blkNum = blkNum
@@ -206,9 +206,9 @@ export class EscrowTransaction extends BaseTransaction {
     return [this.segment]
   }
 
-  verify(signatures: string[], hash: string): boolean {
+  verify(signatures: string, hash: string): boolean {
     return utils.recoverAddress(
-      hash, signatures[0]) == this.from
+      hash, signatures) == this.from
   }
 
   normalizeSigs(signatures: string[], hash?: string): string[] {

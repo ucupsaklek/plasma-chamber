@@ -24,7 +24,6 @@ import {
   ChamberResultError,
   ChamberOk,
   SwapRequest,
-  SwapTransaction,
   TransactionOutput
 } from '@layer2/core'
 import { WalletErrorFactory } from './error'
@@ -643,8 +642,8 @@ export class ChamberWallet extends EventEmitter {
     }).map(s => s.getOutput())
   }
 
-  private checkSwapTx(swapTx: SwapTransaction) {
-    const input = swapTx.getInputByOwner(this.getAddress())
+  private checkSwapTx(swapTx: SignedTransaction) {
+    const input = swapTx.getAllInputs().filter(i => i.getOwners().indexOf(this.getAddress()))[0]
     if(input) {
       return this.getUTXOArray().filter((_tx) => {
         // check input spent _tx which user has
@@ -788,7 +787,7 @@ export class ChamberWallet extends EventEmitter {
     const swapTxResult = await this.client.getSwapRequestResponse(this.getAddress())
     if(swapTxResult.isOk()) {
       const swapTx = swapTxResult.ok()
-      if(this.checkSwapTx(swapTx.getRawTx(0) as SwapTransaction)) {
+      if(this.checkSwapTx(swapTx)) {
         swapTx.sign(this.wallet.privateKey)
         const result = await this.client.sendTransaction(swapTx)
         if(result.isOk()) {

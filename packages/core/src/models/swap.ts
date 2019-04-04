@@ -1,5 +1,5 @@
 import { Segment } from '../segment';
-import { SwapTransaction, TransactionOutput } from '../tx';
+import { TransactionOutput, SplitTransaction } from '../tx';
 import { Address } from '../helpers/types';
 import * as ethers from 'ethers'
 import BigNumber = ethers.utils.BigNumber
@@ -80,9 +80,9 @@ export class SwapRequest {
 
   getSignedSwapTx() {
     if(this.target) {
-      const tx = this.getSwapTx(this.target.getOwners()[0], this.target.getBlkNum(), this.target.getSegment(0))
-      if(tx)
-        return new SignedTransaction([tx])
+      const txs = this.getSwapTx(this.target.getOwners()[0], this.target.getBlkNum(), this.target.getSegment(0))
+      if(txs)
+        return new SignedTransaction(txs)
     } else {
       throw new Error('target not setted')
     }
@@ -108,23 +108,33 @@ export class SwapRequest {
     if(segment.getAmount().gte(this.segment.getAmount())) {
       // case: segment >= this.segment
       // swap segment:left and this.segment
-      return new SwapTransaction(
-        owner,
-        new Segment(segment.getTokenId(), segment.start, segment.start.add(this.segment.getAmount())),
-        blkNum,
-        this.getOwner(),
-        this.segment,
-        this.getBlkNum())
+      return [
+        new SplitTransaction(
+          owner,
+          new Segment(segment.getTokenId(), segment.start, segment.start.add(this.segment.getAmount())),
+          blkNum,
+          this.getOwner(),
+        ),new SplitTransaction(
+          this.getOwner(),
+          this.segment,
+          this.getBlkNum(),
+          owner
+        )]
     } else {
       // case: segment < this.segment
       // swap segment and this.segment:left
-      return new SwapTransaction(
-        owner,
-        segment,
-        blkNum,
-        this.getOwner(),
-        new Segment(this.segment.getTokenId(), this.segment.end.sub(segment.getAmount()), this.segment.end),
-        this.getBlkNum())
+      return [
+        new SplitTransaction(
+          owner,
+          segment,
+          blkNum,
+          this.getOwner(),
+        ),new SplitTransaction(
+          this.getOwner(),
+          new Segment(this.segment.getTokenId(), this.segment.end.sub(segment.getAmount()), this.segment.end),
+          this.getBlkNum(),
+          owner
+        )]
     }
   }
 

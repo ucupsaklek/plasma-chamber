@@ -2,7 +2,6 @@ const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnStateVerifier = artifacts.require("OwnStateVerifier")
 const StandardVerifier = artifacts.require("StandardVerifier")
-const SwapVerifier = artifacts.require("SwapVerifier")
 const EscrowTxVerifier = artifacts.require("EscrowTxVerifier")
 const EscrowStateVerifier = artifacts.require("EscrowStateVerifier")
 const { constants, utils } = require('ethers')
@@ -19,7 +18,7 @@ const {
   OwnState,
   Segment,
   SignedTransaction,
-  SwapTransaction,
+  SplitTransaction,
   EscrowTransaction
 } = require('@layer2/core')
 
@@ -40,10 +39,6 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       this.verifierUtil.address,
       this.ownStateVerifier.address,
       { from: operator })
-    this.swapVerifier = await SwapVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
     this.escrowTxVerifier = await EscrowTxVerifier.new(
       this.verifierUtil.address,
       this.ownStateVerifier.address,
@@ -57,8 +52,6 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
       })
     // label: 10-19
     await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
-    // label: 20-29
-    await this.customVerifier.addVerifier(this.swapVerifier.address, {from: operator})
     OwnState.setAddress(this.ownStateVerifier.address)
 
   });
@@ -149,21 +142,24 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
     const blkNum3 = utils.bigNumberify('3')
     const blkNum5 = utils.bigNumberify('5')
 
-    const swapTx = new SignedTransaction([new SwapTransaction(
-      testAddresses.AliceAddress,
-      Segment.ETH(
-        utils.bigNumberify('5000000'),
-        utils.bigNumberify('5100000')),
-      blkNum3,
-      testAddresses.OperatorAddress,
-      Segment.ETH(
-        utils.bigNumberify('5100000'),
-        utils.bigNumberify('5200000')),
-      blkNum5,
-      utils.bigNumberify('40000'),
-      utils.bigNumberify('60000'))])
-      swapTx.sign(testKeys.AlicePrivateKey)
-      swapTx.sign(testKeys.OperatorPrivateKey)
+    const transfer1 = new SignedTransaction([new SplitTransaction(
+        testAddresses.AliceAddress,
+        Segment.ETH(
+          utils.bigNumberify('5000000'),
+          utils.bigNumberify('5100000')),
+        blkNum3,
+        testAddresses.OperatorAddress
+      )])
+    const transfer2 = new SignedTransaction([new SplitTransaction(
+        testAddresses.OperatorAddress,
+        Segment.ETH(
+          utils.bigNumberify('5100000'),
+          utils.bigNumberify('5200000')),
+        blkNum5,
+        testAddresses.AliceAddress,
+      )])
+    transfer1.sign(testKeys.AlicePrivateKey)
+    transfer2.sign(testKeys.OperatorPrivateKey)
 
     it("should isSpent", async () => {
       const exitState1 = new OwnState(
@@ -177,17 +173,17 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
           utils.bigNumberify('5200000')),
         operator).withBlkNum(blkNum5)
       const evidence2 = await this.customVerifier.getSpentEvidence(
-        swapTx.getTxBytes(),
+        transfer1.getTxBytes(),
         0,
-        swapTx.getSignatures()
+        transfer1.getSignatures()
       )
       const evidence3 = await this.customVerifier.getSpentEvidence(
-        swapTx.getTxBytes(),
-        1,
-        swapTx.getSignatures()
+        transfer2.getTxBytes(),
+        0,
+        transfer2.getSignatures()
       )
       const result2 = await this.customVerifier.isSpent(
-        swapTx.getTxHash(),
+        transfer1.getTxHash(),
         exitState1.getBytes(),
         evidence2,
         0,
@@ -195,7 +191,7 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
           from: alice
         });
       const result3 = await this.customVerifier.isSpent(
-        swapTx.getTxHash(),
+        transfer2.getTxHash(),
         exitState2.getBytes(),
         evidence3,
         0,

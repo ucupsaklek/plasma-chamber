@@ -3,7 +3,6 @@ import {
   BaseTransaction,
   TransactionDecoder,
   TransactionOutput,
-  SwapTransaction,
   TransactionOutputDeserializer,
   SplitTransaction
 } from './tx'
@@ -48,8 +47,8 @@ export class SignedTransaction {
   }
 
   verify(): boolean {
-    return this.txs.reduce((isVerified, tx) => {
-      return isVerified && tx.verify(this.signatures, this.getTxHash())
+    return this.txs.reduce((isVerified, tx, index) => {
+      return isVerified && tx.verify(this.signatures[index], this.getTxHash())
     }, <boolean>true)
   }
   

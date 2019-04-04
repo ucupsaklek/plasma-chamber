@@ -4,7 +4,6 @@ import {
   TransactionDecoder,
   SplitTransaction,
   MergeTransaction,
-  SwapTransaction,
   SignedTransaction,
   SignedTransactionWithProof
 } from '../src'
@@ -68,17 +67,6 @@ describe('Transaction', () => {
     assert.equal(decoded.getInput(0).getSegment(0).start.toString(), '5000000')
   });
 
-  it('encode and decode swap transaction', () => {
-    const tx = SwapTransaction.SimpleSwap(
-      AliceAddress, segment1, blkNum1, BobAddress, segment2, blkNum2)
-    const encoded = tx.serialize()
-    const decoded: SwapTransaction = TransactionDecoder.decode(encoded) as SwapTransaction
-    //assert.equal(encoded, '0xf84105b83ef83c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf834c4b40835b8d80329434fdeadc2b69fd24f3043a89f9231f10f1284a4a835b8d80836acfc034');
-    assert.equal(decoded.hash(), tx.hash());
-    assert.equal(decoded.getOutput(0).getSegment(0).start.toString(), '5000000')
-    assert.equal(decoded.getInput(0).getSegment(0).start.toString(), '5000000')
-  });
-
   it('hash of own state', () => {
     const tx1 = SplitTransaction.Transfer(AliceAddress, segment, blkNum1, BobAddress)
     const tx2 = SplitTransaction.Transfer(BobAddress, segment, blkNum2, AliceAddress)
@@ -137,9 +125,11 @@ describe('Transaction', () => {
     });
 
     it('verify simple swap transaction', () => {
-      const tx = SwapTransaction.SimpleSwap(
-        AliceAddress, segment1, blkNum1, BobAddress, segment2, blkNum2)
-      const signedTx = new SignedTransaction([tx])
+      const tx1 = SplitTransaction.Transfer(
+        AliceAddress, segment1, blkNum1, BobAddress)
+      const tx2 = SplitTransaction.Transfer(
+        BobAddress, segment2, blkNum2, AliceAddress)
+      const signedTx = new SignedTransaction([tx1, tx2])
       signedTx.sign(AlicePrivateKey)
       signedTx.sign(BobPrivateKey)
       assert.equal(signedTx.verify(), true)
@@ -152,24 +142,22 @@ describe('Transaction', () => {
       const swapSegment2 = Segment.ETH(
         utils.bigNumberify('6000000'),
         utils.bigNumberify('7000000'))
-      const tx = new SwapTransaction(
-        AliceAddress,
-        swapSegment1,
-        blkNum1,
-        BobAddress,
-        swapSegment2,
-        blkNum2)
-      const signedTx = new SignedTransaction([tx])
+      const tx1 = SplitTransaction.Transfer(
+        AliceAddress, swapSegment1, blkNum1, BobAddress)
+      const tx2 = SplitTransaction.Transfer(
+        BobAddress, swapSegment2, blkNum2, AliceAddress)
+      const signedTx = new SignedTransaction([tx1, tx2])
       signedTx.sign(AlicePrivateKey)
       signedTx.sign(BobPrivateKey)
       assert.equal(signedTx.verify(), true)
       const outputSegment1 = signedTx.getRawTx(0).getOutput(0).getSegment(0)
-      const outputSegment2 = signedTx.getRawTx(0).getOutput(1).getSegment(0)
+      const outputSegment2 = signedTx.getRawTx(1).getOutput(0).getSegment(0)
       assert.equal(outputSegment1.start.toString(), utils.bigNumberify('5000000').toString())
       assert.equal(outputSegment1.end.toString(), utils.bigNumberify('5700000').toString())
       assert.equal(outputSegment2.start.toString(), utils.bigNumberify('6000000').toString())
       assert.equal(outputSegment2.end.toString(), utils.bigNumberify('7000000').toString())
-      assert.equal(signedTx.getRawTx(0).getOutputs().length, 2)
+      assert.equal(signedTx.getRawTx(0).getOutputs().length, 1)
+      assert.equal(signedTx.getRawTx(1).getOutputs().length, 1)
     });
 
   })

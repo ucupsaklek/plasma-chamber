@@ -3,7 +3,7 @@ import { SwapRequest } from "../../src/models/swap"
 import { Segment } from "../../src/segment"
 import { assert } from "chai"
 import { constants, utils } from "ethers"
-import { OwnState, SwapTransaction } from '../../src/tx'
+import { OwnState, SplitTransaction } from '../../src/tx'
 import {
   AlicePrivateKey,
   BobPrivateKey
@@ -47,9 +47,13 @@ describe('SwapRequest', () => {
     const tx = swapRequest.getSignedSwapTx()
     assert.notEqual(tx, undefined)
     if(tx) {
-      const swapTx: SwapTransaction = tx.getRawTx(0) as SwapTransaction
-      assert.equal(swapTx.getInput(0).getOwners()[0], AliceAddress)
-      assert.equal(swapTx.getOutput(0).getOwners()[0], BobAddress)
+      const swapTx1: SplitTransaction = tx.getRawTx(0) as SplitTransaction
+      const swapTx2: SplitTransaction = tx.getRawTx(1) as SplitTransaction
+      assert.equal(swapTx1.getInput().getOwners()[0], BobAddress)
+      assert.equal(swapTx1.getOutput(0).getOwners()[0], AliceAddress)
+      assert.equal(swapTx2.getInput().getOwners()[0], AliceAddress)
+      assert.equal(swapTx2.getOutput(0).getOwners()[0], BobAddress)
+
     }
   })
 
