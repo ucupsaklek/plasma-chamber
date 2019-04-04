@@ -252,8 +252,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         challengeTx.getProofAsHex(),
         challengeTx.getSignatures(),
         {
-          from: alice,
-          gas: '500000'
+          from: alice
         });
     })
 
@@ -344,8 +343,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         respondTx.getProofAsHex(),
         respondTx.getSignatures(),
         {
-          from: operator,
-          gas: '500000'
+          from: operator
         })
       const exitResult = await this.rootChain.getExit(exitId1)
       // challengeCount is 0
