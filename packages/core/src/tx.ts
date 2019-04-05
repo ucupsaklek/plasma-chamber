@@ -56,12 +56,12 @@ export abstract class BaseTransaction {
   }
 
   encode(): string {
-    const label = utils.padZeros(utils.arrayify(this.label), 8)
+    const predicate = utils.padZeros(utils.arrayify(this.label), 8)
     const maxBlock = utils.padZeros(utils.arrayify(this.maxBlock), 8)
     const arr = this.items.map((i: RLPItem) => {
       return utils.padZeros(utils.arrayify(i), 32)
     })
-    return utils.hexlify(utils.concat([label, maxBlock].concat(arr)))
+    return utils.hexlify(utils.concat([predicate, maxBlock].concat(arr)))
   }
 
   hash(): string {
@@ -97,7 +97,6 @@ export abstract class BaseTransaction {
  * @description The decoder for transaction
  */
 export class TransactionDecoder {
-
   /**
    * decode
    * @param bytes is hex string
@@ -320,6 +319,15 @@ export class DepositTransaction extends BaseTransaction {
 
 }
 
+/**
+ * tx
+ * - predicate
+ * - maxblock
+ * - stateUpdate
+ * -   segment
+ * -   blkNum
+ * -   state
+ */
 export class SplitTransaction extends BaseTransaction {
   from: Address
   segment: Segment

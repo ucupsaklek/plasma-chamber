@@ -22,9 +22,9 @@ import {
   Hash,
   Address
 } from './helpers/types'
-import { DepositTransaction, TransactionDecoder } from './tx';
 import { MapUtil } from './utils/MapUtil'
-import { SegmentedBlock, ExclusionProof } from './models/SegmentedBlock';
+import { SegmentedBlock, ExclusionProof } from './models/SegmentedBlock'
+import { PredicatesManager, StateUpdate } from './StateUpdate'
 
 class SegmentNode {
   segment: Segment
@@ -64,7 +64,7 @@ class SegmentNode {
   timestamp: BigNumber
   isDepositBlock: boolean
   txs: SignedTransaction[]
-  depositTx?: DepositTransaction
+  depositTx?: StateUpdate
   tree: SumMerkleTree | null
   numTokens: number
   confSigMap: Map<string, string[]>
@@ -109,7 +109,7 @@ class SegmentNode {
     this.timestamp = bn
   }
   
-  setDepositTx(depositTx: DepositTransaction) {
+  setDepositTx(depositTx: StateUpdate) {
     this.depositTx = depositTx
     this.isDepositBlock = true
   }
@@ -131,7 +131,7 @@ class SegmentNode {
     return {
       number: this.number,
       isDepositBlock: this.isDepositBlock,
-      depositTx: this.depositTx?this.depositTx.encode():null,
+      depositTx: this.depositTx?this.depositTx.serialize():null,
       txs: this.txs.map(tx => tx.serialize()),
       root: this.txs.length>0?this.getRoot():null,
       numTokens: this.numTokens,
@@ -147,7 +147,7 @@ class SegmentNode {
     block.setBlockTimestamp(ethers.utils.bigNumberify(data.timestamp))
     block.setSuperRoot(data.superRoot)
     if(data.depositTx !== null)
-      block.setDepositTx(TransactionDecoder.decode(data.depositTx) as DepositTransaction)
+      block.setDepositTx(StateUpdate.deserialize(data.depositTx))
     data.txs.forEach((tx: any) => {
       block.appendTx(SignedTransaction.deserialize(tx))
     })
@@ -183,7 +183,6 @@ class SegmentNode {
     if(this.superRoot != null) {
       const superRoot: string = this.superRoot
       const signedTx = this.getSignedTransaction(hash)
-      const confSigs: string[] | undefined = this.confSigMap.get(hash)
       const proofs = this.getProof(hash)
       return proofs.map((p, i) => {
         const index = signedTx.getIndex(p.segment)
@@ -196,11 +195,7 @@ class SegmentNode {
           proofs,
           utils.bigNumberify(this.number))
       }).map(tx => {
-        if(confSigs) {
-          return tx.withRawConfSigs(confSigs)
-        } else {
-          return tx
-        }
+        return tx
       })
     }else{
       throw new Error("superRoot doesn't setted")
@@ -323,20 +318,18 @@ class SegmentNode {
     return this.txs
   }
 
-  getUserTransactions(owner: Address): SignedTransaction[] {
+  getUserTransactions(owner: Address, predicatesManager: PredicatesManager): SignedTransaction[] {
     return this.txs.filter(tx => {
-      const hasOutput = tx.getAllOutputs().filter(output => {
-        return output.getOwners().indexOf(owner) >= 0
+      const hasOutput = tx.getStateUpdates().filter(output => {
+        return output.isOwnedBy(owner, predicatesManager)
       }).length > 0
-      const hasInput = tx.getAllInputs().filter(input => {
-        return input.getOwners().indexOf(owner) >= 0
-      }).length > 0
-      return hasOutput || hasInput
+      const isSigner = tx.getSigners().indexOf(owner) >= 0
+      return hasOutput || isSigner
     })
   }
 
-  getUserTransactionAndProofs(owner: Address): SignedTransactionWithProof[] {
-    return this.getUserTransactions(owner).reduce((acc: SignedTransactionWithProof[], tx) => {
+  getUserTransactionAndProofs(owner: Address, predicatesManager: PredicatesManager): SignedTransactionWithProof[] {
+    return this.getUserTransactions(owner, predicatesManager).reduce((acc: SignedTransactionWithProof[], tx) => {
       return acc.concat(this.getSignedTransactionWithProof(tx.hash()))
     }, [])
   }

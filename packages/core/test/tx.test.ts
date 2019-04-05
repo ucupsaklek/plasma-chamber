@@ -1,11 +1,12 @@
 import { describe, it } from "mocha"
 import {
   Segment,
-  TransactionDecoder,
-  SplitTransaction,
-  MergeTransaction,
   SignedTransaction,
-  SignedTransactionWithProof
+  StateUpdate,
+  PredicatesManager,
+  OwnershipPredicate,
+  PaymentChannelPredicate,
+  DecoderUtility
 } from '../src'
 import { assert } from "chai"
 import { utils } from "ethers"
@@ -34,105 +35,64 @@ describe('Transaction', () => {
     utils.bigNumberify('7000000'))
   const blkNum1 = utils.bigNumberify('50')
   const blkNum2 = utils.bigNumberify('52')
+  const predicate = AliceAddress
+  const predicateManager = new PredicatesManager()
+  predicateManager.addPredicate(predicate, 'OwnershipPredicate')
 
   it('encode and decode transfer transaction', () => {
-    const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-    const encoded = tx.serialize()
-    const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
-    //assert.equal(encoded, '0xf601b4f394953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c0019434fdeadc2b69fd24f3043a89f9231f10f1284a4a');
-    assert.equal(decoded.label.toNumber(), 11);
-    assert.equal(decoded.getOutput().getSegment().start.toString(), '2000000');
-  });
-
-  it('encode and decode split transaction', () => {
-    const tx = new SplitTransaction(
-      AliceAddress, splitSegment, blkNum, BobAddress)
-    const encoded = tx.serialize()
-    const decoded: SplitTransaction = TransactionDecoder.decode(encoded) as SplitTransaction
-    //assert.equal(encoded, '0xf85102b84ef84c94953b8fb338ef870eda6d74c1dd4769b6c977b8cf831e8480832dc6c00194953b8fb338ef870eda6d74c1dd4769b6c977b8cf9434fdeadc2b69fd24f3043a89f9231f10f1284a4a8327ac40');
-    const outputSegment = decoded.getOutput().getSegment()
-    assert.equal(outputSegment.start.toString(), '2000000')
-    assert.equal(outputSegment.end.toString(), '2600000')
-    assert.equal(tx.hash(), decoded.hash())
-
-  });
-
-  it('encode and decode merge transaction', () => {
-    const tx = new MergeTransaction(
-      AliceAddress, segment1, segment2, BobAddress, blkNum1, blkNum2)
-    const encoded = tx.serialize()
-    const decoded: MergeTransaction = TransactionDecoder.decode(encoded) as MergeTransaction
-    //assert.equal(encoded, '0xf83d03b83af83894953b8fb338ef870eda6d74c1dd4769b6c977b8cf834c4b40835b8d80836acfc09434fdeadc2b69fd24f3043a89f9231f10f1284a4a3234');
-    assert.equal(decoded.getOutput().getSegment().start.toString(), '5000000')
-    assert.equal(decoded.getInput(0).getSegment().start.toString(), '5000000')
-  });
-
-  it('hash of own state', () => {
-    const tx1 = SplitTransaction.Transfer(AliceAddress, segment, blkNum1, BobAddress)
-    const tx2 = SplitTransaction.Transfer(BobAddress, segment, blkNum2, AliceAddress)
-    assert.equal(tx1.getOutput().withBlkNum(blkNum2).hash(), tx2.getInput().hash())
+    const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
+    const encoded = stateUpdate.serialize()
+    const decoded = StateUpdate.deserialize(encoded)
+    assert.equal(DecoderUtility.getAddress(decoded.state), BobAddress);
+    assert.equal(decoded.getSegment().toBigNumber().toHexString(), segment.toBigNumber().toHexString());
   });
     
   describe('SignedTransaction', () => {
 
     it('serialize and deserialize', () => {
-      const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-      const signedTx = new SignedTransaction([tx])
+      const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
+      const signedTx = new SignedTransaction([stateUpdate])
       signedTx.sign(AlicePrivateKey)
       const serialized = signedTx.serialize()
       const deserialized = SignedTransaction.deserialize(serialized)
-      assert.equal(deserialized.hash(), signedTx.hash())
-      assert.equal(deserialized.getSignatures(), signedTx.getSignatures())
+      assert.equal(deserialized.getTxHash(), signedTx.getTxHash())
+      assert.equal(deserialized.getTransactionWitness(), signedTx.getTransactionWitness())
     });
 
     it('getSignatures', () => {
-      const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-      const signedTx = new SignedTransaction([tx])
+      const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
+      const signedTx = new SignedTransaction([stateUpdate])
       signedTx.sign(AlicePrivateKey)
-      const signature = signedTx.getSignatures()
+      const signature = signedTx.getTransactionWitness()
       assert.equal(utils.recoverAddress(signedTx.hash(), signature), AliceAddress)
     })
 
-    it('verify transfer transaction', () => {
-      const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-      const signedTx = new SignedTransaction([tx])
+    it('succeed to verifyDeprecation', () => {
+      const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, AliceAddress)
+      const newStateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
+      const signedTx = new SignedTransaction([newStateUpdate])
       signedTx.sign(AlicePrivateKey)
-      assert.equal(signedTx.verify(), true)
+      const isVerifyDEprecation = stateUpdate.verifyDeprecation(
+        signedTx.hash(),
+        newStateUpdate,
+        signedTx.getTransactionWitness(),
+        predicateManager
+      )
+      assert.isTrue(isVerifyDEprecation)
     });
 
-    it('fail to verify transfer transaction', () => {
-      const tx = SplitTransaction.Transfer(AliceAddress, segment, blkNum, BobAddress)
-      const signedTx = new SignedTransaction([tx])
-      signedTx.sign(BobPrivateKey)
-      assert.equal(signedTx.verify(), false)
-    });
-
-    it('verify split transaction', () => {
-      const tx = new SplitTransaction(
-        AliceAddress, splitSegment, blkNum, BobAddress)
-      const signedTx = new SignedTransaction([tx])
+    it('fail to verifyDeprecation', () => {
+      const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, AliceAddress)
+      const newStateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
+      const signedTx = new SignedTransaction([newStateUpdate])
       signedTx.sign(AlicePrivateKey)
-      assert.equal(signedTx.verify(), true)
-      assert.equal(SignedTransaction.deserialize(signedTx.serialize()).verify(), true)
-    });
-
-    it('verify merge transaction', () => {
-      const tx = new MergeTransaction(
-        AliceAddress, segment1, segment2, BobAddress, blkNum1, blkNum2)
-      const signedTx = new SignedTransaction([tx])
-      signedTx.sign(AlicePrivateKey)
-      assert.equal(signedTx.verify(), true)
-    });
-
-    it('verify simple swap transaction', () => {
-      const tx1 = SplitTransaction.Transfer(
-        AliceAddress, segment1, blkNum1, BobAddress)
-      const tx2 = SplitTransaction.Transfer(
-        BobAddress, segment2, blkNum2, AliceAddress)
-      const signedTx = new SignedTransaction([tx1, tx2])
-      signedTx.sign(AlicePrivateKey)
-      signedTx.sign(BobPrivateKey)
-      assert.equal(signedTx.verify(), true)
+      const isVerifyDeprecation = stateUpdate.verifyDeprecation(
+        signedTx.hash(),
+        newStateUpdate,
+        signedTx.getTransactionWitness(),
+        predicateManager
+      )
+      assert.isTrue(isVerifyDeprecation)
     });
 
     it('verify swap transaction', () => {
@@ -142,20 +102,27 @@ describe('Transaction', () => {
       const swapSegment2 = Segment.ETH(
         utils.bigNumberify('6000000'),
         utils.bigNumberify('7000000'))
-      const tx1 = SplitTransaction.Transfer(
-        AliceAddress, swapSegment1, blkNum1, BobAddress)
-      const tx2 = SplitTransaction.Transfer(
-        BobAddress, swapSegment2, blkNum2, AliceAddress)
-      const signedTx = new SignedTransaction([tx1, tx2])
-      signedTx.sign(AlicePrivateKey)
-      signedTx.sign(BobPrivateKey)
-      assert.equal(signedTx.verify(), true)
-      const outputSegment1 = signedTx.getRawTx(0).getOutput().getSegment()
-      const outputSegment2 = signedTx.getRawTx(1).getOutput().getSegment()
-      assert.equal(outputSegment1.start.toString(), utils.bigNumberify('5000000').toString())
-      assert.equal(outputSegment1.end.toString(), utils.bigNumberify('5700000').toString())
-      assert.equal(outputSegment2.start.toString(), utils.bigNumberify('6000000').toString())
-      assert.equal(outputSegment2.end.toString(), utils.bigNumberify('7000000').toString())
+      const stateUpdate1 = OwnershipPredicate.create(swapSegment1, blkNum1, predicate, AliceAddress)
+      const stateUpdate2 = OwnershipPredicate.create(swapSegment2, blkNum1, predicate, BobAddress)
+      const newStateUpdate1 = PaymentChannelPredicate.create(swapSegment1, blkNum2, predicate, AliceAddress, BobAddress)
+      const newStateUpdate2 = PaymentChannelPredicate.create(swapSegment2, blkNum2, predicate, AliceAddress, BobAddress)
+      const signedTx = new SignedTransaction([newStateUpdate1, newStateUpdate2])
+      const signA = signedTx.justSign(AlicePrivateKey)
+      const signB = signedTx.justSign(BobPrivateKey)
+      const isVerifyDeprecation1 = stateUpdate1.verifyDeprecation(
+        signedTx.hash(),
+        newStateUpdate1,
+        signA,
+        predicateManager
+      )
+      const isVerifyDeprecation2 = stateUpdate2.verifyDeprecation(
+        signedTx.hash(),
+        newStateUpdate2,
+        signB,
+        predicateManager
+      )
+      assert.isTrue(isVerifyDeprecation1)
+      assert.isTrue(isVerifyDeprecation2)
     });
 
   })

@@ -2,7 +2,7 @@ import { describe, it } from "mocha"
 import { assert } from "chai"
 import { constants, utils, ethers } from "ethers"
 import { TxFilter } from '../src/txfilter'
-import { SplitTransaction, Segment, SignedTransaction } from '@layer2/core'
+import { OwnershipPredicate, PredicatesManager, SplitTransaction, Segment, SignedTransaction } from '@layer2/core'
 
 describe('TxFilter', () => {
 
@@ -11,25 +11,29 @@ describe('TxFilter', () => {
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const BobAddress = utils.computeAddress(BobPrivateKey)
 
-  const tx1 = SplitTransaction.Transfer(
-    AliceAddress,
+  const predicate = AliceAddress
+  const predicateManager = new PredicatesManager()
+  predicateManager.addPredicate(predicate, 'OwnershipPredicate')
+
+  const tx1 = OwnershipPredicate.create(
     Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000)),
     ethers.utils.bigNumberify(5),
+    predicate,
     BobAddress
   )
-  const tx2 = SplitTransaction.Transfer(
-    AliceAddress,
+  const tx2 = OwnershipPredicate.create(
     Segment.ETH(ethers.utils.bigNumberify(10000000), ethers.utils.bigNumberify(20000000)),
     ethers.utils.bigNumberify(7),
+    predicate,
     BobAddress
   )
-  const tx3 = SplitTransaction.Transfer(
-    AliceAddress,
+  const tx3 = OwnershipPredicate.create(
     Segment.ETH(ethers.utils.bigNumberify(5000000), ethers.utils.bigNumberify(15000000)),
     ethers.utils.bigNumberify(7),
+    predicate,
     BobAddress
   )
-
+  
   it('should succeed to checkAndInsertTx', async () => {
     const txFilter = new TxFilter()
     const signedTx1 = new SignedTransaction([tx1])

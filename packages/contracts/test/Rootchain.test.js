@@ -12,8 +12,8 @@ const RootChain = artifacts.require("RootChain")
 const Checkpoint = artifacts.require("Checkpoint")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
-const OwnStateVerifier = artifacts.require("OwnStateVerifier")
-const StandardVerifier = artifacts.require("StandardVerifier")
+const OwnershipPredicateContract = artifacts.require("OwnershipPredicate")
+const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const TestPlasmaToken = artifacts.require("TestPlasmaToken")
@@ -25,8 +25,7 @@ const {
   constants,
   Segment,
   SignedTransaction,
-  SplitTransaction,
-  OwnState
+  OwnershipPredicate
 } = require('@layer2/core')
 
 const {
@@ -51,16 +50,14 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
     this.erc721 = await ERC721.new()
     this.checkpoint = await Checkpoint.new({ from: operator })
     this.verifierUtil = await VerifierUtil.new({ from: operator })
-    this.ownStateVerifier = await OwnStateVerifier.new(
+    this.ownershipPredicate = await OwnershipPredicateContract.new(
       this.verifierUtil.address, { from: operator })
-    this.standardVerifier = await StandardVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
+      this.verifierUtil.address, { from: operator })
     this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
-      this.ownStateVerifier.address,
+      this.ownershipPredicate.address,
       {
         from: operator
       })
@@ -73,13 +70,13 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       {
         from: operator
       })
-    await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     await this.rootChain.setup()
     const exitNFTAddress = await this.rootChain.getTokenAddress.call()
     const exitNFT = await ERC721.at(exitNFTAddress)
     const minter = await exitNFT.getMinter.call()
     assert.equal(minter, this.rootChain.address)
-    OwnState.setAddress(this.ownStateVerifier.address)
   });
 
   describe("submit", () => {
@@ -387,7 +384,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.challenge(
         exitId2,
         exitId2,
-        depositTx.getOutput().withBlkNum(ethers.utils.bigNumberify(3)).getBytes(),
+        depositTx.encode(),
         6 * 100 + 0,
         Scenario1.segments[0].toBigNumber(),
         respondTx.getTxBytes(),
@@ -453,6 +450,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
     // deposits
     const blkNum1 = ethers.utils.bigNumberify('3')
     const blkNum2 = ethers.utils.bigNumberify('5')
+    const blkNum3 = ethers.utils.bigNumberify('6')
     const segment1 = Segment.ETH(
       ethers.utils.bigNumberify('0'),
       ethers.utils.bigNumberify('1000000'))
@@ -461,8 +459,8 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       ethers.utils.bigNumberify('2000000'))
     const block3 = new Block()
     const swapTx = new SignedTransaction([
-      SplitTransaction.Transfer(testAddresses.AliceAddress, segment1, blkNum1, testAddresses.OperatorAddress),
-      SplitTransaction.Transfer(testAddresses.OperatorAddress, segment2, blkNum2, testAddresses.AliceAddress)])
+      OwnershipPredicate.create(segment1, blkNum3, ethers.constants.AddressZero, testAddresses.OperatorAddress),
+      OwnershipPredicate.create(segment2, blkNum3, ethers.constants.AddressZero, testAddresses.AliceAddress)])
     swapTx.sign(testKeys.AlicePrivateKey)
     swapTx.sign(testKeys.OperatorPrivateKey)
     block3.setBlockNumber(6)

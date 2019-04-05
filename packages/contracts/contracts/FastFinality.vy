@@ -36,31 +36,20 @@ contract RootChain():
     _proofs: bytes[2352],
     _outputIndex: uint256,
     _owner: address
-  ) -> bytes32: constant
+  ) -> bytes[256]: constant
 
 contract CustomVerifier():
-  def isExitGamable(
+  def canInitiateExit(
     _txHash: bytes32,
-    _txBytes: bytes[496],
-    _sigs: bytes[260],
-    _outputIndex: uint256,
+    _stateUpdate: bytes[256],
     _owner: address,
     _segment: uint256
   ) -> bool: constant
-  def getOutput(
-    _txBytes: bytes[496],
-    _txBlkNum: uint256,
-    _index: uint256
-  ) -> bytes[256]: constant
-  def getSpentEvidence(
-    _txBytes: bytes[496],
-    _index: uint256,
-    _sigs: bytes[260]
-  ) -> bytes[256]: constant
-  def isSpent(
+  def verifyDeprecation(
     _txHash: bytes32,
     _stateBytes: bytes[256],
-    _evidence: bytes[256],
+    _nextStateUpdate: bytes[256],
+    _transactionWitness: bytes[130],
     _timestamp: uint256
   ) -> bool: constant
 
@@ -211,10 +200,9 @@ def withdrawAndBurnToken(
 @payable
 def dispute(
   _exitStateBytes: bytes[256],
-  _txBytes: bytes[496],
-  _sigs: bytes[260],
+  _txBytes: bytes[256],
+  _sigs: bytes[130],
   _operatorSigs: bytes[65],
-  _index: uint256,
   _segment: uint256
 ):
   assert msg.value == BOND
@@ -226,11 +214,9 @@ def dispute(
   start: uint256
   end: uint256
   (tokenId, start, end) = self.parseSegment(_segment)
-  CustomVerifier(self.txverifier).isExitGamable(
+  assert CustomVerifier(self.txverifier).canInitiateExit(
     txHash,
     _txBytes,
-    _sigs,
-    _index,
     msg.sender,
     _segment)
   self.disputes[txHash] = Dispute({
@@ -246,7 +232,7 @@ def dispute(
 #     Operator challenge showing inclusion of "FF tx"
 @public
 def challenge(
-  _txBytes: bytes[496],
+  _txBytes: bytes[256],
   _proof: bytes[2352],
   _blkNum: uint256,
   _segment: uint256,
@@ -268,10 +254,10 @@ def challenge(
 @public
 def secondDispute(
   _stateBytes: bytes[256],
-  _disputeTxBytes: bytes[496],
-  _txBytes: bytes[496],
+  _disputeTxBytes: bytes[256],
+  _txBytes: bytes[256],
   _proof: bytes[2352],
-  _sigs: bytes[260],
+  _sigs: bytes[130],
   _blkNum: uint256,
   _segment: uint256
 ):
@@ -286,15 +272,11 @@ def secondDispute(
     ZERO_ADDRESS)
   disputeId: bytes32 = sha3(_disputeTxBytes)
   assert self.disputes[disputeId].stateHash == sha3(_stateBytes)
-  evidence: bytes[256] = CustomVerifier(self.txverifier).getSpentEvidence(
-    _txBytes,
-    0,
-    _sigs
-  )
-  assert CustomVerifier(self.txverifier).isSpent(
+  assert CustomVerifier(self.txverifier).verifyDeprecation(
     txHash,
     _stateBytes,
-    evidence,
+    _txBytes,
+    _sigs,
     0
   )
   self.disputes[disputeId].status = STATE_SECOND_DISPUTED

@@ -3,11 +3,9 @@ const TestPlasmaToken = artifacts.require("TestPlasmaToken")
 const RootChain = artifacts.require("RootChain")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
-const OwnStateVerifier = artifacts.require("OwnStateVerifier")
-const StandardVerifier = artifacts.require("StandardVerifier")
+const OwnershipPredicate = artifacts.require("OwnershipPredicate")
+const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
 const Serializer = artifacts.require("Serializer")
-const EscrowStateVerifier = artifacts.require("EscrowStateVerifier")
-const EscrowTxVerifier = artifacts.require("EscrowTxVerifier")
 const FastFinality = artifacts.require("FastFinality")
 const Checkpoint = artifacts.require("Checkpoint")
 
@@ -22,22 +20,20 @@ module.exports = (deployer) => {
     checkpoint = _checkpoint
     return deployer.deploy(VerifierUtil)
   })
-  .then(() => deployer.deploy(OwnStateVerifier, VerifierUtil.address))
-  .then(() => deployer.deploy(EscrowStateVerifier, VerifierUtil.address))
-  .then(() => deployer.deploy(StandardVerifier, VerifierUtil.address, OwnStateVerifier.address))
+  .then(() => deployer.deploy(OwnershipPredicate, VerifierUtil.address))
+  .then(() => deployer.deploy(PaymentChannelPredicate, VerifierUtil.address))
   .then(() => deployer.deploy(Serializer))
-  .then(() => deployer.deploy(EscrowTxVerifier, VerifierUtil.address, OwnStateVerifier.address, EscrowStateVerifier.address))
   .then(() => deployer.deploy(
     CustomVerifier,
     VerifierUtil.address,
-    OwnStateVerifier.address
+    OwnershipPredicate.address
   ))
   .then((_customVerifier) => {
     customVerifier = _customVerifier
-    return customVerifier.addVerifier(StandardVerifier.address)
+    return customVerifier.registerPredicate(OwnershipPredicate.address)
   })
   .then(() => {
-    return customVerifier.addVerifier(EscrowTxVerifier.address)
+    return customVerifier.registerPredicate(PaymentChannelPredicate.address)
   })
   .then(() => deployer.deploy(
     RootChain,

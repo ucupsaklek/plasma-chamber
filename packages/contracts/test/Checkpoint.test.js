@@ -12,8 +12,8 @@ const RootChain = artifacts.require("RootChain")
 const Checkpoint = artifacts.require("Checkpoint")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
-const OwnStateVerifier = artifacts.require("OwnStateVerifier")
-const StandardVerifier = artifacts.require("StandardVerifier")
+const OwnershipPredicate = artifacts.require("OwnershipPredicate")
+const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const ethers = require('ethers')
@@ -55,20 +55,20 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
     this.erc721 = await ERC721.new()
     this.checkpoint = await Checkpoint.new({ from: operator })
     this.verifierUtil = await VerifierUtil.new({ from: operator })
-    this.ownStateVerifier = await OwnStateVerifier.new(
+    this.ownershipPredicate = await OwnershipPredicate.new(
       this.verifierUtil.address, { from: operator })
-    this.standardVerifier = await StandardVerifier.new(
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
       this.verifierUtil.address,
-      this.ownStateVerifier.address,
       { from: operator })
     this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
-      this.ownStateVerifier.address,
+      this.ownershipPredicate.address,
       {
         from: operator
       })
-    await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
       this.serializer.address,

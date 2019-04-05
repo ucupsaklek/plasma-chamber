@@ -11,9 +11,10 @@ import { WaitingBlockWrapper } from '../models';
 import { ethers } from 'ethers';
 import { IStorage } from '../storage';
 import { PlasmaClient } from '../client';
+import { StateUpdate, PredicatesManager } from '@layer2/core/src';
 
 export class PlasmaBlockHeader {
-  deposit?: DepositTransaction
+  deposit?: StateUpdate
   block?: WaitingBlockWrapper
   blkNum: number
 
@@ -29,7 +30,7 @@ export class PlasmaBlockHeader {
     return !!this.deposit
   }
 
-  setDeposit(deposit: DepositTransaction) {
+  setDeposit(deposit: StateUpdate) {
     this.deposit = deposit
   }
 
@@ -37,7 +38,7 @@ export class PlasmaBlockHeader {
     this.block = block
   }
 
-  getDeposit(): DepositTransaction {
+  getDeposit(): StateUpdate {
     if(this.deposit) {
       return this.deposit
     } else {
@@ -68,14 +69,14 @@ export class PlasmaBlockHeader {
     if(data[0] == 'B') {
       plasmaBlockHeader.setBlock(WaitingBlockWrapper.deserialize(data[1]))
     } else if(data[0] == 'D') {
-      plasmaBlockHeader.setDeposit(DepositTransaction.deserialize(data[1]))
+      plasmaBlockHeader.setDeposit(StateUpdate.deserialize(data[1]))
     } else {
       throw new Error('unknown type')
     }
     return plasmaBlockHeader
   }
 
-  static CreateDeposit(blkNum: number, deposit: DepositTransaction) {
+  static CreateDeposit(blkNum: number, deposit: StateUpdate) {
     const plasmaBlockHeader = new PlasmaBlockHeader(blkNum)
     plasmaBlockHeader.setDeposit(deposit)
     return plasmaBlockHeader
@@ -137,7 +138,8 @@ export class SegmentHistory {
         }
         if(segmentChecker.isContain(tx.getSignedTx())) {
           segmentChecker.spend(tx.getSignedTx())
-          segmentChecker.insert(tx.getSignedTx(), ethers.utils.bigNumberify(blkNum))
+          segmentChecker.insert(tx.getSignedTx())
+          // tx.getSignedTx().getStateUpdates().filter(s => s.getBlkNum().eq(blkNum))
         } else {
           throw new Error('invalid history')
         }
@@ -166,20 +168,24 @@ export class SegmentHistoryManager {
   deposits: DepositTransaction[]
   storage: IStorage
   client: PlasmaClient
+  predicatesManager: PredicatesManager
 
-  constructor(storage: IStorage, client: PlasmaClient) {
+  constructor(storage: IStorage, client: PlasmaClient, predicatesManager: PredicatesManager) {
     this.storage = storage
     this.client = client
     this.deposits = []
     this.blockHeaders = []
+    this.predicatesManager = predicatesManager
   }
 
   init(key: string, originalSegment: Segment) {
     this.segmentHistoryMap[key] = new SegmentHistory(this.storage, key, originalSegment)
   }
 
-  appendDeposit(blkNum: number, deposit: DepositTransaction) {
-    this.storage.addBlockHeader(blkNum, JSON.stringify(PlasmaBlockHeader.CreateDeposit(blkNum, deposit).serialize()))
+  appendDeposit(deposit: StateUpdate) {
+    this.storage.addBlockHeader(
+      deposit.getBlkNum().toNumber(),
+      JSON.stringify(PlasmaBlockHeader.CreateDeposit(deposit.getBlkNum().toNumber(), deposit).serialize()))
   }
 
   async appendSegmentedBlock(key: string, segmentedBlock: SegmentedBlock) {
@@ -200,7 +206,7 @@ export class SegmentHistoryManager {
   }
 
   async verifyHistory(key: string) {
-    const segmentChecker = new SegmentChecker()
+    const segmentChecker = new SegmentChecker(this.predicatesManager)
     return await this.loadAndVerify(segmentChecker, key, 0)
   }
 
@@ -208,7 +214,7 @@ export class SegmentHistoryManager {
     segmentChecker: SegmentChecker,
     key: string,
     fromBlkNum: number
-  ): Promise<TransactionOutput[]> {
+  ): Promise<StateUpdate[]> {
     // check segment history by this.blockHeaders
     const blockHeaders = await this.loadBlockHeaders(fromBlkNum, fromBlkNum + 100)
     if(blockHeaders.length > 0) {
@@ -223,7 +229,7 @@ export class SegmentHistoryManager {
     segmentChecker: SegmentChecker,
     key: string,
     blockHeaders: PlasmaBlockHeader[]
-  ): Promise<TransactionOutput[]> {
+  ): Promise<StateUpdate[]> {
     const blockHeader = blockHeaders.shift()
     if(blockHeader) {
       if(blockHeader.isDeposit()) {
@@ -243,9 +249,9 @@ export class SegmentHistoryManager {
   private async verifyDeposit(
     segmentChecker: SegmentChecker,
     blkNum: number,
-    deposit: DepositTransaction
+    deposit: StateUpdate
   ) {
-    segmentChecker.insertDepositTx(deposit, ethers.utils.bigNumberify(blkNum))
+    segmentChecker.insertDepositTx(deposit)
   }
 
   private async verifyBlock(

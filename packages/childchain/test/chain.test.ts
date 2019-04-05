@@ -3,44 +3,11 @@ import chai = require('chai');
 import { assert } from "chai"
 import chaiAsPromised from 'chai-as-promised'
 import { constants, utils, ethers } from "ethers"
-import { Snapshot, ISnapshotDb } from '../src/snapshot'
 import {
   Chain,
   IChainDb
 } from '../src/chain'
-import { SplitTransaction, Segment, SignedTransaction, DepositTransaction } from '@layer2/core'
-
-class MockSnapshotDb implements ISnapshotDb {
-  getRoot() {
-    return ''
-  }
-  setRoot(root: string) {}
-  contains(key: string): Promise<boolean> {
-    return Promise.resolve(true)
-  }
-  insertId(key: string): Promise<boolean> {
-    return Promise.resolve(true)
-  }
-  deleteId(key: string): Promise<boolean> {
-    return Promise.resolve(true)
-  }
-}
-
-class MockNoDataSnapshotDb implements ISnapshotDb {
-  getRoot() {
-    return ''
-  }
-  setRoot(root: string) {}
-  contains(key: string): Promise<boolean> {
-    return Promise.resolve(false)
-  }
-  insertId(key: string): Promise<boolean> {
-    return Promise.resolve(true)
-  }
-  deleteId(key: string): Promise<boolean> {
-    return Promise.resolve(true)
-  }
-}
+import { PredicatesManager, SplitTransaction, Segment, SignedTransaction, DepositTransaction, OwnershipPredicate } from '@layer2/core'
 
 class MockChainDb implements IChainDb {
   contains(key: string): Promise<boolean> {
@@ -63,22 +30,28 @@ describe('Chain', () => {
   const BobPrivateKey = '0x855364a82b6d1405211d4b47926f4aa9fa55175ab2deaf2774e28c2881189cff'
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const BobAddress = utils.computeAddress(BobPrivateKey)
+  const predicate = AliceAddress
+  const predicateManager = new PredicatesManager()
+  predicateManager.addPredicate(predicate, 'OwnershipPredicate')
 
   before(() => {
     chai.use(chaiAsPromised)
   })
 
   it('should generateBlock', async () => {
-    const chain = new Chain(new MockChainDb())
+    const chain = new Chain(new MockChainDb(), predicateManager)
     const segment = Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000))
-    const depositTx = new DepositTransaction(AliceAddress, segment)
-    chain.segmentChecker.insertDepositTx(depositTx, ethers.utils.bigNumberify(5))
-    const tx = SplitTransaction.Transfer(
-      AliceAddress,
+    const depositTx = OwnershipPredicate.create(
+      segment,
+      ethers.utils.bigNumberify(3),
+      predicate,
+      AliceAddress)
+    chain.segmentChecker.insertDepositTx(depositTx)
+    const tx = OwnershipPredicate.create(
       segment,
       ethers.utils.bigNumberify(5),
-      BobAddress
-    )
+      predicate,
+      BobAddress)
     const signedTx = new SignedTransaction([tx])
     signedTx.sign(AlicePrivateKey)
     chain.appendTx(signedTx)
@@ -87,13 +60,12 @@ describe('Chain', () => {
   })
 
   it('should fail to generateBlock by no input', async () => {
-    const chain = new Chain(new MockChainDb())
-    const tx = SplitTransaction.Transfer(
-      AliceAddress,
+    const chain = new Chain(new MockChainDb(), predicateManager)
+    const tx = OwnershipPredicate.create(
       Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000)),
       ethers.utils.bigNumberify(5),
-      BobAddress
-    )
+      predicate,
+      BobAddress)
     const signedTx = new SignedTransaction([tx])
     signedTx.sign(AlicePrivateKey)
     chain.appendTx(signedTx)
@@ -103,17 +75,21 @@ describe('Chain', () => {
   })
 
   it('should generateBlock but segment duplecated', async () => {
-    const chain = new Chain(new MockChainDb())
+    const chain = new Chain(new MockChainDb(), predicateManager)
     const segment = Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000))
-    const depositTx = new DepositTransaction(AliceAddress, segment)
-    chain.segmentChecker.insertDepositTx(depositTx, ethers.utils.bigNumberify(5))
-    
-    const tx = SplitTransaction.Transfer(
-      AliceAddress,
+    const depositTx = OwnershipPredicate.create(
       segment,
       ethers.utils.bigNumberify(5),
-      BobAddress
-    )
+      predicate,
+      AliceAddress)
+    chain.segmentChecker.insertDepositTx(depositTx)
+    
+    const tx = OwnershipPredicate.create(
+      segment,
+      ethers.utils.bigNumberify(5),
+      predicate,
+      BobAddress)
+
     const signedTx = new SignedTransaction([tx])
     signedTx.sign(AlicePrivateKey)
     chain.appendTx(signedTx)

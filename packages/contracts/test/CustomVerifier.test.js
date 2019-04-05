@@ -1,9 +1,7 @@
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
-const OwnStateVerifier = artifacts.require("OwnStateVerifier")
-const StandardVerifier = artifacts.require("StandardVerifier")
-const EscrowTxVerifier = artifacts.require("EscrowTxVerifier")
-const EscrowStateVerifier = artifacts.require("EscrowStateVerifier")
+const OwnershipPredicateContract = artifacts.require("OwnershipPredicate")
+const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
 const { constants, utils } = require('ethers')
 const BigNumber = utils.BigNumber
 const {
@@ -18,8 +16,7 @@ const {
   OwnState,
   Segment,
   SignedTransaction,
-  SplitTransaction,
-  EscrowTransaction
+  OwnershipPredicate
 } = require('@layer2/core')
 
 require('chai')
@@ -31,77 +28,67 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
 
   beforeEach(async () => {
     this.verifierUtil = await VerifierUtil.new({ from: operator })
-    this.ownStateVerifier = await OwnStateVerifier.new(
+    this.ownershipPredicate = await OwnershipPredicateContract.new(
       this.verifierUtil.address, { from: operator })
-    this.EscrowStateVerifier = await EscrowStateVerifier.new(
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
       this.verifierUtil.address, { from: operator })
-    this.standardVerifier = await StandardVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
-    this.escrowTxVerifier = await EscrowTxVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      this.EscrowStateVerifier.address,
-      { from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
-      this.ownStateVerifier.address,
+      this.ownershipPredicate.address,
       {
         from: operator
       })
-    // label: 10-19
-    await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
-    OwnState.setAddress(this.ownStateVerifier.address)
-
+    await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
   });
 
-  describe("TransferTransaction", () => {
+  describe("OwnershipPredicate", () => {
 
-    it("should be exit gamable", async () => {
-      const tx = transactions.tx
-      const isExitGamable = await this.customVerifier.isExitGamable(
-        tx.getTxHash(),
-        tx.getTxBytes(),
-        tx.getSignatures(),
-        0,
-        testAddresses.BobAddress,
-        transactions.segments[0].toBigNumber(),
+    it("can initiate exit", async () => {
+      const segment = Segment.ETH(utils.bigNumberify('0'), utils.bigNumberify('1000000'))
+      const stateUpdate = OwnershipPredicate.create(
+        segment,
+        utils.bigNumberify(4),
+        this.ownershipPredicate.address,
+        testAddresses.AliceAddress
+      )
+      const signedTx = new SignedTransaction([stateUpdate])
+      const canInitiateExit = await this.customVerifier.canInitiateExit(
+        signedTx.getTxHash(),
+        signedTx.getTxBytes(),
+        testAddresses.AliceAddress,
+        segment.toBigNumber(),
         {
           from: alice
         });
-      const output = await this.customVerifier.getOutput(
-        transactions.segments[0].toBigNumber(),
-        tx.getTxBytes(),
-        6,
-        {
-          from: alice
-        });
-      assert.isTrue(isExitGamable)
-      assert.equal(output, utils.keccak256(tx.getStateBytes(this.ownStateVerifier.address)))
+      assert.isTrue(canInitiateExit)
     })
 
-    it("should not be exit gamable", async () => {
-      const invalidTx = transactions.invalidTx
-      await assertRevert(this.customVerifier.isExitGamable(
-        invalidTx.getTxHash(),
-        invalidTx.getTxBytes(),
-        invalidTx.getSignatures(),
-        0,
-        constants.AddressZero,
+    it("can't initiate exit", async () => {
+      const segment = Segment.ETH(utils.bigNumberify('0'), utils.bigNumberify('1000000'))
+      const stateUpdate = OwnershipPredicate.create(
+        segment,
+        utils.bigNumberify(4),
+        this.ownershipPredicate.address,
+        testAddresses.BobAddress
+      )
+      const signedTx = new SignedTransaction([stateUpdate])
+
+      await assertRevert(this.customVerifier.canInitiateExit(
+        signedTx.getTxHash(),
+        signedTx.getTxBytes(),
+        testAddresses.AliceAddress,
         transactions.segments[0].toBigNumber(),
         {
           from: alice
         }))
     })
 
-    it("should not be exit gamable because of invalid segment", async () => {
+    it("can't initiate exit because of invalid segment", async () => {
       const tx = transactions.tx
-      await assertRevert(this.customVerifier.isExitGamable(
+      await assertRevert(this.customVerifier.canInitiateExit(
         tx.getTxHash(),
         tx.getTxBytes(),
-        tx.getSignatures(),
-        0,
         constants.AddressZero,
         transactions.segments[1].toBigNumber(),
         {
@@ -109,35 +96,23 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
         }))
     })
 
-  })
-  
-  describe("MergeTransaction", () => {
-
-    it("should be exit gamable", async () => {
-      const tx = transactions.mergeTx
-      const isExitGamable = await this.customVerifier.isExitGamable(
+    /*
+    it("can verify deprecation", async () => {
+      const tx = transactions.tx
+      const canInitiateExit = await this.customVerifier.verifyDeprecation(
         tx.getTxHash(),
         tx.getTxBytes(),
-        tx.getSignatures(),
-        0,
         testAddresses.BobAddress,
-        transactions.segment45.toBigNumber(),
+        transactions.segments[0].toBigNumber(),
         {
           from: alice
         });
-      const output = await this.customVerifier.getOutput(
-        transactions.segment45.toBigNumber(),
-        tx.getTxBytes(),
-        6,
-        {
-          from: alice
-        });
-      assert.isTrue(isExitGamable)
-      assert.equal(output, utils.keccak256(tx.getStateBytes(this.ownStateVerifier.address)))
+      assert.isTrue(canInitiateExit)
     })
+    */
 
   })
-
+  /*
   describe("SwapTransaction", () => {
     const blkNum3 = utils.bigNumberify('3')
     const blkNum5 = utils.bigNumberify('5')
@@ -203,8 +178,9 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
     })
 
   })
-
-  describe("addVerifier", () => {
+  */
+ /*
+  describe("register", () => {
 
     const blkNum = utils.bigNumberify('3')
     const segment = Segment.ETH(
@@ -245,6 +221,7 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
     })
 
   })
+  */
 
   describe("parseSegment", () => {
 

@@ -12,13 +12,15 @@ export class TxFilter {
   }
 
   checkAndInsertTx(tx: SignedTransaction): boolean {
+    /*
     if(!tx.verify()) {
       throw new Error('invalid transaction')
     }
+    */
     if(this.txHashes.get(tx.hash()) !== undefined) {
       throw new Error('conflicted transaction hash')
     }
-    if(tx.getAllInputs().filter(input => {
+    if(tx.getStateUpdates().filter(input => {
       const target = input.getSegment()
       return this.segments.filter(segment => {
         return target.start.lt(segment.end) && target.end.gt(segment.start)

@@ -11,7 +11,7 @@ import {
 } from '../src/client'
 import { assert } from "chai"
 import { constants, utils } from "ethers"
-import { DepositTransaction, Segment, SignedTransaction, Block, SplitTransaction } from "@layer2/core";
+import { DepositTransaction, PredicatesManager, Segment, SignedTransaction, Block, SplitTransaction, OwnershipPredicate } from "@layer2/core";
 import { WaitingBlockWrapper } from "../src/models";
 import { BigNumber } from 'ethers/utils';
 
@@ -46,6 +46,9 @@ describe('SegmentHistoryManager', () => {
   const BobPrivateKey = '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f'
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const BobAddress = utils.computeAddress(BobPrivateKey)
+  const predicate = AliceAddress
+  const predicateManager = new PredicatesManager()
+  predicateManager.addPredicate(predicate, 'OwnershipPredicate')
   const segment1 = Segment.ETH(utils.bigNumberify(0), utils.bigNumberify(1000000))
   const segment2 = Segment.ETH(utils.bigNumberify(1000000), utils.bigNumberify(2000000))
   const blkNum3 = utils.bigNumberify(3)
@@ -56,16 +59,16 @@ describe('SegmentHistoryManager', () => {
   block6.setBlockNumber(6)
   const block8 = new Block(8)
   block8.setBlockNumber(8)
-  const depositTx1 = new DepositTransaction(AliceAddress, segment1)
-  const depositTx2 = new DepositTransaction(BobAddress, segment2)
+  const depositTx1 = OwnershipPredicate.create(segment1, blkNum3, predicate, AliceAddress)
+  const depositTx2 = OwnershipPredicate.create(segment2, blkNum5, predicate, BobAddress)
   const tx61 = createTransfer(
-    AlicePrivateKey, AliceAddress, segment1, blkNum3, BobAddress)
-  const tx62 = createTransfer(BobPrivateKey, BobAddress, segment2, blkNum5, AliceAddress)
+    AlicePrivateKey, predicate, segment1, blkNum3, BobAddress)
+  const tx62 = createTransfer(BobPrivateKey, predicate, segment2, blkNum6, AliceAddress)
   block6.appendTx(tx61)
   block6.appendTx(tx62)
   const tx81 = createTransfer(
-    AlicePrivateKey, AliceAddress, segment2, blkNum6, BobAddress)
-  const tx82 = createTransfer(BobPrivateKey, BobAddress, segment1, blkNum6, AliceAddress)
+    AlicePrivateKey, predicate, segment2, blkNum6, BobAddress)
+  const tx82 = createTransfer(BobPrivateKey, predicate, segment1, blkNum8, AliceAddress)
   block8.appendTx(tx81)
   block8.appendTx(tx82)
   block6.setSuperRoot(constants.HashZero)
@@ -76,9 +79,9 @@ describe('SegmentHistoryManager', () => {
   })
 
   it('should verify history', async () => {
-    const segmentHistoryManager = new SegmentHistoryManager(storage, client)
-    segmentHistoryManager.appendDeposit(blkNum3.toNumber(), depositTx1)
-    segmentHistoryManager.appendDeposit(blkNum5.toNumber(), depositTx2)
+    const segmentHistoryManager = new SegmentHistoryManager(storage, client, predicateManager)
+    segmentHistoryManager.appendDeposit(depositTx1)
+    segmentHistoryManager.appendDeposit(depositTx2)
     segmentHistoryManager.appendBlockHeader(new WaitingBlockWrapper(
       blkNum6,
       block6.getRoot()
@@ -93,14 +96,15 @@ describe('SegmentHistoryManager', () => {
 
     const utxo = await segmentHistoryManager.verifyHistory('key')
     assert.equal(utxo[0].getBlkNum().toNumber(), blkNum8.toNumber())
-    assert.deepEqual(utxo[0].getOwners(), [AliceAddress])
+    assert.deepEqual(utxo[0].getOwner(), AliceAddress)
     assert.equal(utxo[0].getSegment().toBigNumber().toNumber(), segment1.toBigNumber().toNumber())
   })
 
 })
 
-function createTransfer(privKey: string, from: string, seg: Segment, blkNum: BigNumber, to: string) {
-  const tx= new SignedTransaction([SplitTransaction.Transfer(from, seg, blkNum, to)])
+function createTransfer(privKey: string, predicate: string, seg: Segment, blkNum: BigNumber, to: string) {
+  const stateUpdate = OwnershipPredicate.create(seg, blkNum, predicate, to)
+  const tx= new SignedTransaction([stateUpdate])
   tx.sign(privKey)
   return tx
 }

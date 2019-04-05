@@ -3,11 +3,12 @@ import { SwapRequest } from "../../src/models/swap"
 import { Segment } from "../../src/segment"
 import { assert } from "chai"
 import { constants, utils } from "ethers"
-import { OwnState, SplitTransaction } from '../../src/tx'
 import {
   AlicePrivateKey,
   BobPrivateKey
 } from "../testdata"
+import { OwnershipPredicate } from "../../src/StateUpdate";
+import { DecoderUtility } from "../../dist";
 
 describe('SwapRequest', () => {
 
@@ -23,6 +24,8 @@ describe('SwapRequest', () => {
   const segment3 = Segment.ETH(
     utils.bigNumberify('4000000'),
     utils.bigNumberify('5000000'))
+  const targetBlock = utils.bigNumberify(0)
+  const predicate = AliceAddress
 
   it('check', () => {
     const swapRequest = new SwapRequest(
@@ -41,19 +44,18 @@ describe('SwapRequest', () => {
       segment1,
       blkNum,
       segment3)
-    swapRequest.setTarget(new OwnState(
+    swapRequest.setTarget(OwnershipPredicate.create(
       segment2,
-      BobAddress).withBlkNum(blkNum))
-    const tx = swapRequest.getSignedSwapTx()
+      targetBlock,
+      predicate,
+      BobAddress))
+    const tx = swapRequest.getSignedSwapTx(targetBlock, predicate)
     assert.notEqual(tx, undefined)
     if(tx) {
-      const swapTx1: SplitTransaction = tx.getRawTx(0) as SplitTransaction
-      const swapTx2: SplitTransaction = tx.getRawTx(1) as SplitTransaction
-      assert.equal(swapTx1.getInput().getOwners()[0], BobAddress)
-      assert.equal(swapTx1.getOutput().getOwners()[0], AliceAddress)
-      assert.equal(swapTx2.getInput().getOwners()[0], AliceAddress)
-      assert.equal(swapTx2.getOutput().getOwners()[0], BobAddress)
-
+      const swapTx1 = tx.getStateUpdate(0)
+      const swapTx2 = tx.getStateUpdate(1)
+      assert.equal(DecoderUtility.getAddress(swapTx1.state), AliceAddress)
+      assert.equal(DecoderUtility.getAddress(swapTx2.state), BobAddress)
     }
   })
 

@@ -81,37 +81,26 @@ contract Serializer():
   ) -> (uint256, uint256, bytes32): constant
 
 contract CustomVerifier():
-  def isExitGamable(
+  def canInitiateExit(
     _txHash: bytes32,
-    _txBytes: bytes[496],
-    _sigs: bytes[260],
-    _outputIndex: uint256,
+    _stateUpdate: bytes[256],
     _owner: address,
     _segment: uint256
   ) -> bool: constant
-  def getOutput(
-    _segment: uint256,
-    _txBytes: bytes[496],
-    _txBlkNum: uint256
-  ) -> bytes32: constant
-  def getSpentEvidence(
-    _txBytes: bytes[496],
-    _index: uint256,
-    _sigs: bytes[260]
-  ) -> bytes[256]: constant
-  def isSpent(
+  def verifyDeprecation(
     _txHash: bytes32,
     _stateBytes: bytes[256],
-    _evidence: bytes[256],
+    _nextStateUpdate: bytes[256],
+    _transactionWitness: bytes[130],
     _timestamp: uint256
   ) -> bool: constant
   def verifyDeposit(
     _requestingSegment: uint256,
     _owner: address,
-    _txBytes: bytes[496],
+    _txBytes: bytes[256],
     _hash: bytes32,
     _txBlkNum: uint256
-  ) -> bytes32: constant
+  ) -> bool: constant
 
 ListingEvent: event({_tokenId: uint256, _tokenAddress: address})
 BlockSubmitted: event({_superRoot: bytes32, _root: bytes32, _timestamp: timestamp, _blkNum: uint256})
@@ -218,15 +207,15 @@ def checkMembership(
 def checkTransaction(
   _requestingSegment: uint256,
   _txHash: bytes32,
-  _txBytes: bytes[496],
+  _txBytes: bytes[256],
   _blkNum: uint256,
   _proofs: bytes[2352],
   _outputIndex: uint256,
   _owner: address
-) -> bytes32:
+) -> bytes[256]:
   root: bytes32
   blockTimestamp: uint256
-  requestingTxBytes: bytes[496]
+  requestingTxBytes: bytes[256]
   if _blkNum % 2 == 0:
     numTx: int128
     txIndex: int128
@@ -244,7 +233,7 @@ def checkTransaction(
       segment: uint256
       sig: bytes[65]
       (txBytesOffset, txBytesSize, segment, sig) = Serializer(self.serializer).decodeInclusionWitness(_proofs, i, numNodes)
-      slicedTxBytes: bytes[496] = slice(_txBytes, start=txBytesOffset, len=txBytesSize)
+      slicedTxBytes: bytes[256] = slice(_txBytes, start=txBytesOffset, len=txBytesSize)
       (tokenId, start, end) = VerifierUtil(self.verifierUtil).parseSegment(segment)
       assert self.checkMembership(
         start + tokenId * TOTAL_DEPOSIT,
@@ -256,36 +245,29 @@ def checkTransaction(
         numNodes
       )
       if txIndex == i:
-        assert CustomVerifier(self.txverifier).isExitGamable(
+        assert CustomVerifier(self.txverifier).canInitiateExit(
           _txHash,
           slicedTxBytes,
-          sig,
-          0,
           _owner,
           segment)
         assert _requestingSegment == segment
         requestingTxBytes = slicedTxBytes
       else:
-        assert CustomVerifier(self.txverifier).isExitGamable(
+        assert CustomVerifier(self.txverifier).canInitiateExit(
           _txHash,
           slicedTxBytes,
-          sig,
-          0,
           ZERO_ADDRESS,
           segment)
-    return CustomVerifier(self.txverifier).getOutput(
-      _requestingSegment,
-      requestingTxBytes,
-      _blkNum)
+    return requestingTxBytes
   else:
     # deposit transaction
-    return CustomVerifier(self.txverifier).verifyDeposit(
+    assert CustomVerifier(self.txverifier).verifyDeposit(
       _requestingSegment,
       _owner,
       _txBytes,
       self.childChain[_blkNum],
       _blkNum)
-
+    return _txBytes
 
 # checkExitable construction is from Plasma Group
 # https://github.com/plasma-group/plasma-contracts/blob/master/contracts/PlasmaChain.vy#L363
@@ -495,7 +477,7 @@ def depositERC20(
 def exit(
   _utxoPos: uint256,
   _segment: uint256,
-  _txBytes: bytes[496],
+  _txBytes: bytes[256],
   _proof: bytes[2352]
 ):
   assert msg.value == EXIT_BOND
@@ -510,7 +492,7 @@ def exit(
     assert VerifierUtil(self.verifierUtil).isContainSegment(self.challenges[txHash].segment, _segment)
     self.extendExits[exitId].priority = self.challenges[txHash].blkNum
     self.childs[self.challenges[txHash].exitId] = exitId
-  exitStateHash: bytes32 = self.checkTransaction(
+  stateHash: bytes32 = sha3(self.checkTransaction(
     _segment,
     txHash,
     _txBytes,
@@ -518,19 +500,19 @@ def exit(
     _proof,
     outputIndex,
     msg.sender
-  )
+  ))
   self.exitNonce += 1
   self.exits[exitId] = Exit({
     owner: msg.sender,
     exitableAt: exitableAt,
     txHash: txHash,
-    stateHash: exitStateHash,
+    stateHash: stateHash,
     blkNum: blkNum,
     segment: _segment,
     isFinalized: False
   })
   ERC721(self.exitToken).mint(msg.sender, exitId)
-  log.ExitStarted(msg.sender, exitId, exitStateHash, exitableAt, _segment, blkNum)
+  log.ExitStarted(msg.sender, exitId, stateHash, exitableAt, _segment, blkNum)
 
 # @dev challenge
 # @param _utxoPos is blknum and index of challenge tx
@@ -541,16 +523,15 @@ def challenge(
   _exitStateBytes: bytes[256],
   _utxoPos: uint256,
   _segment: uint256,
-  _txBytes: bytes[496],
+  _txBytes: bytes[256],
   _proof: bytes[2352],
-  _sig: bytes[260]
+  _deprecationWitness: bytes[130]
 ):
   blkNum: uint256 = _utxoPos / 100
   txoIndex: uint256 = _utxoPos - blkNum * 100
   exit: Exit = self.exits[_exitId]
   exitBlkNum: uint256 = exit.blkNum
   VerifierUtil(self.verifierUtil).hasInterSection(_segment, exit.segment)
-  # assert exit.txHash == sha3(_exitTxBytes)
   txHash: bytes32 = sha3(_txBytes)
   assert exit.stateHash == sha3(_exitStateBytes)
   if _exitId == _childExitId:
@@ -561,7 +542,7 @@ def challenge(
     assert self.childs[_exitId] == _childExitId
     assert exitBlkNum < blkNum and blkNum < self.exits[_childExitId].blkNum
   assert exit.exitableAt > as_unitless_number(block.timestamp)
-  self.checkTransaction(
+  stateBytes: bytes[256] = self.checkTransaction(
     _segment,
     txHash,
     _txBytes,
@@ -583,11 +564,11 @@ def challenge(
       exitId: _exitId
     })
   blockTimestamp: uint256 = convert(slice(_proof, start=32, len=8), uint256)
-  assert CustomVerifier(self.txverifier).isSpent(
+  assert CustomVerifier(self.txverifier).verifyDeprecation(
     txHash,
     _exitStateBytes,
-    CustomVerifier(self.txverifier).getSpentEvidence(
-      _txBytes, txoIndex, _sig),
+    stateBytes,
+    _deprecationWitness,
     blockTimestamp)
   # break exit procedure
   if _exitId == _childExitId:
@@ -662,7 +643,7 @@ def challengeTooOldExit(
   _utxoPos: uint256,
   _exitId: uint256,
   _segment: uint256,
-  _txBytes: bytes[496],
+  _txBytes: bytes[256],
   _proof: bytes[2352]
 ):
   blkNum: uint256 = _utxoPos / 100

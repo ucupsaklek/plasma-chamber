@@ -11,19 +11,19 @@ const RootChain = artifacts.require("RootChain")
 const Checkpoint = artifacts.require("Checkpoint")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
-const OwnStateVerifier = artifacts.require("OwnStateVerifier")
-const StandardVerifier = artifacts.require("StandardVerifier")
+const OwnershipPredicateContract = artifacts.require("OwnershipPredicate")
+const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
-const {
-  utils
-} = require('ethers')
+const ethers = require('ethers')
+const utils = ethers.utils
 const BigNumber = utils.BigNumber
 
 const {
   constants,
   DepositTransaction,
-  OwnState
+  OwnState,
+  OwnershipPredicate
 } = require('@layer2/core')
 
 const {
@@ -46,20 +46,19 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
     this.erc721 = await ERC721.new()
     this.checkpoint = await Checkpoint.new({ from: operator })
     this.verifierUtil = await VerifierUtil.new({ from: operator })
-    this.ownStateVerifier = await OwnStateVerifier.new(
+    this.ownershipPredicate = await OwnershipPredicateContract.new(
       this.verifierUtil.address, { from: operator })
-    this.standardVerifier = await StandardVerifier.new(
-      this.verifierUtil.address,
-      this.ownStateVerifier.address,
-      { from: operator })
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
+      this.verifierUtil.address, { from: operator })
     this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
-      this.ownStateVerifier.address,
+      this.ownershipPredicate.address,
       {
         from: operator
       })
-    await this.customVerifier.addVerifier(this.standardVerifier.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
       this.serializer.address,
@@ -79,7 +78,6 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       })
     const getTokenAddressResult = await this.fastFinality.getTokenAddress.call()
     this.ffToken = await ERC721.at(getTokenAddressResult)
-    OwnState.setAddress(OwnStateVerifier.address)
   })
 
   describe('depositAndMintToken', () => {
@@ -115,8 +113,11 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
   describe('dispute', () => {
 
     const prevBlkNum = utils.bigNumberify(5)
-    const prevOutput = new DepositTransaction(testAddresses.AliceAddress, Scenario3.segments[0])
-                            .getOutput().withBlkNum(prevBlkNum)
+    const prevOutput = OwnershipPredicate.create(
+      Scenario3.segments[0],
+      prevBlkNum,
+      ethers.constants.AddressZero,
+      testAddresses.AliceAddress)
 
     beforeEach(async () => {
       const result = await this.fastFinality.depositAndMintToken(
@@ -137,13 +138,12 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
     it('should succeed to dispute and finalizeDispute', async () => {
       const tx = Scenario3.blocks[0].transactions[0]
       const operatorSig = Scenario3.blocks[0].operatorSignes[0]
-
+      console.log(tx.getTxBytes())
       await this.fastFinality.dispute(
-        prevOutput.getBytes(),
+        prevOutput.encode(),
         tx.getTxBytes(),
-        tx.getSignatures(),
+        tx.getTransactionWitness(),
         operatorSig,
-        1,
         Scenario3.segments[0].toBigNumber(),
         {
           value: BOND,
@@ -168,11 +168,10 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       const operatorSig = Scenario3.blocks[0].operatorSignes[0]
 
       await this.fastFinality.dispute(
-        prevOutput.getBytes(),
+        prevOutput.encode(),
         tx.getTxBytes(),
         tx.getSignatures(),
         operatorSig,
-        1,
         Scenario3.segments[2].toBigNumber(),
         {
           value: BOND,
@@ -196,9 +195,12 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
     const STATE_CHALLENGED = 2;
     const STATE_SECOND_DISPUTED = 3;
     const prevBlkNum = utils.bigNumberify(5)
-    const prevOutput = new DepositTransaction(testAddresses.AliceAddress, Scenario3.segments[0])
-                            .getOutput().withBlkNum(prevBlkNum)
-
+    const prevOutput = OwnershipPredicate.create(
+      Scenario3.segments[0],
+      prevBlkNum,
+      ethers.constants.AddressZero,
+      testAddresses.AliceAddress)
+    
     beforeEach(async () => {
       const submit = async (block) => {
         const result = await this.rootChain.submit(
@@ -216,11 +218,10 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
       const operatorSig = Scenario3.blocks[0].operatorSignes[0]
 
       await this.fastFinality.dispute(
-        prevOutput.getBytes(),
+        prevOutput.encode(),
         tx.getTxBytes(),
-        tx.getSignatures(),
+        tx.getTransactionWitness(),
         operatorSig,
-        1,
         Scenario3.segments[2].toBigNumber(),
         {
           value: BOND,
@@ -271,7 +272,7 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
           from: operator
         })
       await this.fastFinality.secondDispute(
-        prevOutput.getBytes(),
+        prevOutput.encode(),
         tx.getTxBytes(),
         secondDisputeTx.getTxBytes(),
         secondDisputeTx.getProofAsHex(),
