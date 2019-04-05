@@ -7,16 +7,23 @@ export class ExitableRangeManager {
 
   constructor() {
     this.ranges = []
-    this.ranges.push(new Segment(
-      utils.bigNumberify(0),
-      utils.bigNumberify(0),
-      utils.bigNumberify(0)))
+    this.ranges.push(ExitableRangeManager.emptyRange())
   }
 
   withRanges(ranges: Segment[]) {
-    this.ranges = this.ranges.concat(ranges)
-    this.sort()
+    this.ranges = ranges
+    if(this.ranges.length == 0) {
+      // if ranges has no item, push empty range
+      this.ranges.push(ExitableRangeManager.emptyRange())
+    }
     return this
+  }
+
+  static emptyRange() {
+    return new Segment(
+      utils.bigNumberify(0),
+      utils.bigNumberify(0),
+      utils.bigNumberify(0))
   }
 
   static deserialize(arr: any[]) {
