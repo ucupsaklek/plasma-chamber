@@ -3,14 +3,12 @@ import {
   ChamberResult,
   ChamberOk,
   ChamberResultError,
-  DepositTransaction,
   SignedTransaction,
   Block,
   PredicatesManager, OwnershipPredicate, Address,
   Segment,
   SegmentChecker,
-  SignedTransactionWithProof,
-  SplitTransaction
+  SignedTransactionWithProof
 } from '@layer2/core'
 import { ChainErrorFactory } from './error'
 import { constants, utils } from 'ethers';

@@ -4,14 +4,12 @@ import {
   SegmentedBlock,
   SignedTransactionWithProof,
   ExclusionProof,
-  TransactionOutput,
-  DepositTransaction
+  StateUpdate,
+  PredicatesManager
 } from '@layer2/core';
 import { WaitingBlockWrapper } from '../models';
-import { ethers } from 'ethers';
 import { IStorage } from '../storage';
 import { PlasmaClient } from '../client';
-import { StateUpdate, PredicatesManager } from '@layer2/core/src';
 
 export class PlasmaBlockHeader {
   deposit?: StateUpdate
@@ -165,7 +163,6 @@ export class SegmentHistoryManager {
 
   segmentHistoryMap: {[key: string]: SegmentHistory} = {}
   blockHeaders: WaitingBlockWrapper[]
-  deposits: DepositTransaction[]
   storage: IStorage
   client: PlasmaClient
   predicatesManager: PredicatesManager
@@ -173,7 +170,6 @@ export class SegmentHistoryManager {
   constructor(storage: IStorage, client: PlasmaClient, predicatesManager: PredicatesManager) {
     this.storage = storage
     this.client = client
-    this.deposits = []
     this.blockHeaders = []
     this.predicatesManager = predicatesManager
   }

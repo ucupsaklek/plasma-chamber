@@ -2,7 +2,7 @@ import { describe, it } from "mocha"
 import { assert } from "chai"
 import { constants, utils, ethers } from "ethers"
 import { TxFilter } from '../src/txfilter'
-import { OwnershipPredicate, PredicatesManager, SplitTransaction, Segment, SignedTransaction } from '@layer2/core'
+import { OwnershipPredicate, PredicatesManager, Segment, SignedTransaction } from '@layer2/core'
 
 describe('TxFilter', () => {
 

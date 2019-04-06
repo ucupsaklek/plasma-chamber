@@ -8,9 +8,7 @@ const {
 
 const {
   Block,
-  DepositTransaction,
   Segment,
-  SplitTransaction,
   MergeTransaction,
   SignedTransaction,
   OwnershipPredicate
@@ -266,13 +264,14 @@ function transactions() {
     
   const blkNum1 = utils.bigNumberify('3')
   const blkNum2 = utils.bigNumberify('5')
+  const blkNum3 = utils.bigNumberify('6')
   const block = new Block()
   block.setSuperRoot('')
   block.setBlockNumber(6)
 
   const tx = createTransfer(AlicePrivateKey, AliceAddress, segment1, blkNum1, BobAddress)
   const invalidTx = createTransfer(OperatorPrivateKey, AliceAddress, segment2, blkNum2, BobAddress)
-  const mergeTx = new SignedTransaction([new MergeTransaction(AliceAddress, segment4, segment5, BobAddress, blkNum1, blkNum2)])
+  const mergeTx = createTransfer(AlicePrivateKey, AliceAddress, segment45, blkNum3, BobAddress)
   mergeTx.sign(AlicePrivateKey)
 
   block.appendTx(tx)

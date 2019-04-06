@@ -2,11 +2,9 @@ import { describe, it } from "mocha"
 import {
   Segment,
   SignedTransaction,
-  StateUpdate,
   PredicatesManager,
   OwnershipPredicate,
-  PaymentChannelPredicate,
-  DecoderUtility
+  PaymentChannelPredicate
 } from '../src'
 import { assert } from "chai"
 import { utils } from "ethers"
@@ -15,7 +13,7 @@ import {
   BobPrivateKey
 } from "./testdata"
 
-describe('Transaction', () => {
+describe('SignedTransaction', () => {
 
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const BobAddress = utils.computeAddress(BobPrivateKey)
@@ -39,13 +37,6 @@ describe('Transaction', () => {
   const predicateManager = new PredicatesManager()
   predicateManager.addPredicate(predicate, 'OwnershipPredicate')
 
-  it('encode and decode transfer transaction', () => {
-    const stateUpdate = OwnershipPredicate.create(segment, blkNum, predicate, BobAddress)
-    const encoded = stateUpdate.serialize()
-    const decoded = StateUpdate.deserialize(encoded)
-    assert.equal(DecoderUtility.getAddress(decoded.state), BobAddress);
-    assert.equal(decoded.getSegment().toBigNumber().toHexString(), segment.toBigNumber().toHexString());
-  });
     
   describe('SignedTransaction', () => {
 

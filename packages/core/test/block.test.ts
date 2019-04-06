@@ -2,13 +2,9 @@ import { describe, it } from "mocha"
 import {
   Block,
   Segment,
-  TransactionDecoder,
-  SplitTransaction,
-  MergeTransaction,
   SignedTransaction,
   SignedTransactionWithProof,
   ExclusionProof,
-  StateUpdate,
   OwnershipPredicate,
   PredicatesManager
 } from '../src'

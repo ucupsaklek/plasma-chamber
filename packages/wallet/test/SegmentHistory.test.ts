@@ -11,7 +11,7 @@ import {
 } from '../src/client'
 import { assert } from "chai"
 import { constants, utils } from "ethers"
-import { DepositTransaction, PredicatesManager, Segment, SignedTransaction, Block, SplitTransaction, OwnershipPredicate } from "@layer2/core";
+import { PredicatesManager, Segment, SignedTransaction, Block, OwnershipPredicate } from "@layer2/core";
 import { WaitingBlockWrapper } from "../src/models";
 import { BigNumber } from 'ethers/utils';
 

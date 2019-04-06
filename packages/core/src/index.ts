@@ -10,7 +10,6 @@ export {
 export {
   Block,
 } from './block'
-export * from './tx'
 export {
   SignedTransaction,
   SignedTransactionWithProof
@@ -34,5 +33,3 @@ export * from './utils/MapUtil'
 
 export * from './models/swap'
 export * from './models/SegmentedBlock'
-
-export * from './verifiers/escrow'

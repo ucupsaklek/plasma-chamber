@@ -7,7 +7,7 @@ import {
   Chain,
   IChainDb
 } from '../src/chain'
-import { PredicatesManager, SplitTransaction, Segment, SignedTransaction, DepositTransaction, OwnershipPredicate } from '@layer2/core'
+import { PredicatesManager, Segment, SignedTransaction, OwnershipPredicate } from '@layer2/core'
 
 class MockChainDb implements IChainDb {
   contains(key: string): Promise<boolean> {

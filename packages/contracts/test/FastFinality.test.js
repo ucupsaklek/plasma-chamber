@@ -21,8 +21,6 @@ const BigNumber = utils.BigNumber
 
 const {
   constants,
-  DepositTransaction,
-  OwnState,
   OwnershipPredicate
 } = require('@layer2/core')
 
@@ -138,7 +136,6 @@ contract("FastFinality", ([alice, bob, operator, merchant, user5, admin]) => {
     it('should succeed to dispute and finalizeDispute', async () => {
       const tx = Scenario3.blocks[0].transactions[0]
       const operatorSig = Scenario3.blocks[0].operatorSignes[0]
-      console.log(tx.getTxBytes())
       await this.fastFinality.dispute(
         prevOutput.encode(),
         tx.getTxBytes(),

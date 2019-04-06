@@ -7,8 +7,8 @@ import {
   AlicePrivateKey,
   BobPrivateKey
 } from "../testdata"
-import { OwnershipPredicate } from "../../src/StateUpdate";
-import { DecoderUtility } from "../../dist";
+import { OwnershipPredicate } from "../../src/StateUpdate"
+import { DecoderUtility } from "../../src/utils/Decoder"
 
 describe('SwapRequest', () => {
 

@@ -1,12 +1,6 @@
 import { utils, ethers } from "ethers"
 import RLP = utils.RLP
 import {
-  BaseTransaction,
-  TransactionDecoder,
-  TransactionOutput,
-  TransactionOutputDeserializer
-} from './tx'
-import {
   HexString,
   Signature,
   Hash,
