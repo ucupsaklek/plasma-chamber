@@ -35,9 +35,10 @@ export class Chain {
 
   constructor(
     db: IChainDb,
-    predicatesManager: PredicatesManager
+    options: any
   ) {
-    this.predicatesManager = predicatesManager
+    this.predicatesManager = new PredicatesManager()
+    this.predicatesManager.addPredicate(options.OwnershipPredicate, 'OwnershipPredicate')
     this.ownershipPredicateAddress = this.predicatesManager.getNativePredicate('OwnershipPredicate')
     this.segmentChecker = new SegmentChecker(this.predicatesManager)
     this.blockHeight = 0

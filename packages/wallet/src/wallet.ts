@@ -207,6 +207,7 @@ export class ChamberWallet extends EventEmitter {
       )
     })
     this.predicatesManager = new PredicatesManager()
+    this.predicatesManager.addPredicate(this.options.OwnershipPredicate, 'OwnershipPredicate')
     this.segmentHistoryManager = new SegmentHistoryManager(storage, this.client, this.predicatesManager)
     this.plasmaSyncher.on('PlasmaBlockHeaderAdded', (e: any) => {
       this.segmentHistoryManager.appendBlockHeader(e.blockHeader as WaitingBlockWrapper)
@@ -256,13 +257,13 @@ export class ChamberWallet extends EventEmitter {
    */
   private _spend(newTx: SignedTransactionWithProof, newStateUpdate: StateUpdate): boolean {
     return this.getUTXOArray().filter((tx) => {
-      this.storage.deleteUTXO(tx.getOutput().hash())
       if(tx.getOutput().verifyDeprecation(
         newTx.getTxHash(),
         newStateUpdate,
         newTx.getTransactionWitness(),
         this.predicatesManager
       )) {
+        this.storage.deleteUTXO(tx.getOutput().hash())
         tx.spend(newStateUpdate).forEach(newTx => {
           this.storage.addUTXO(newTx)
         })

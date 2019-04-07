@@ -45,6 +45,9 @@ describe('ChamberWallet', () => {
   const client = new PlasmaClient(mockClient, new MockPubsubClient())
   let storage = new MockStorage()
   const predicate = AliceAddress
+  const options = {
+    OwnershipPredicate: predicate
+  }
 
   beforeEach(() => {
     storage = new MockStorage()
@@ -57,6 +60,7 @@ describe('ChamberWallet', () => {
       ContractAddress,
       storage,
       AlicePrivateKey,
+      options
     )
     assert.equal(wallet.getBalance().toNumber(), 0)
   })
@@ -70,6 +74,7 @@ describe('ChamberWallet', () => {
       ContractAddress,
       storage,
       AlicePrivateKey,
+      options
     )
     wallet.setPredicate('OwnershipPredicate', predicate)
 
@@ -94,6 +99,7 @@ describe('ChamberWallet', () => {
       ContractAddress,
       storage,
       AlicePrivateKey,
+      options
     )
     wallet.setPredicate('OwnershipPredicate', predicate)
 

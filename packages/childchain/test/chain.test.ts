@@ -31,15 +31,16 @@ describe('Chain', () => {
   const AliceAddress = utils.computeAddress(AlicePrivateKey)
   const BobAddress = utils.computeAddress(BobPrivateKey)
   const predicate = AliceAddress
-  const predicateManager = new PredicatesManager()
-  predicateManager.addPredicate(predicate, 'OwnershipPredicate')
+  const options = {
+    OwnershipPredicate: predicate
+  }
 
   before(() => {
     chai.use(chaiAsPromised)
   })
 
   it('should generateBlock', async () => {
-    const chain = new Chain(new MockChainDb(), predicateManager)
+    const chain = new Chain(new MockChainDb(), options)
     const segment = Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000))
     const depositTx = OwnershipPredicate.create(
       segment,
@@ -60,7 +61,7 @@ describe('Chain', () => {
   })
 
   it('should fail to generateBlock by no input', async () => {
-    const chain = new Chain(new MockChainDb(), predicateManager)
+    const chain = new Chain(new MockChainDb(), options)
     const tx = OwnershipPredicate.create(
       Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000)),
       ethers.utils.bigNumberify(5),
@@ -75,7 +76,7 @@ describe('Chain', () => {
   })
 
   it('should generateBlock but segment duplecated', async () => {
-    const chain = new Chain(new MockChainDb(), predicateManager)
+    const chain = new Chain(new MockChainDb(), options)
     const segment = Segment.ETH(ethers.utils.bigNumberify(0), ethers.utils.bigNumberify(10000000))
     const depositTx = OwnershipPredicate.create(
       segment,

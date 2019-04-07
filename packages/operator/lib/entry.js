@@ -27,7 +27,8 @@ async function main() {
   );
   const options = {
     confirmation: process.env.MAINCHAIN_CONFIRMATION,
-    initialBlock: process.env.MAINCHAIN_INITIAL_BLOCK
+    initialBlock: process.env.MAINCHAIN_INITIAL_BLOCK,
+    OwnershipPredicate: process.env.OWNERSHIP_PREDICATE
   }
   await chainManager.start(
     Object.assign({}, options, getStorageOption()))
