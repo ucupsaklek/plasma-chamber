@@ -424,7 +424,7 @@ export class ChamberWallet extends EventEmitter {
       const contract = new ethers.Contract(address, ERC20abi, this.httpProvider)
       const ERC20 = contract.connect(this.wallet)
       const resultBalanceOf = await ERC20.balanceOf(this.getAddress())
-      return resultBalanceOf
+      return resultBalanceOf.value
     }
   }
 
