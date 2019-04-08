@@ -51,7 +51,8 @@ const abi = [
 ]
 
 const ERC20abi = [
-  'function approve(address _spender, uint256 _value) returns (bool)'
+  'function approve(address _spender, uint256 _value) returns (bool)',
+  'function balanceOf(address tokenOwner) returns (uint)'
 ]
 
 export class ChamberWallet extends EventEmitter {
@@ -413,8 +414,18 @@ export class ChamberWallet extends EventEmitter {
     return this.wallet.address
   }
 
-  getBalanceOfMainChain() {
-    return this.wallet.getBalance()
+  async getBalanceOfMainChain(_tokenId?: number): Promise<BigNumber> {
+    const tokenId = _tokenId || 0
+    if(tokenId == 0) {
+      return this.wallet.getBalance()
+    } else {
+      // had better to use cache?
+      const address = this.getAvailableTokens().filter(t => t.id == tokenId).map(t => t.address)[0]
+      const contract = new ethers.Contract(address, ERC20abi, this.httpProvider)
+      const ERC20 = contract.connect(this.wallet)
+      const resultBalanceOf = await ERC20.balanceOf(this.getAddress())
+      return resultBalanceOf
+    }
   }
 
   /**
