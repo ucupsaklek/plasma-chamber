@@ -245,6 +245,17 @@ export class ChamberWallet extends EventEmitter {
     return await this.client.getBlockNumber()
   }
 
+  getPlasmaBlockNumber() {
+    return this.loadedBlockNumber
+  }
+
+  /**
+   * get current targetBlock
+   */
+  getTargetBlockNumber() {
+    return this.loadedBlockNumber + 3
+  }
+
   async syncChildChain(): Promise<SignedTransactionWithProof[]> {
     await this.plasmaSyncher.sync(async (block: Block) => {
       await this.updateBlock(block)
@@ -560,7 +571,7 @@ export class ChamberWallet extends EventEmitter {
     fee?: BigNumber
   ): SignedTransaction | null {
     let tx: SignedTransaction | null = null
-    const targetBlock = ethers.utils.bigNumberify(0)
+    const targetBlock = ethers.utils.bigNumberify(this.getTargetBlockNumber())
     this.getUTXOArray()
     .filter(_tx => _tx.getOutput().getSegment().getTokenId().eq(tokenId))
     .forEach((_tx) => {
@@ -745,7 +756,7 @@ export class ChamberWallet extends EventEmitter {
   }
 
   async merge() {
-    const targetBlock = ethers.utils.bigNumberify(0)
+    const targetBlock = ethers.utils.bigNumberify(this.getTargetBlockNumber())
     const tx = this.searchMergable(targetBlock)
     if(tx == null) {
       return new ChamberResultError(WalletErrorFactory.TooLargeAmount())
@@ -765,7 +776,7 @@ export class ChamberWallet extends EventEmitter {
   }
 
   async swapRequestRespond() {
-    const targetBlock = ethers.utils.bigNumberify(0)
+    const targetBlock = ethers.utils.bigNumberify(this.getTargetBlockNumber())
     const ownershipPredicateAddress = this.predicatesManager.getNativePredicate('OWnershipPredicate')
     let swapRequests = await this.client.getSwapRequest()
     if(swapRequests.isError()) {
