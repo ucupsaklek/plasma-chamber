@@ -16,6 +16,10 @@ contract VerifierUtil():
     small: uint256
   ) -> (bool): constant
 
+contract ERC20:
+  def transferFrom(_from: address, _to: address, _value: uint256) -> bool: modifying
+  def transfer(_to: address, _value: uint256) -> bool: modifying
+
 verifierUtil: public(address)
 
 # @dev Constructor
@@ -72,13 +76,32 @@ def verifyDeprecation(
   _transactionWitness: bytes[65],
   _timestamp: uint256
 ) -> (bool):
-  previousBlkNum: uint256
+  blkNum: uint256
   exitSegment: uint256
   exitOwner: address
   challengeSegment: uint256
   challengeBlkNum: uint256
-  (previousBlkNum, exitSegment, exitOwner) = self.decodeOwnershipState(_stateBytes)
+  (blkNum, exitSegment, exitOwner) = self.decodeOwnershipState(_stateBytes)
   (challengeBlkNum, challengeSegment) = self.decodeState(_nextStateUpdate)
   assert VerifierUtil(self.verifierUtil).isContainSegment(exitSegment, challengeSegment)
   assert VerifierUtil(self.verifierUtil).ecrecoverSig(_txHash, _transactionWitness, 0) == exitOwner
   return True
+
+@public
+def finalizeExit(
+  _stateBytes: bytes[256],
+  _tokenAddress: address,
+  _amount: uint256
+):
+  blkNum: uint256
+  exitSegment: uint256
+  exitOwner: address
+  tokenId: uint256
+  start: uint256
+  end: uint256
+  (blkNum, exitSegment, exitOwner) = self.decodeOwnershipState(_stateBytes)
+  (tokenId, start, end) = VerifierUtil(self.verifierUtil).parseSegment(exitSegment)
+  if _tokenAddress == ZERO_ADDRESS:
+    send(exitOwner, as_wei_value(_amount, "wei"))
+  else:
+    assert ERC20(_tokenAddress).transfer(exitOwner, _amount)

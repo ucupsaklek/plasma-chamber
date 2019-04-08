@@ -4,7 +4,7 @@ const RootChain = artifacts.require("RootChain")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnershipPredicate = artifacts.require("OwnershipPredicate")
-const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
+const SwapChannelPredicate = artifacts.require("SwapChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const FastFinality = artifacts.require("FastFinality")
 const Checkpoint = artifacts.require("Checkpoint")
@@ -21,7 +21,6 @@ module.exports = (deployer) => {
     return deployer.deploy(VerifierUtil)
   })
   .then(() => deployer.deploy(OwnershipPredicate, VerifierUtil.address))
-  .then(() => deployer.deploy(PaymentChannelPredicate, VerifierUtil.address))
   .then(() => deployer.deploy(Serializer))
   .then(() => deployer.deploy(
     CustomVerifier,
@@ -31,9 +30,6 @@ module.exports = (deployer) => {
   .then((_customVerifier) => {
     customVerifier = _customVerifier
     return customVerifier.registerPredicate(OwnershipPredicate.address)
-  })
-  .then(() => {
-    return customVerifier.registerPredicate(PaymentChannelPredicate.address)
   })
   .then(() => deployer.deploy(
     RootChain,
@@ -46,6 +42,10 @@ module.exports = (deployer) => {
   .then((_rootChain) => {
     rootChain = _rootChain
     return rootChain.setup()
+  })
+  .then(() => deployer.deploy(SwapChannelPredicate, VerifierUtil.address, RootChain.address))
+  .then(() => {
+    return customVerifier.registerPredicate(SwapChannelPredicate.address)
   })
   .then(() => deployer.deploy(TestPlasmaToken, "0x505050", "0x505050", 1, 100000))
   .then(() => {

@@ -1,7 +1,7 @@
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnershipPredicateContract = artifacts.require("OwnershipPredicate")
-const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
+const PaymentChannelPredicate = artifacts.require("SwapChannelPredicate")
 const { constants, utils } = require('ethers')
 const BigNumber = utils.BigNumber
 const {
@@ -30,8 +30,6 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
     this.verifierUtil = await VerifierUtil.new({ from: operator })
     this.ownershipPredicate = await OwnershipPredicateContract.new(
       this.verifierUtil.address, { from: operator })
-    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
-      this.verifierUtil.address, { from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
       this.ownershipPredicate.address,
@@ -39,7 +37,6 @@ contract("CustomVerifier", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
-    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
   });
 
   describe("OwnershipPredicate", () => {

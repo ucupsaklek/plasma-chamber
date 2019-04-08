@@ -13,7 +13,7 @@ const Checkpoint = artifacts.require("Checkpoint")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnershipPredicateContract = artifacts.require("OwnershipPredicate")
-const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
+const PaymentChannelPredicate = artifacts.require("SwapChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const TestPlasmaToken = artifacts.require("TestPlasmaToken")
@@ -52,8 +52,6 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
     this.verifierUtil = await VerifierUtil.new({ from: operator })
     this.ownershipPredicate = await OwnershipPredicateContract.new(
       this.verifierUtil.address, { from: operator })
-    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
-      this.verifierUtil.address, { from: operator })
     this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
@@ -71,8 +69,12 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
-    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     await this.rootChain.setup()
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
+      this.verifierUtil.address,
+      this.rootChain.address,
+      { from: operator })
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     const exitNFTAddress = await this.rootChain.getTokenAddress.call()
     const exitNFT = await ERC721.at(exitNFTAddress)
     const minter = await exitNFT.getMinter.call()
@@ -164,6 +166,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       const finalizeExitGasCost = await this.rootChain.finalizeExit.estimateGas(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: bob
         });
@@ -171,6 +174,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: bob
         });
@@ -292,6 +296,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await assertRevert(this.rootChain.finalizeExit(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: operator
         }))
@@ -417,6 +422,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId1,
+        tx.getStateBytes(),
         {
           from: bob
         });
@@ -437,6 +443,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await assertRevert(this.rootChain.finalizeExit(
         exitableEnd,
         exitId2,
+        invalidTx.getStateBytes(),
         {
           from: bob
         }))
@@ -519,12 +526,14 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId1,
+        tx1.getStateBytes(),
         {
           from: operator
         })
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId2,
+        tx2.getStateBytes(),
         {
           from: alice
         })
@@ -695,6 +704,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
   describe("listToken", () => {
 
     const exitableEnd = Scenario4.segments[1].end
+    let ERC20Token
 
     beforeEach(async () => {
       const token = await TestPlasmaToken.new(
@@ -703,6 +713,7 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
         "10",
         ethers.utils.bigNumberify(2000000000000000),
         {from: operator})
+      ERC20Token = token
       await token.transfer(
         alice,
         ethers.utils.bigNumberify(200000000000000),
@@ -771,12 +782,20 @@ contract("RootChain", ([alice, bob, operator, user4, user5, admin]) => {
       assert.equal(result.logs[0].event, 'ExitStarted')
       // 6 weeks after
       await increaseTime(duration.weeks(6));
+      await showBalance(this.rootChain.address)
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: bob
         });
+      await showBalance(this.rootChain.address)
+      async function showBalance(rootchainAddress) {
+        const bobBalance = await ERC20Token.balanceOf(bob)
+        const rootchainBalance = await ERC20Token.balanceOf(rootchainAddress)
+        console.log('bob', bobBalance.toString(), 'rootchain', rootchainBalance.toString())
+      }
     })
   })
 

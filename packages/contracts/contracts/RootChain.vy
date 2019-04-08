@@ -33,7 +33,8 @@ struct exitableRange:
 
 contract ERC20:
   def transferFrom(_from: address, _to: address, _value: uint256) -> bool: modifying
-  def transfer(_to: address, _value: uint256) -> bool: modifying
+  def transfer(to: address, tokens: uint256) -> bool: modifying
+  def approve(spender: address, tokens: uint256) -> bool: modifying
 
 contract ERC721:
   def setup(): modifying
@@ -101,6 +102,13 @@ contract CustomVerifier():
     _hash: bytes32,
     _txBlkNum: uint256
   ) -> bool: constant
+
+contract PredicateInterface():
+  def finalizeExit(
+    _exitStateBytes: bytes[256],
+    _tokenAddress: address,
+    _amount: uint256
+  ): modifying
 
 ListingEvent: event({_tokenId: uint256, _tokenAddress: address})
 BlockSubmitted: event({_superRoot: bytes32, _root: bytes32, _timestamp: timestamp, _blkNum: uint256})
@@ -363,6 +371,11 @@ def processDepositFragment(
   self.childChain[self.currentChildBlock] = root
   log.Deposited(depositer, tokenId, start, end, self.currentChildBlock)
 
+@public
+@constant
+def decodePredicate(_state: bytes[256]) -> (address):
+  return extract32(_state, 0, type=address)
+
 # @dev Constructor
 @public
 def __init__(
@@ -605,7 +618,8 @@ def requestHigherPriorityExit(
 @public
 def finalizeExit(
   _exitableEnd: uint256,
-  _exitId: uint256
+  _exitId: uint256,
+  _exitStateBytes: bytes[256]
 ):
   assert ERC721(self.exitToken).ownerOf(_exitId) == msg.sender
   exit: Exit = self.exits[_exitId]
@@ -628,11 +642,28 @@ def finalizeExit(
   )
   assert exit.exitableAt < as_unitless_number(block.timestamp) and self.extendExits[_exitId].extendedExitableAt < as_unitless_number(block.timestamp)
   assert self.extendExits[_exitId].challengeCount == 0
-  if tokenId == 0:
-    send(exit.owner, as_wei_value(end - start, "gwei") + EXIT_BOND)
+  assert exit.stateHash == sha3(_exitStateBytes)
+  predicate: address = self.decodePredicate(_exitStateBytes)
+  withdrawer: address
+  tokenAddress: address = ZERO_ADDRESS
+  amount: uint256
+  if predicate == ZERO_ADDRESS:
+    withdrawer = exit.owner
   else:
-    ERC20(self.listings[tokenId].tokenAddress).transfer(exit.owner, (end - start) * self.listings[tokenId].decimalOffset)
-    send(exit.owner, EXIT_BOND)
+    withdrawer = predicate
+  if tokenId == 0:
+    amount = (end - start) * (10 ** 9)
+    send(withdrawer, as_wei_value(amount, "wei"))
+  else:
+    tokenAddress = self.listings[tokenId].tokenAddress
+    amount = (end - start) * self.listings[tokenId].decimalOffset
+    ERC20(tokenAddress).transfer(withdrawer, amount)
+    pass
+  if predicate != ZERO_ADDRESS:
+    PredicateInterface(predicate).finalizeExit(_exitStateBytes, tokenAddress, amount)
+  else:
+    pass
+  send(exit.owner, EXIT_BOND)
   self.exits[_exitId].isFinalized = True
   ERC721(self.exitToken).burn(_exitId)
   log.FinalizedExit(_exitId, tokenId, start, end)

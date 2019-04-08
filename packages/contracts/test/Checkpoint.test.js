@@ -13,7 +13,7 @@ const Checkpoint = artifacts.require("Checkpoint")
 const CustomVerifier = artifacts.require("CustomVerifier")
 const VerifierUtil = artifacts.require("VerifierUtil")
 const OwnershipPredicate = artifacts.require("OwnershipPredicate")
-const PaymentChannelPredicate = artifacts.require("PaymentChannelPredicate")
+const PaymentChannelPredicate = artifacts.require("SwapChannelPredicate")
 const Serializer = artifacts.require("Serializer")
 const ERC721 = artifacts.require("ERC721")
 const ethers = require('ethers')
@@ -57,9 +57,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
     this.verifierUtil = await VerifierUtil.new({ from: operator })
     this.ownershipPredicate = await OwnershipPredicate.new(
       this.verifierUtil.address, { from: operator })
-    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
-      this.verifierUtil.address,
-      { from: operator })
     this.serializer = await Serializer.new({ from: operator })
     this.customVerifier = await CustomVerifier.new(
       this.verifierUtil.address,
@@ -68,7 +65,6 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.customVerifier.registerPredicate(this.ownershipPredicate.address, {from: operator})
-    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     this.rootChain = await RootChain.new(
       this.verifierUtil.address,
       this.serializer.address,
@@ -79,6 +75,11 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
         from: operator
       })
     await this.rootChain.setup()
+    this.paymentChannelPredicate = await PaymentChannelPredicate.new(
+      this.verifierUtil.address,
+      this.rootChain.address,
+      { from: operator })
+    await this.customVerifier.registerPredicate(this.paymentChannelPredicate.address, {from: operator})
     await this.checkpoint.setRootChain(
       this.rootChain.address,
       {
@@ -193,6 +194,7 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: bob
         });
@@ -248,6 +250,7 @@ contract("Checkpoint", ([alice, bob, operator, user4, user5, admin]) => {
       await this.rootChain.finalizeExit(
         exitableEnd,
         exitId,
+        tx.getStateBytes(),
         {
           from: bob
         });
